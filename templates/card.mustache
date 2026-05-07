@@ -16,6 +16,9 @@
     * levels        array  [{name, colourkey}]
     * hastags       bool
     * haslevels     bool
+    * isdraft       bool
+    * isarchived    bool
+    * statuslabel   string
 }}
 <article class="local-imageblog-card">
     <a href="{{viewurl}}" class="local-imageblog-card__link" tabindex="-1" aria-hidden="true">
@@ -37,6 +40,12 @@
 
         <h2 class="local-imageblog-card__title">
             <a href="{{viewurl}}">{{title}}</a>
+            {{#isdraft}}
+            <span class="badge bg-warning text-dark ms-1 align-middle">{{statuslabel}}</span>
+            {{/isdraft}}
+            {{#isarchived}}
+            <span class="badge bg-secondary ms-1 align-middle">{{statuslabel}}</span>
+            {{/isarchived}}
         </h2>
 
         {{#summary}}

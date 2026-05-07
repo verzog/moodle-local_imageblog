@@ -82,19 +82,41 @@ class post {
     }
 
     /**
-     * Fetch published posts for the listing page.
+     * Fetch posts for the listing page.
+     *
+     * By default returns only published posts. Pass `statuses` to widen the
+     * window (e.g. include drafts), and pass `mineonly` + `viewerid` to scope
+     * the result to a single author — used so non-managers can find their
+     * own drafts without seeing other authors' unpublished work.
      *
      * @param array $filters Keys: authorid, categoryid, subcategoryid, tagid,
-     *                       levelid, keyword, datefrom, dateto, page
+     *                       levelid, keyword, datefrom, dateto, page,
+     *                       statuses (string[]), mineonly (bool),
+     *                       viewerid (int)
      * @param int   $perpage
      * @return array{posts: self[], total: int}
      */
     public static function get_published(array $filters = [], int $perpage = 12): array {
         global $DB;
 
-        $params = ['status' => self::STATUS_PUBLISHED];
-        $where  = ['p.status = :status'];
+        $statuses = (array)($filters['statuses'] ?? [self::STATUS_PUBLISHED]);
+        $statuses = array_values(array_intersect($statuses, [
+            self::STATUS_PUBLISHED,
+            self::STATUS_DRAFT,
+            self::STATUS_ARCHIVED,
+        ]));
+        if (!$statuses) {
+            $statuses = [self::STATUS_PUBLISHED];
+        }
+        [$statussql, $statusparams] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED, 'st');
+        $params = $statusparams;
+        $where  = ["p.status $statussql"];
         $joins  = '';
+
+        if (!empty($filters['mineonly']) && !empty($filters['viewerid'])) {
+            $where[]            = 'p.authorid = :viewerid';
+            $params['viewerid'] = (int)$filters['viewerid'];
+        }
 
         if (!empty($filters['authorid'])) {
             $where[]            = 'p.authorid = :authorid';
@@ -151,11 +173,14 @@ class post {
         $wheresql = implode(' AND ', $where);
         $page     = max(0, (int)($filters['page'] ?? 0));
 
-        $sql = "SELECT DISTINCT p.*
+        // Postgres requires DISTINCT ORDER BY columns to appear in the
+        // SELECT list, so expose the sort key explicitly.
+        $sql = "SELECT DISTINCT p.*,
+                       COALESCE(p.timepublished, p.timemodified, p.timecreated) AS sortkey
                   FROM {local_imageblog_posts} p
                   $joins
                  WHERE $wheresql
-              ORDER BY p.timepublished DESC, p.id DESC";
+              ORDER BY sortkey DESC, p.id DESC";
 
         $countsql = "SELECT COUNT(DISTINCT p.id)
                        FROM {local_imageblog_posts} p
