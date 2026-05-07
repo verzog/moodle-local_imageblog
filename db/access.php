@@ -4,25 +4,31 @@
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 or later.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Capability definitions for local_scca_blog.
+ * Capability definitions for local_imageblog.
  *
- * @package   local_scca_blog
- * @copyright 2026 Skin Cancer College of Australasia
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_imageblog
+ * @copyright  2026 Skin Cancer College of Australasia
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
 
-    // View published posts — granted to all logged-in users by default.
-    'local/scca_blog:view' => [
+    'local/imageblog:view' => [
         'captype'      => 'read',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
-            'guest'          => CAP_ALLOW,
             'user'           => CAP_ALLOW,
             'student'        => CAP_ALLOW,
             'teacher'        => CAP_ALLOW,
@@ -31,8 +37,7 @@ $capabilities = [
         ],
     ],
 
-    // Create and edit own posts — assigned to the Blog Author role or cohort.
-    'local/scca_blog:createpost' => [
+    'local/imageblog:createpost' => [
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
@@ -40,8 +45,7 @@ $capabilities = [
         ],
     ],
 
-    // Edit any post — moderators and admins only.
-    'local/scca_blog:editanypost' => [
+    'local/imageblog:editanypost' => [
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
@@ -49,8 +53,7 @@ $capabilities = [
         ],
     ],
 
-    // Delete any post.
-    'local/scca_blog:deleteanypost' => [
+    'local/imageblog:deleteanypost' => [
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
@@ -58,8 +61,7 @@ $capabilities = [
         ],
     ],
 
-    // Publish posts (move from draft to published).
-    'local/scca_blog:publishpost' => [
+    'local/imageblog:publishpost' => [
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
@@ -67,8 +69,7 @@ $capabilities = [
         ],
     ],
 
-    // Manage categories, tags, and levels.
-    'local/scca_blog:managetaxonomy' => [
+    'local/imageblog:managetaxonomy' => [
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [

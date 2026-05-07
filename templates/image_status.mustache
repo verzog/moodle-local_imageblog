@@ -1,0 +1,16 @@
+{{!
+    @template local_imageblog/image_status
+
+    Inline status indicator next to a file input while images are processed
+    in the browser.
+
+    Context variables:
+    * message     string
+    * processing  bool
+    * done        bool
+    * error       bool
+}}
+<small class="local-imageblog-image-status form-text
+    {{#processing}}local-imageblog-image-status--processing{{/processing}}
+    {{#done}}local-imageblog-image-status--done{{/done}}
+    {{#error}}local-imageblog-image-status--error text-danger{{/error}}">{{message}}</small>

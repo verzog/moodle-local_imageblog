@@ -4,40 +4,48 @@
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 or later.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Plugin library functions.
  *
- * @package   local_scca_blog
- * @copyright 2026 Skin Cancer College of Australasia
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_imageblog
+ * @copyright  2026 Skin Cancer College of Australasia
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Serve plugin files (featured images and body images).
+ * Serve plugin files (featured images and post body images).
  *
  * @param stdClass $course
  * @param stdClass $cm
  * @param context  $context
- * @param string   $filearea   featured_image | post_images
+ * @param string   $filearea
  * @param array    $args
  * @param bool     $forcedownload
  * @param array    $options
  * @return bool
  */
-function local_scca_blog_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
+function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
 
     if ($context->contextlevel !== CONTEXT_SYSTEM) {
         return false;
     }
 
     require_login();
-    require_capability('local/scca_blog:view', context_system::instance());
+    require_capability('local/imageblog:view', $context);
 
     $allowedareas = ['featured_image', 'post_images'];
-    if (!in_array($filearea, $allowedareas)) {
+    if (!in_array($filearea, $allowedareas, true)) {
         return false;
     }
 
@@ -46,21 +54,14 @@ function local_scca_blog_pluginfile($course, $cm, $context, $filearea, $args, $f
     $filepath = $args ? '/' . implode('/', $args) . '/' : '/';
 
     $fs   = get_file_storage();
-    $file = $fs->get_file($context->id, 'local_scca_blog', $filearea, $itemid, $filepath, $filename);
+    $file = $fs->get_file($context->id, 'local_imageblog', $filearea, $itemid, $filepath, $filename);
 
     if (!$file || $file->is_directory()) {
         return false;
     }
 
-    // Featured images are public-ish — no forced download, long cache.
-    if ($filearea === 'featured_image') {
-        send_file($file, $filename, 0, 0, false, false, '', false, $options);
-    } else {
-        // Clinical images — no download forced but shorter cache window.
-        send_file($file, $filename, 86400, 0, false, $forcedownload, '', false, $options);
-    }
-
-    return true;
+    $cachelifetime = ($filearea === 'featured_image') ? DAYSECS : HOURSECS;
+    send_stored_file($file, $cachelifetime, 0, $forcedownload, $options);
 }
 
 /**
@@ -68,30 +69,27 @@ function local_scca_blog_pluginfile($course, $cm, $context, $filearea, $args, $f
  *
  * @return array{authors: array, categories: array, tags: array}
  */
-function local_scca_blog_get_taxonomy(): array {
+function local_imageblog_get_taxonomy(): array {
     global $DB;
 
-    // Authors — users who have at least one published post.
     $sql = "SELECT DISTINCT u.id, u.firstname, u.lastname
               FROM {user} u
-              JOIN {local_scca_blog_posts} p ON p.authorid = u.id
-             WHERE p.status = 'published'
+              JOIN {local_imageblog_posts} p ON p.authorid = u.id
+             WHERE p.status = :status
           ORDER BY u.lastname, u.firstname";
-    $authorrecords = $DB->get_records_sql($sql);
+    $authorrecords = $DB->get_records_sql($sql, ['status' => \local_imageblog\post::STATUS_PUBLISHED]);
     $authors = array_map(function($u) {
-        return ['id' => $u->id, 'name' => fullname($u)];
+        return ['id' => (int)$u->id, 'name' => fullname($u)];
     }, $authorrecords);
 
-    // Categories.
-    $catrecords = $DB->get_records('local_scca_blog_categories', null, 'sortorder ASC');
+    $catrecords = $DB->get_records('local_imageblog_categories', null, 'sortorder ASC');
     $categories = array_map(function($c) {
-        return ['id' => $c->id, 'name' => $c->name];
+        return ['id' => (int)$c->id, 'name' => $c->name];
     }, $catrecords);
 
-    // Tags.
-    $tagrecords = $DB->get_records('local_scca_blog_tags', null, 'name ASC');
+    $tagrecords = $DB->get_records('local_imageblog_tags', null, 'name ASC');
     $tags = array_map(function($t) {
-        return ['id' => $t->id, 'name' => $t->name];
+        return ['id' => (int)$t->id, 'name' => $t->name];
     }, $tagrecords);
 
     return [
@@ -99,4 +97,27 @@ function local_scca_blog_get_taxonomy(): array {
         'categories' => array_values($categories),
         'tags'       => array_values($tags),
     ];
+}
+
+/**
+ * Inject a link to the blog into the global navigation.
+ *
+ * @param global_navigation $navigation
+ * @return void
+ */
+function local_imageblog_extend_navigation(global_navigation $navigation): void {
+    if (!isloggedin() || isguestuser()) {
+        return;
+    }
+    $context = context_system::instance();
+    if (!has_capability('local/imageblog:view', $context)) {
+        return;
+    }
+    $navigation->add(
+        get_string('pluginname', 'local_imageblog'),
+        new moodle_url('/local/imageblog/index.php'),
+        navigation_node::TYPE_CUSTOM,
+        null,
+        'local_imageblog'
+    );
 }

@@ -1,46 +1,44 @@
 {{!
+    @template local_imageblog/listing
+
     Listing page — filter bar + card grid + pagination.
 
-    @template local_scca_blog/listing
-    @copyright 2026 Skin Cancer College of Australasia
-    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-
     Context variables:
-    * cards        array  — see card.mustache
-    * filterbar    object — authors, categories, tags, current, formaction
-    * pagination   object — show, pages, hasprev, hasnext, prevurl, nexturl
-    * newposturl   string|null — shown only to users with createpost capability
+    * cards         array  — see card.mustache
+    * hascards      bool
+    * filterbar     object — authors, categories, tags, keyword, formaction
+    * pagination    object — show, pages, hasprev, hasnext, prevurl, nexturl
+    * cancreate     bool
+    * newposturl    string
 }}
+<div class="local-imageblog-listing">
 
-<div class="scca-blog-listing">
-
-    {{! ── Filter bar ── }}
-    <div class="scca-blog-filters card mb-4">
+    <div class="local-imageblog-filters card mb-4">
         <div class="card-body">
             <form method="get" action="{{filterbar.formaction}}">
                 <div class="row g-2 mb-2">
                     <div class="col-md-4">
-                        <label class="form-label small text-muted">{{#str}}category, local_scca_blog{{/str}}</label>
-                        <select name="categoryid" class="form-select form-select-sm">
-                            <option value="">{{#str}}selectcategory, local_scca_blog{{/str}}</option>
+                        <label class="form-label small text-muted" for="local-imageblog-filter-cat">{{#str}}category, local_imageblog{{/str}}</label>
+                        <select id="local-imageblog-filter-cat" name="categoryid" class="form-select form-select-sm">
+                            <option value="">{{#str}}selectcategory, local_imageblog{{/str}}</option>
                             {{#filterbar.categories}}
                             <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
                             {{/filterbar.categories}}
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small text-muted">{{#str}}tags, local_scca_blog{{/str}}</label>
-                        <select name="tagid" class="form-select form-select-sm">
-                            <option value="">{{#str}}selecttags, local_scca_blog{{/str}}</option>
+                        <label class="form-label small text-muted" for="local-imageblog-filter-tag">{{#str}}tags, local_imageblog{{/str}}</label>
+                        <select id="local-imageblog-filter-tag" name="tagid" class="form-select form-select-sm">
+                            <option value="">{{#str}}selecttags, local_imageblog{{/str}}</option>
                             {{#filterbar.tags}}
                             <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
                             {{/filterbar.tags}}
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small text-muted">{{#str}}selectauthors, local_scca_blog{{/str}}</label>
-                        <select name="authorid" class="form-select form-select-sm">
-                            <option value="">{{#str}}selectauthors, local_scca_blog{{/str}}</option>
+                        <label class="form-label small text-muted" for="local-imageblog-filter-author">{{#str}}selectauthors, local_imageblog{{/str}}</label>
+                        <select id="local-imageblog-filter-author" name="authorid" class="form-select form-select-sm">
+                            <option value="">{{#str}}selectauthors, local_imageblog{{/str}}</option>
                             {{#filterbar.authors}}
                             <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
                             {{/filterbar.authors}}
@@ -49,50 +47,57 @@
                 </div>
                 <div class="row g-2 align-items-end">
                     <div class="col-md-6">
-                        <label class="form-label small text-muted">{{#str}}keyword, local_scca_blog{{/str}}</label>
-                        <input type="text" name="keyword" class="form-control form-control-sm"
-                               value="{{filterbar.current.keyword}}"
-                               placeholder="{{#str}}keyword, local_scca_blog{{/str}}">
+                        <label class="form-label small text-muted" for="local-imageblog-filter-keyword">{{#str}}keyword, local_imageblog{{/str}}</label>
+                        <input id="local-imageblog-filter-keyword" type="text" name="keyword"
+                               class="form-control form-control-sm"
+                               value="{{filterbar.keyword}}">
                     </div>
                     <div class="col-md-6 d-flex justify-content-end gap-2">
                         <button type="submit" class="btn btn-sm btn-primary">
-                            {{#str}}datepublished, local_scca_blog{{/str}} ↓
+                            {{#str}}searchposts, local_imageblog{{/str}}
                         </button>
                         <a href="{{filterbar.formaction}}" class="btn btn-sm btn-outline-secondary">
-                            {{#str}}resetfilters, local_scca_blog{{/str}}
+                            {{#str}}resetfilters, local_imageblog{{/str}}
                         </a>
-                        {{#newposturl}}
+                        {{#cancreate}}
                         <a href="{{newposturl}}" class="btn btn-sm btn-success">
-                            + {{#str}}newpost, local_scca_blog{{/str}}
+                            {{#str}}newpost, local_imageblog{{/str}}
                         </a>
-                        {{/newposturl}}
+                        {{/cancreate}}
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    {{! ── Card grid ── }}
-    {{#cards}}
-        {{> local_scca_blog/card}}
-    {{/cards}}
-    {{^cards}}
-    <div class="scca-blog-empty text-center py-5 text-muted">
-        <p>{{#str}}nopostsfound, local_scca_blog{{/str}}</p>
+    {{#hascards}}
+    <div class="local-imageblog-card-grid">
+        {{#cards}}
+            {{> local_imageblog/card}}
+        {{/cards}}
     </div>
-    {{/cards}}
+    {{/hascards}}
+    {{^hascards}}
+    <div class="local-imageblog-empty text-center py-5 text-muted">
+        <p>{{#str}}nopostsfound, local_imageblog{{/str}}</p>
+    </div>
+    {{/hascards}}
 
-    {{! ── Pagination ── }}
     {{#pagination.show}}
-    <nav class="scca-blog-pagination d-flex justify-content-center align-items-center gap-1 mt-4" aria-label="Blog pagination">
+    <nav class="local-imageblog-pagination d-flex justify-content-center align-items-center gap-1 mt-4"
+         aria-label="{{#str}}paginationlabel, local_imageblog{{/str}}">
         {{#pagination.hasprev}}
-        <a href="{{pagination.prevurl}}" class="btn btn-sm btn-outline-secondary">← {{#str}}previous, moodle{{/str}}</a>
+        <a href="{{pagination.prevurl}}" class="btn btn-sm btn-outline-secondary">
+            {{#str}}previous, local_imageblog{{/str}}
+        </a>
         {{/pagination.hasprev}}
         {{#pagination.pages}}
         <a href="{{url}}" class="btn btn-sm {{#active}}btn-primary{{/active}}{{^active}}btn-outline-secondary{{/active}}">{{num}}</a>
         {{/pagination.pages}}
         {{#pagination.hasnext}}
-        <a href="{{pagination.nexturl}}" class="btn btn-sm btn-outline-secondary">{{#str}}next, moodle{{/str}} →</a>
+        <a href="{{pagination.nexturl}}" class="btn btn-sm btn-outline-secondary">
+            {{#str}}next, local_imageblog{{/str}}
+        </a>
         {{/pagination.hasnext}}
     </nav>
     {{/pagination.show}}

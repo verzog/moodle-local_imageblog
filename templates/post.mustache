@@ -1,0 +1,39 @@
+{{!
+    @template local_imageblog/post
+
+    Single post view.
+
+    Context variables:
+    * id            int
+    * title         string
+    * body          string  — already passed through format_text()
+    * authorname    string
+    * datepublished string
+    * hasimage      bool
+    * imageurl      string
+    * listingurl    string
+    * lazyimages    bool
+}}
+<div class="local-imageblog-post">
+    <a href="{{listingurl}}" class="btn btn-sm btn-outline-secondary mb-3">
+        {{#str}}backtoposts, local_imageblog{{/str}}
+    </a>
+
+    {{#hasimage}}
+    <img src="{{imageurl}}" alt=""
+         class="local-imageblog-post__image mb-3"
+         {{#lazyimages}}loading="lazy"{{/lazyimages}}>
+    {{/hasimage}}
+
+    <h1 class="local-imageblog-post__title mb-2">{{title}}</h1>
+
+    <div class="local-imageblog-post__meta text-muted small mb-3">
+        <span>{{authorname}}</span>
+        <span>·</span>
+        <span>{{datepublished}}</span>
+    </div>
+
+    <div class="local-imageblog-post-body">
+        {{{body}}}
+    </div>
+</div>
