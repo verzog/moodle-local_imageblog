@@ -19,6 +19,8 @@
     * isdraft       bool
     * isarchived    bool
     * statuslabel   string
+    * canedit       bool
+    * editurl       string
 }}
 <article class="local-imageblog-card">
     <a href="{{viewurl}}" class="local-imageblog-card__link" tabindex="-1" aria-hidden="true">
@@ -67,5 +69,13 @@
             {{/tags}}
         </div>
         {{/hastags}}
+
+        {{#canedit}}
+        <div class="local-imageblog-card__actions mt-2">
+            <a href="{{editurl}}" class="btn btn-sm btn-outline-primary">
+                {{#str}}editpost, local_imageblog{{/str}}
+            </a>
+        </div>
+        {{/canedit}}
     </div>
 </article>

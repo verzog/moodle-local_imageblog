@@ -95,10 +95,15 @@ class renderer extends plugin_renderer_base {
             IGNORE_MISSING
         );
 
+        global $USER;
+
         $imgurl = $post->get_featured_image_url();
         $panourl = $post->get_panorama_url();
         $syscontext = \context_system::instance();
         $canmanage = has_capability('local/imageblog:editanypost', $syscontext);
+        $isowner = ($post->authorid === (int)$USER->id);
+        $canauthor = has_capability('local/imageblog:createpost', $syscontext);
+        $canedit = $canmanage || ($isowner && $canauthor);
         $ispublished = ($post->status === post::STATUS_PUBLISHED);
 
         $context = [
@@ -124,6 +129,11 @@ class renderer extends plugin_renderer_base {
                 '/local/imageblog/view.php',
                 ['id' => $post->id, 'action' => 'unpublish', 'sesskey' => sesskey()]
             ))->out(false),
+            'canedit'       => $canedit,
+            'editurl'       => (new moodle_url(
+                '/local/imageblog/edit.php',
+                ['id' => $post->id]
+            ))->out(false),
         ];
 
         return $this->render_from_template('local_imageblog/post', $context);
@@ -136,7 +146,7 @@ class renderer extends plugin_renderer_base {
      * @return array
      */
     private function build_card_context(post $post): array {
-        global $DB;
+        global $DB, $USER;
 
         $author = $DB->get_record(
             'user',
@@ -147,6 +157,11 @@ class renderer extends plugin_renderer_base {
         $imgurl = $post->get_featured_image_url();
         $tags   = $post->get_tags();
         $levels = $post->get_levels();
+
+        $syscontext = \context_system::instance();
+        $isowner    = ($post->authorid === (int)$USER->id);
+        $canedit    = has_capability('local/imageblog:editanypost', $syscontext)
+            || ($isowner && has_capability('local/imageblog:createpost', $syscontext));
 
         return [
             'id'            => $post->id,
@@ -170,6 +185,10 @@ class renderer extends plugin_renderer_base {
             'isarchived'    => $post->status === post::STATUS_ARCHIVED,
             'statuslabel'   => $post->status !== post::STATUS_PUBLISHED
                 ? get_string('status_' . $post->status, 'local_imageblog')
+                : '',
+            'canedit'       => $canedit,
+            'editurl'       => $canedit
+                ? (new moodle_url('/local/imageblog/edit.php', ['id' => $post->id]))->out(false)
                 : '',
         ];
     }
