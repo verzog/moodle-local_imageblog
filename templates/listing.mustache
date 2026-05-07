@@ -1,0 +1,100 @@
+{{!
+    Listing page — filter bar + card grid + pagination.
+
+    @template local_scca_blog/listing
+    @copyright 2026 Skin Cancer College of Australasia
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Context variables:
+    * cards        array  — see card.mustache
+    * filterbar    object — authors, categories, tags, current, formaction
+    * pagination   object — show, pages, hasprev, hasnext, prevurl, nexturl
+    * newposturl   string|null — shown only to users with createpost capability
+}}
+
+<div class="scca-blog-listing">
+
+    {{! ── Filter bar ── }}
+    <div class="scca-blog-filters card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{filterbar.formaction}}">
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">{{#str}}category, local_scca_blog{{/str}}</label>
+                        <select name="categoryid" class="form-select form-select-sm">
+                            <option value="">{{#str}}selectcategory, local_scca_blog{{/str}}</option>
+                            {{#filterbar.categories}}
+                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                            {{/filterbar.categories}}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">{{#str}}tags, local_scca_blog{{/str}}</label>
+                        <select name="tagid" class="form-select form-select-sm">
+                            <option value="">{{#str}}selecttags, local_scca_blog{{/str}}</option>
+                            {{#filterbar.tags}}
+                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                            {{/filterbar.tags}}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">{{#str}}selectauthors, local_scca_blog{{/str}}</label>
+                        <select name="authorid" class="form-select form-select-sm">
+                            <option value="">{{#str}}selectauthors, local_scca_blog{{/str}}</option>
+                            {{#filterbar.authors}}
+                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                            {{/filterbar.authors}}
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">{{#str}}keyword, local_scca_blog{{/str}}</label>
+                        <input type="text" name="keyword" class="form-control form-control-sm"
+                               value="{{filterbar.current.keyword}}"
+                               placeholder="{{#str}}keyword, local_scca_blog{{/str}}">
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            {{#str}}datepublished, local_scca_blog{{/str}} ↓
+                        </button>
+                        <a href="{{filterbar.formaction}}" class="btn btn-sm btn-outline-secondary">
+                            {{#str}}resetfilters, local_scca_blog{{/str}}
+                        </a>
+                        {{#newposturl}}
+                        <a href="{{newposturl}}" class="btn btn-sm btn-success">
+                            + {{#str}}newpost, local_scca_blog{{/str}}
+                        </a>
+                        {{/newposturl}}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{! ── Card grid ── }}
+    {{#cards}}
+        {{> local_scca_blog/card}}
+    {{/cards}}
+    {{^cards}}
+    <div class="scca-blog-empty text-center py-5 text-muted">
+        <p>{{#str}}nopostsfound, local_scca_blog{{/str}}</p>
+    </div>
+    {{/cards}}
+
+    {{! ── Pagination ── }}
+    {{#pagination.show}}
+    <nav class="scca-blog-pagination d-flex justify-content-center align-items-center gap-1 mt-4" aria-label="Blog pagination">
+        {{#pagination.hasprev}}
+        <a href="{{pagination.prevurl}}" class="btn btn-sm btn-outline-secondary">← {{#str}}previous, moodle{{/str}}</a>
+        {{/pagination.hasprev}}
+        {{#pagination.pages}}
+        <a href="{{url}}" class="btn btn-sm {{#active}}btn-primary{{/active}}{{^active}}btn-outline-secondary{{/active}}">{{num}}</a>
+        {{/pagination.pages}}
+        {{#pagination.hasnext}}
+        <a href="{{pagination.nexturl}}" class="btn btn-sm btn-outline-secondary">{{#str}}next, moodle{{/str}} →</a>
+        {{/pagination.hasnext}}
+    </nav>
+    {{/pagination.show}}
+
+</div>

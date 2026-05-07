@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/scca_blog/db" VERSION="20260507" COMMENT="XMLDB file for local_scca_blog">
+  <TABLES>
+
+    <TABLE NAME="local_scca_blog_posts" COMMENT="Blog posts">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="authorid"        TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="mdl_user.id"/>
+        <FIELD NAME="title"           TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="summary"         TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Short excerpt shown on card"/>
+        <FIELD NAME="body"            TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Full post HTML from TinyMCE"/>
+        <FIELD NAME="bodyformat"      TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="status"          TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="draft" SEQUENCE="false" COMMENT="draft|published|archived"/>
+        <FIELD NAME="timepublished"   TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true"  SEQUENCE="false"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true"  SEQUENCE="false"/>
+        <FIELD NAME="lazy_images"     TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1=lazy load body images"/>
+        <FIELD NAME="forumpostid"     TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Linked forum discussion id"/>
+        <FIELD NAME="featuredimage"   TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="mdl_files id for card thumbnail"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_author" TYPE="foreign" FIELDS="authorid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_status_published" UNIQUE="false" FIELDS="status, timepublished"/>
+        <INDEX NAME="idx_authorid" UNIQUE="false" FIELDS="authorid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_scca_blog_categories" COMMENT="Top-level blog categories">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="sortorder"    TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_scca_blog_subcategories" COMMENT="Subcategories belonging to a category">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="categoryid"   TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="sortorder"    TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_category" TYPE="foreign" FIELDS="categoryid" REFTABLE="local_scca_blog_categories" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_scca_blog_post_cats" COMMENT="Many-to-many: posts to categories">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="postid"         TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="categoryid"     TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="subcategoryid"  TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_post"    TYPE="foreign" FIELDS="postid"     REFTABLE="local_scca_blog_posts"         REFFIELDS="id"/>
+        <KEY NAME="fk_cat"     TYPE="foreign" FIELDS="categoryid" REFTABLE="local_scca_blog_categories"    REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_postid" UNIQUE="false" FIELDS="postid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_scca_blog_tags" COMMENT="Tag definitions">
+      <FIELDS>
+        <FIELD NAME="id"    TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"  TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="slug"  TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_slug" UNIQUE="true" FIELDS="slug"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_scca_blog_post_tags" COMMENT="Many-to-many: posts to tags">
+      <FIELDS>
+        <FIELD NAME="id"      TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="postid"  TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="tagid"   TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_post" TYPE="foreign" FIELDS="postid" REFTABLE="local_scca_blog_posts" REFFIELDS="id"/>
+        <KEY NAME="fk_tag"  TYPE="foreign" FIELDS="tagid"  REFTABLE="local_scca_blog_tags"  REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_postid" UNIQUE="false" FIELDS="postid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_scca_blog_levels" COMMENT="Difficulty level tags (All Levels, Advanced, Fellowship etc.)">
+      <FIELDS>
+        <FIELD NAME="id"         TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"       TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="colourkey"  TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="amber" SEQUENCE="false" COMMENT="amber|teal|coral|purple"/>
+        <FIELD NAME="sortorder"  TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_scca_blog_post_levels" COMMENT="Many-to-many: posts to levels">
+      <FIELDS>
+        <FIELD NAME="id"       TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="postid"   TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="levelid"  TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_post"  TYPE="foreign" FIELDS="postid"  REFTABLE="local_scca_blog_posts"  REFFIELDS="id"/>
+        <KEY NAME="fk_level" TYPE="foreign" FIELDS="levelid" REFTABLE="local_scca_blog_levels" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
