@@ -82,7 +82,8 @@ class post {
     /**
      * Fetch published posts for the listing page.
      *
-     * @param array $filters Keys: authorid, categoryid, tagid, keyword, page
+     * @param array $filters Keys: authorid, categoryid, subcategoryid, tagid,
+     *                       levelid, keyword, datefrom, dateto, page
      * @param int   $perpage
      * @return array{posts: self[], total: int}
      */
@@ -98,10 +99,16 @@ class post {
             $params['authorid'] = (int)$filters['authorid'];
         }
 
-        if (!empty($filters['categoryid'])) {
+        if (!empty($filters['categoryid']) || !empty($filters['subcategoryid'])) {
             $joins .= ' JOIN {local_imageblog_post_cats} pc ON pc.postid = p.id ';
-            $where[]              = 'pc.categoryid = :categoryid';
-            $params['categoryid'] = (int)$filters['categoryid'];
+            if (!empty($filters['categoryid'])) {
+                $where[]              = 'pc.categoryid = :categoryid';
+                $params['categoryid'] = (int)$filters['categoryid'];
+            }
+            if (!empty($filters['subcategoryid'])) {
+                $where[]                 = 'pc.subcategoryid = :subcategoryid';
+                $params['subcategoryid'] = (int)$filters['subcategoryid'];
+            }
         }
 
         if (!empty($filters['tagid'])) {
@@ -110,9 +117,33 @@ class post {
             $params['tagid'] = (int)$filters['tagid'];
         }
 
+        if (!empty($filters['levelid'])) {
+            $joins .= ' JOIN {local_imageblog_post_levels} pl ON pl.postid = p.id ';
+            $where[]           = 'pl.levelid = :levelid';
+            $params['levelid'] = (int)$filters['levelid'];
+        }
+
+        if (!empty($filters['datefrom'])) {
+            $where[]            = 'p.timepublished >= :datefrom';
+            $params['datefrom'] = (int)$filters['datefrom'];
+        }
+        if (!empty($filters['dateto'])) {
+            $where[]          = 'p.timepublished <= :dateto';
+            $params['dateto'] = (int)$filters['dateto'];
+        }
+
         if (!empty($filters['keyword'])) {
-            $where[]           = $DB->sql_like('p.title', ':keyword', false);
-            $params['keyword'] = '%' . $DB->sql_like_escape($filters['keyword']) . '%';
+            $titlelike = $DB->sql_like('p.title', ':keyword_title', false);
+            $taglike   = $DB->sql_like('t.name', ':keyword_tag', false);
+            $where[] = "($titlelike OR EXISTS (
+                            SELECT 1
+                              FROM {local_imageblog_post_tags} kt
+                              JOIN {local_imageblog_tags} t ON t.id = kt.tagid
+                             WHERE kt.postid = p.id AND $taglike
+                        ))";
+            $kw = '%' . $DB->sql_like_escape($filters['keyword']) . '%';
+            $params['keyword_title'] = $kw;
+            $params['keyword_tag']   = $kw;
         }
 
         $wheresql = implode(' AND ', $where);
@@ -211,7 +242,9 @@ class post {
 
         $categoryid    = !empty($data->categoryid) ? (int)$data->categoryid : null;
         $subcategoryid = !empty($data->subcategoryid) ? (int)$data->subcategoryid : null;
-        $tagids        = isset($data->tagids)   && is_array($data->tagids) ? $data->tagids : [];
+        $tagids        = isset($data->tagids) && is_array($data->tagids)
+            ? self::resolve_tagids($data->tagids)
+            : [];
         $levelids      = isset($data->levelids) && is_array($data->levelids) ? $data->levelids : [];
         self::set_taxonomy($record->id, $categoryid, $subcategoryid, $tagids, $levelids);
 
@@ -247,6 +280,59 @@ class post {
             'maxfiles'       => 1,
             'subdirs'        => 0,
         ];
+    }
+
+    /**
+     * Update the status of a single post in place.
+     *
+     * @param int $postid
+     * @param string $status One of self::STATUS_*
+     */
+    public static function set_status(int $postid, string $status): void {
+        global $DB;
+        $allowed = [self::STATUS_DRAFT, self::STATUS_PUBLISHED, self::STATUS_ARCHIVED];
+        if (!in_array($status, $allowed, true)) {
+            throw new \moodle_exception('error_invalidstatus', 'local_imageblog');
+        }
+        $DB->update_record('local_imageblog_posts', (object)[
+            'id'           => $postid,
+            'status'       => $status,
+            'timemodified' => time(),
+        ]);
+    }
+
+    /**
+     * Convert a mixed array of tag ids and free-text tag names (as produced by
+     * the autocomplete element with tags=true) into a list of existing tag ids,
+     * creating any new tags on the fly.
+     *
+     * @param array $values
+     * @return int[]
+     */
+    private static function resolve_tagids(array $values): array {
+        global $DB;
+        $ids = [];
+        foreach ($values as $value) {
+            if ($value === '' || $value === null) {
+                continue;
+            }
+            if (is_numeric($value)) {
+                $ids[] = (int)$value;
+                continue;
+            }
+            $name = trim((string)$value);
+            if ($name === '') {
+                continue;
+            }
+            $slug = taxonomy::slugify($name);
+            $existing = $DB->get_record('local_imageblog_tags', ['slug' => $slug], 'id');
+            if ($existing) {
+                $ids[] = (int)$existing->id;
+                continue;
+            }
+            $ids[] = taxonomy::save(taxonomy::TYPE_TAG, (object)['name' => $name]);
+        }
+        return array_values(array_unique($ids));
     }
 
     /**

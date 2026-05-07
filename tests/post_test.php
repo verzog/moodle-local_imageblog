@@ -141,6 +141,69 @@ final class post_test extends \advanced_testcase {
         $bykeyword = post::get_published(['keyword' => 'bob']);
         $this->assertSame(1, $bykeyword['total']);
         $this->assertSame($postbob, $bykeyword['posts'][0]->id);
+
+        // Keyword should also match tag names — alice's post has the
+        // 'test-feature' tag so searching by 'feature' should find it.
+        $bykeywordtag = post::get_published(['keyword' => 'feature']);
+        $this->assertSame(1, $bykeywordtag['total']);
+        $this->assertSame($postalice, $bykeywordtag['posts'][0]->id);
+    }
+
+    /**
+     * Subcategory, level and date-range filters narrow results correctly.
+     */
+    public function test_get_published_subcategory_level_and_date_filters(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+        $context = \context_system::instance();
+
+        $now = time();
+        $catid = $DB->insert_record('local_imageblog_categories', (object)[
+            'name' => 'Tutorial', 'sortorder' => 0, 'timecreated' => $now,
+        ]);
+        $sub1 = $DB->insert_record('local_imageblog_subcategories', (object)[
+            'name' => 'Dermoscopy', 'categoryid' => $catid, 'sortorder' => 0,
+        ]);
+        $sub2 = $DB->insert_record('local_imageblog_subcategories', (object)[
+            'name' => 'Procedures', 'categoryid' => $catid, 'sortorder' => 1,
+        ]);
+        $level = $DB->insert_record('local_imageblog_levels', (object)[
+            'name' => 'Beginner', 'colourkey' => 'teal', 'sortorder' => 0,
+        ]);
+
+        $postderm = post::save((object)[
+            'title'  => 'Dermoscopy basics',
+            'status' => post::STATUS_PUBLISHED,
+        ], $context);
+        post::set_taxonomy($postderm, $catid, $sub1, [], [$level]);
+
+        $postproc = post::save((object)[
+            'title'  => 'Cryotherapy procedure',
+            'status' => post::STATUS_PUBLISHED,
+        ], $context);
+        post::set_taxonomy($postproc, $catid, $sub2, [], []);
+
+        // Backdate the dermoscopy post to last month.
+        $lastmonth = $now - (35 * DAYSECS);
+        $DB->set_field('local_imageblog_posts', 'timepublished', $lastmonth, ['id' => $postderm]);
+
+        $bysubcat = post::get_published(['subcategoryid' => $sub1]);
+        $this->assertSame(1, $bysubcat['total']);
+        $this->assertSame($postderm, $bysubcat['posts'][0]->id);
+
+        $bylevel = post::get_published(['levelid' => $level]);
+        $this->assertSame(1, $bylevel['total']);
+        $this->assertSame($postderm, $bylevel['posts'][0]->id);
+
+        $recent = post::get_published(['datefrom' => $now - DAYSECS]);
+        $this->assertSame(1, $recent['total']);
+        $this->assertSame($postproc, $recent['posts'][0]->id);
+
+        $old = post::get_published(['dateto' => $now - DAYSECS]);
+        $this->assertSame(1, $old['total']);
+        $this->assertSame($postderm, $old['posts'][0]->id);
     }
 
     /**

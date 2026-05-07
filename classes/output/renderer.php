@@ -56,6 +56,15 @@ class renderer extends plugin_renderer_base {
             $cards[] = $this->build_card_context($p);
         }
 
+        // Build a categoryid -> [{id, name}] JSON map for the dependent
+        // subcategory dropdown.
+        $subcatmap = [];
+        foreach (($taxonomy['subcategories'] ?? []) as $sub) {
+            $catid = (int)$sub['categoryid'];
+            $subcatmap[$catid] ??= [];
+            $subcatmap[$catid][] = ['id' => (int)$sub['id'], 'name' => $sub['name']];
+        }
+
         $context = [
             'cards'      => $cards,
             'hascards'   => !empty($cards),
@@ -64,6 +73,7 @@ class renderer extends plugin_renderer_base {
             'pagination' => $this->build_pagination($total, $page, $perpage, $filters),
             'cancreate'  => has_capability('local/imageblog:createpost', \context_system::instance()),
             'newposturl' => (new moodle_url('/local/imageblog/edit.php'))->out(false),
+            'subcatdata' => s(json_encode($subcatmap)),
         ];
 
         return $this->render_from_template('local_imageblog/listing', $context);
@@ -86,12 +96,15 @@ class renderer extends plugin_renderer_base {
         );
 
         $imgurl = $post->get_featured_image_url();
+        $syscontext = \context_system::instance();
+        $canmanage = has_capability('local/imageblog:editanypost', $syscontext);
+        $ispublished = ($post->status === post::STATUS_PUBLISHED);
 
         $context = [
             'id'            => $post->id,
             'title'         => format_string($post->title),
             'body'          => format_text($post->body, $post->bodyformat, [
-                'context' => \context_system::instance(),
+                'context' => $syscontext,
             ]),
             'authorname'    => $author ? fullname($author) : '',
             'datepublished' => $post->timepublished
@@ -101,6 +114,13 @@ class renderer extends plugin_renderer_base {
             'imageurl'      => $imgurl ? $imgurl->out(false) : '',
             'listingurl'    => (new moodle_url('/local/imageblog/index.php'))->out(false),
             'lazyimages'    => !empty($post->lazyimages),
+            'isdraft'       => !$ispublished,
+            'statuslabel'   => get_string('status_' . $post->status, 'local_imageblog'),
+            'canunpublish'  => $canmanage && $ispublished,
+            'unpublishurl'  => (new moodle_url(
+                '/local/imageblog/view.php',
+                ['id' => $post->id, 'action' => 'unpublish', 'sesskey' => sesskey()]
+            ))->out(false),
         ];
 
         return $this->render_from_template('local_imageblog/post', $context);
@@ -165,12 +185,31 @@ class renderer extends plugin_renderer_base {
             }, $items);
         };
 
+        $currentcategory = (int)($filters['categoryid'] ?? 0);
+        $subcategories = [];
+        foreach (($taxonomy['subcategories'] ?? []) as $sub) {
+            if ($currentcategory && (int)$sub['categoryid'] !== $currentcategory) {
+                continue;
+            }
+            $subcategories[] = [
+                'id'       => $sub['id'],
+                'name'     => $sub['name'],
+                'selected' => ((int)$sub['id'] === (int)($filters['subcategoryid'] ?? 0)),
+            ];
+        }
+
         return [
-            'authors'    => $mark($taxonomy['authors'] ?? [], (int)($filters['authorid'] ?? 0)),
-            'categories' => $mark($taxonomy['categories'] ?? [], (int)($filters['categoryid'] ?? 0)),
-            'tags'       => $mark($taxonomy['tags'] ?? [], (int)($filters['tagid'] ?? 0)),
-            'keyword'    => $filters['keyword'] ?? '',
-            'formaction' => (new moodle_url('/local/imageblog/index.php'))->out(false),
+            'authors'        => $mark($taxonomy['authors'] ?? [], (int)($filters['authorid'] ?? 0)),
+            'categories'     => $mark($taxonomy['categories'] ?? [], $currentcategory),
+            'subcategories'  => $subcategories,
+            'hassubcats'     => !empty($subcategories),
+            'tags'           => $mark($taxonomy['tags'] ?? [], (int)($filters['tagid'] ?? 0)),
+            'levels'         => $mark($taxonomy['levels'] ?? [], (int)($filters['levelid'] ?? 0)),
+            'haslevels'      => !empty($taxonomy['levels'] ?? []),
+            'keyword'        => $filters['keyword'] ?? '',
+            'datefrom'       => $filters['datefromraw'] ?? '',
+            'dateto'         => $filters['datetoraw'] ?? '',
+            'formaction'     => (new moodle_url('/local/imageblog/index.php'))->out(false),
         ];
     }
 
@@ -189,8 +228,17 @@ class renderer extends plugin_renderer_base {
             return ['show' => false];
         }
 
+        // Map our internal filter shape back to the URL param shape: drop
+        // page + datetimes, swap raw date strings into datefrom/dateto.
         $base = $filters;
-        unset($base['page']);
+        unset($base['page'], $base['datefrom'], $base['dateto']);
+        if (!empty($base['datefromraw'])) {
+            $base['datefrom'] = $base['datefromraw'];
+        }
+        if (!empty($base['datetoraw'])) {
+            $base['dateto'] = $base['datetoraw'];
+        }
+        unset($base['datefromraw'], $base['datetoraw']);
 
         $url = function (int $p) use ($base): string {
             return (new moodle_url('/local/imageblog/index.php', $base + ['page' => $p]))->out(false);
