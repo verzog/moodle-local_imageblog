@@ -70,6 +70,51 @@ class post_form extends moodleform {
         $mform->setDefault('lazyimages', 1);
         $mform->addHelpButton('lazyimages', 'lazyimages', 'local_imageblog');
 
+        global $CFG;
+        require_once($CFG->dirroot . '/local/imageblog/lib.php');
+        $taxonomy = local_imageblog_get_taxonomy();
+
+        $catoptions = ['' => get_string('selectcategory', 'local_imageblog')];
+        foreach ($taxonomy['categories'] as $cat) {
+            $catoptions[$cat['id']] = $cat['name'];
+        }
+        $mform->addElement('select', 'categoryid',
+            get_string('category', 'local_imageblog'), $catoptions);
+        $mform->setType('categoryid', PARAM_INT);
+
+        $subcatoptions = ['' => get_string('selectsubcategory', 'local_imageblog')];
+        foreach ($taxonomy['subcategories'] as $sub) {
+            $parent = $sub['categoryid'];
+            $parentname = '';
+            foreach ($taxonomy['categories'] as $cat) {
+                if ($cat['id'] === $parent) {
+                    $parentname = $cat['name'];
+                    break;
+                }
+            }
+            $label = $parentname !== '' ? "{$parentname} / {$sub['name']}" : $sub['name'];
+            $subcatoptions[$sub['id']] = $label;
+        }
+        $mform->addElement('select', 'subcategoryid',
+            get_string('subcategory', 'local_imageblog'), $subcatoptions);
+        $mform->setType('subcategoryid', PARAM_INT);
+
+        $tagoptions = [];
+        foreach ($taxonomy['tags'] as $tag) {
+            $tagoptions[$tag['id']] = $tag['name'];
+        }
+        $mform->addElement('select', 'tagids',
+            get_string('tags', 'local_imageblog'), $tagoptions, ['multiple' => 'multiple', 'size' => 6]);
+        $mform->setType('tagids', PARAM_INT);
+
+        $leveloptions = [];
+        foreach ($taxonomy['levels'] as $level) {
+            $leveloptions[$level['id']] = $level['name'];
+        }
+        $mform->addElement('select', 'levelids',
+            get_string('levels', 'local_imageblog'), $leveloptions, ['multiple' => 'multiple', 'size' => 4]);
+        $mform->setType('levelids', PARAM_INT);
+
         $statusoptions = [
             post::STATUS_DRAFT     => get_string('status_draft',     'local_imageblog'),
             post::STATUS_PUBLISHED => get_string('status_published', 'local_imageblog'),
@@ -91,6 +136,11 @@ class post_form extends moodleform {
             $defaults->status     = $post->status;
             $defaults->body       = $post->body;
             $defaults->bodyformat = $post->bodyformat;
+            [$catid, $subcatid] = $post->get_category_ids();
+            $defaults->categoryid    = $catid;
+            $defaults->subcategoryid = $subcatid;
+            $defaults->tagids        = $post->get_tag_ids();
+            $defaults->levelids      = $post->get_level_ids();
         } else {
             $defaults->id         = 0;
             $defaults->body       = '';

@@ -204,6 +204,12 @@ class post {
             );
         }
 
+        $categoryid    = !empty($data->categoryid)    ? (int)$data->categoryid    : null;
+        $subcategoryid = !empty($data->subcategoryid) ? (int)$data->subcategoryid : null;
+        $tagids        = isset($data->tagids)   && is_array($data->tagids)   ? $data->tagids   : [];
+        $levelids      = isset($data->levelids) && is_array($data->levelids) ? $data->levelids : [];
+        self::set_taxonomy($record->id, $categoryid, $subcategoryid, $tagids, $levelids);
+
         return $record->id;
     }
 
@@ -236,6 +242,87 @@ class post {
             'maxfiles'       => 1,
             'subdirs'        => 0,
         ];
+    }
+
+    /**
+     * Replace the taxonomy associations for this post.
+     *
+     * @param int      $postid
+     * @param int|null $categoryid
+     * @param int|null $subcategoryid
+     * @param int[]    $tagids
+     * @param int[]    $levelids
+     */
+    public static function set_taxonomy(int $postid, ?int $categoryid, ?int $subcategoryid,
+            array $tagids, array $levelids): void {
+        global $DB;
+
+        $DB->delete_records('local_imageblog_post_cats',   ['postid' => $postid]);
+        $DB->delete_records('local_imageblog_post_tags',   ['postid' => $postid]);
+        $DB->delete_records('local_imageblog_post_levels', ['postid' => $postid]);
+
+        if ($categoryid) {
+            $DB->insert_record('local_imageblog_post_cats', (object)[
+                'postid'        => $postid,
+                'categoryid'    => $categoryid,
+                'subcategoryid' => $subcategoryid ?: null,
+            ]);
+        }
+
+        foreach (array_unique(array_filter(array_map('intval', $tagids))) as $tagid) {
+            $DB->insert_record('local_imageblog_post_tags', (object)[
+                'postid' => $postid,
+                'tagid'  => $tagid,
+            ]);
+        }
+
+        foreach (array_unique(array_filter(array_map('intval', $levelids))) as $levelid) {
+            $DB->insert_record('local_imageblog_post_levels', (object)[
+                'postid'  => $postid,
+                'levelid' => $levelid,
+            ]);
+        }
+    }
+
+    /**
+     * Currently-associated category id (or null), and subcategory id.
+     *
+     * @return array{0: int|null, 1: int|null}
+     */
+    public function get_category_ids(): array {
+        global $DB;
+        $row = $DB->get_record('local_imageblog_post_cats', ['postid' => $this->id],
+            'categoryid, subcategoryid', IGNORE_MISSING);
+        if (!$row) {
+            return [null, null];
+        }
+        return [(int)$row->categoryid, $row->subcategoryid ? (int)$row->subcategoryid : null];
+    }
+
+    /**
+     * Tag ids attached to this post.
+     *
+     * @return int[]
+     */
+    public function get_tag_ids(): array {
+        global $DB;
+        return array_map('intval', array_values($DB->get_fieldset_select(
+            'local_imageblog_post_tags', 'tagid', 'postid = :postid',
+            ['postid' => $this->id]
+        )));
+    }
+
+    /**
+     * Level ids attached to this post.
+     *
+     * @return int[]
+     */
+    public function get_level_ids(): array {
+        global $DB;
+        return array_map('intval', array_values($DB->get_fieldset_select(
+            'local_imageblog_post_levels', 'levelid', 'postid = :postid',
+            ['postid' => $this->id]
+        )));
     }
 
     /**

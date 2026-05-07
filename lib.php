@@ -87,15 +87,31 @@ function local_imageblog_get_taxonomy(): array {
         return ['id' => (int)$c->id, 'name' => $c->name];
     }, $catrecords);
 
+    $subcatrecords = $DB->get_records('local_imageblog_subcategories', null, 'sortorder ASC');
+    $subcategories = array_map(function($s) {
+        return [
+            'id'         => (int)$s->id,
+            'name'       => $s->name,
+            'categoryid' => (int)$s->categoryid,
+        ];
+    }, $subcatrecords);
+
     $tagrecords = $DB->get_records('local_imageblog_tags', null, 'name ASC');
     $tags = array_map(function($t) {
         return ['id' => (int)$t->id, 'name' => $t->name];
     }, $tagrecords);
 
+    $levelrecords = $DB->get_records('local_imageblog_levels', null, 'sortorder ASC');
+    $levels = array_map(function($l) {
+        return ['id' => (int)$l->id, 'name' => $l->name];
+    }, $levelrecords);
+
     return [
-        'authors'    => array_values($authors),
-        'categories' => array_values($categories),
-        'tags'       => array_values($tags),
+        'authors'       => array_values($authors),
+        'categories'    => array_values($categories),
+        'subcategories' => array_values($subcategories),
+        'tags'          => array_values($tags),
+        'levels'        => array_values($levels),
     ];
 }
 
