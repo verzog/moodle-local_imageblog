@@ -166,6 +166,11 @@ class renderer extends plugin_renderer_base {
             ], $levels),
             'hastags'       => !empty($tags),
             'haslevels'     => !empty($levels),
+            'isdraft'       => $post->status === post::STATUS_DRAFT,
+            'isarchived'    => $post->status === post::STATUS_ARCHIVED,
+            'statuslabel'   => $post->status !== post::STATUS_PUBLISHED
+                ? get_string('status_' . $post->status, 'local_imageblog')
+                : '',
         ];
     }
 
@@ -201,18 +206,38 @@ class renderer extends plugin_renderer_base {
             ];
         }
 
+        $currentstatus = (string)($filters['status'] ?? '');
+        $statusoptions = [];
+        if (!empty($filters['canseestatuses'])) {
+            $choices = [
+                ''          => 'status_published',
+                'mine'      => 'status_mine',
+                'draft'     => 'status_draft',
+                'archived'  => 'status_archived',
+            ];
+            foreach ($choices as $value => $stringkey) {
+                $statusoptions[] = [
+                    'value'    => $value,
+                    'label'    => get_string($stringkey, 'local_imageblog'),
+                    'selected' => $value === $currentstatus,
+                ];
+            }
+        }
+
         return [
-            'authors'        => $mark($taxonomy['authors'] ?? [], (int)($filters['authorid'] ?? 0)),
-            'categories'     => $mark($taxonomy['categories'] ?? [], $currentcategory),
-            'subcategories'  => $subcategories,
-            'hassubcats'     => !empty($subcategories),
-            'tags'           => $mark($taxonomy['tags'] ?? [], (int)($filters['tagid'] ?? 0)),
-            'levels'         => $mark($taxonomy['levels'] ?? [], (int)($filters['levelid'] ?? 0)),
-            'haslevels'      => !empty($taxonomy['levels'] ?? []),
-            'keyword'        => $filters['keyword'] ?? '',
-            'datefrom'       => $filters['datefromraw'] ?? '',
-            'dateto'         => $filters['datetoraw'] ?? '',
-            'formaction'     => (new moodle_url('/local/imageblog/index.php'))->out(false),
+            'authors'         => $mark($taxonomy['authors'] ?? [], (int)($filters['authorid'] ?? 0)),
+            'categories'      => $mark($taxonomy['categories'] ?? [], $currentcategory),
+            'subcategories'   => $subcategories,
+            'hassubcats'      => !empty($subcategories),
+            'tags'            => $mark($taxonomy['tags'] ?? [], (int)($filters['tagid'] ?? 0)),
+            'levels'          => $mark($taxonomy['levels'] ?? [], (int)($filters['levelid'] ?? 0)),
+            'haslevels'       => !empty($taxonomy['levels'] ?? []),
+            'keyword'         => $filters['keyword'] ?? '',
+            'datefrom'        => $filters['datefromraw'] ?? '',
+            'dateto'          => $filters['datetoraw'] ?? '',
+            'showstatus'      => !empty($filters['canseestatuses']),
+            'statusoptions'   => $statusoptions,
+            'formaction'      => (new moodle_url('/local/imageblog/index.php'))->out(false),
         ];
     }
 
@@ -232,9 +257,17 @@ class renderer extends plugin_renderer_base {
         }
 
         // Map our internal filter shape back to the URL param shape: drop
-        // page + datetimes, swap raw date strings into datefrom/dateto.
+        // page + datetimes + internal flags, swap raw date strings back in.
         $base = $filters;
-        unset($base['page'], $base['datefrom'], $base['dateto']);
+        unset(
+            $base['page'],
+            $base['datefrom'],
+            $base['dateto'],
+            $base['statuses'],
+            $base['mineonly'],
+            $base['viewerid'],
+            $base['canseestatuses']
+        );
         if (!empty($base['datefromraw'])) {
             $base['datefrom'] = $base['datefromraw'];
         }
@@ -242,6 +275,9 @@ class renderer extends plugin_renderer_base {
             $base['dateto'] = $base['datetoraw'];
         }
         unset($base['datefromraw'], $base['datetoraw']);
+        if (empty($base['status'])) {
+            unset($base['status']);
+        }
 
         $url = function (int $p) use ($base): string {
             return (new moodle_url('/local/imageblog/index.php', $base + ['page' => $p]))->out(false);

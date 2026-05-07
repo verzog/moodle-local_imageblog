@@ -34,6 +34,34 @@ $datetoraw   = optional_param('dateto', '', PARAM_TEXT);
 $datefrom    = $datefromraw !== '' ? strtotime($datefromraw . ' 00:00:00') : 0;
 $dateto      = $datetoraw !== '' ? strtotime($datetoraw . ' 23:59:59') : 0;
 
+// Status scope (visible only to authors/managers; defaults to published).
+$canauthor = has_capability('local/imageblog:createpost', $context);
+$canmanage = has_capability('local/imageblog:editanypost', $context);
+$canseestatuses = $canauthor || $canmanage;
+
+$status = optional_param('status', '', PARAM_ALPHA);
+$validstatuses = [
+    \local_imageblog\post::STATUS_PUBLISHED,
+    \local_imageblog\post::STATUS_DRAFT,
+    \local_imageblog\post::STATUS_ARCHIVED,
+];
+if (!in_array($status, array_merge([''], $validstatuses, ['mine']), true)) {
+    $status = '';
+}
+
+$statuses = [\local_imageblog\post::STATUS_PUBLISHED];
+$mineonly = false;
+if ($canseestatuses) {
+    if ($status === 'mine') {
+        // Show only the current user's posts in any status.
+        $statuses = $validstatuses;
+        $mineonly = true;
+    } else if (in_array($status, $validstatuses, true)) {
+        $statuses = [$status];
+        $mineonly = !$canmanage && $status !== \local_imageblog\post::STATUS_PUBLISHED;
+    }
+}
+
 $filters = [
     'authorid'      => optional_param('authorid', 0, PARAM_INT),
     'categoryid'    => optional_param('categoryid', 0, PARAM_INT),
@@ -46,6 +74,11 @@ $filters = [
     'datefromraw'   => $datefromraw,
     'datetoraw'     => $datetoraw,
     'page'          => optional_param('page', 0, PARAM_INT),
+    'status'        => $status,
+    'statuses'      => $statuses,
+    'mineonly'      => $mineonly,
+    'viewerid'      => (int)$USER->id,
+    'canseestatuses' => $canseestatuses,
 ];
 
 $PAGE->set_context($context);

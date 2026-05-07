@@ -86,6 +86,16 @@
                                class="form-control form-control-sm"
                                value="{{filterbar.keyword}}">
                     </div>
+                    {{#filterbar.showstatus}}
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted" for="local-imageblog-filter-status">{{#str}}status, local_imageblog{{/str}}</label>
+                        <select id="local-imageblog-filter-status" name="status" class="form-select form-select-sm">
+                            {{#filterbar.statusoptions}}
+                            <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                            {{/filterbar.statusoptions}}
+                        </select>
+                    </div>
+                    {{/filterbar.showstatus}}
                 </div>
                 <div class="row g-2">
                     <div class="col-12 d-flex justify-content-end gap-2">

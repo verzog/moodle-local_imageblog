@@ -207,6 +207,55 @@ final class post_test extends \advanced_testcase {
     }
 
     /**
+     * Status + scope filter narrows to drafts, optionally limited to the viewer's own posts.
+     */
+    public function test_get_published_status_and_mineonly_filters(): void {
+        $this->resetAfterTest();
+
+        $alice = $this->getDataGenerator()->create_user();
+        $bob   = $this->getDataGenerator()->create_user();
+        $context = \context_system::instance();
+
+        $this->setUser($alice);
+        $alicedraft = post::save((object)[
+            'title' => 'Alice draft', 'status' => post::STATUS_DRAFT,
+        ], $context);
+        post::save((object)[
+            'title' => 'Alice published', 'status' => post::STATUS_PUBLISHED,
+        ], $context);
+
+        $this->setUser($bob);
+        $bobdraft = post::save((object)[
+            'title' => 'Bob draft', 'status' => post::STATUS_DRAFT,
+        ], $context);
+
+        // Default behaviour unchanged: only published.
+        $this->assertSame(1, post::get_published()['total']);
+
+        // Manager view of all drafts: both authors' drafts visible.
+        $alldrafts = post::get_published(['statuses' => [post::STATUS_DRAFT]]);
+        $this->assertSame(2, $alldrafts['total']);
+
+        // Author scope: alice asks for drafts and is restricted to her own.
+        $minedrafts = post::get_published([
+            'statuses' => [post::STATUS_DRAFT],
+            'mineonly' => true,
+            'viewerid' => $alice->id,
+        ]);
+        $this->assertSame(1, $minedrafts['total']);
+        $this->assertSame($alicedraft, $minedrafts['posts'][0]->id);
+
+        // Bob's own scope returns his draft only.
+        $bobscope = post::get_published([
+            'statuses' => [post::STATUS_DRAFT],
+            'mineonly' => true,
+            'viewerid' => $bob->id,
+        ]);
+        $this->assertSame(1, $bobscope['total']);
+        $this->assertSame($bobdraft, $bobscope['posts'][0]->id);
+    }
+
+    /**
      * set_taxonomy replaces existing associations.
      */
     public function test_set_taxonomy_replaces_associations(): void {

@@ -49,6 +49,7 @@ $string['status']                = 'Status';
 $string['status_draft']          = 'Draft';
 $string['status_published']      = 'Published';
 $string['status_archived']       = 'Archived';
+$string['status_mine']           = 'My posts (any status)';
 $string['timepublished']         = 'Publish date';
 $string['lazyimages']            = 'Optimise for slow connections';
 $string['lazyimages_help']       = 'Images in the post body will load progressively as the reader scrolls. Recommended for posts with three or more images.';
