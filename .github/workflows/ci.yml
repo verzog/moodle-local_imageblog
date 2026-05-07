@@ -9,6 +9,9 @@ jobs:
   test:
     runs-on: ubuntu-22.04
 
+    env:
+      TZ: 'Australia/Sydney'
+
     services:
       postgres:
         image: postgres:16

@@ -3,11 +3,12 @@
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 or later.
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -20,8 +21,6 @@
  * @copyright  2026 Skin Cancer College of Australasia
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Serve plugin files (featured images and post body images).
@@ -36,7 +35,6 @@ defined('MOODLE_INTERNAL') || die();
  * @return bool
  */
 function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
-
     if ($context->contextlevel !== CONTEXT_SYSTEM) {
         return false;
     }
@@ -78,17 +76,17 @@ function local_imageblog_get_taxonomy(): array {
              WHERE p.status = :status
           ORDER BY u.lastname, u.firstname";
     $authorrecords = $DB->get_records_sql($sql, ['status' => \local_imageblog\post::STATUS_PUBLISHED]);
-    $authors = array_map(function($u) {
+    $authors = array_map(function ($u) {
         return ['id' => (int)$u->id, 'name' => fullname($u)];
     }, $authorrecords);
 
     $catrecords = $DB->get_records('local_imageblog_categories', null, 'sortorder ASC');
-    $categories = array_map(function($c) {
+    $categories = array_map(function ($c) {
         return ['id' => (int)$c->id, 'name' => $c->name];
     }, $catrecords);
 
     $subcatrecords = $DB->get_records('local_imageblog_subcategories', null, 'sortorder ASC');
-    $subcategories = array_map(function($s) {
+    $subcategories = array_map(function ($s) {
         return [
             'id'         => (int)$s->id,
             'name'       => $s->name,
@@ -97,12 +95,12 @@ function local_imageblog_get_taxonomy(): array {
     }, $subcatrecords);
 
     $tagrecords = $DB->get_records('local_imageblog_tags', null, 'name ASC');
-    $tags = array_map(function($t) {
+    $tags = array_map(function ($t) {
         return ['id' => (int)$t->id, 'name' => $t->name];
     }, $tagrecords);
 
     $levelrecords = $DB->get_records('local_imageblog_levels', null, 'sortorder ASC');
-    $levels = array_map(function($l) {
+    $levels = array_map(function ($l) {
         return ['id' => (int)$l->id, 'name' => $l->name];
     }, $levelrecords);
 

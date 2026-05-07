@@ -3,11 +3,12 @@
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 or later.
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -51,7 +52,6 @@ class renderer extends plugin_renderer_base {
         array $filters,
         array $taxonomy
     ): string {
-
         $cards = [];
         foreach ($posts as $p) {
             $cards[] = $this->build_card_context($p);
@@ -148,8 +148,8 @@ class renderer extends plugin_renderer_base {
      * @return array
      */
     private function build_filter_context(array $filters, array $taxonomy): array {
-        $mark = function(array $items, int $current): array {
-            return array_map(function($item) use ($current) {
+        $mark = function (array $items, int $current): array {
+            return array_map(function ($item) use ($current) {
                 return [
                     'id'       => $item['id'],
                     'name'     => $item['name'],
@@ -185,7 +185,7 @@ class renderer extends plugin_renderer_base {
         $base = $filters;
         unset($base['page']);
 
-        $url = function(int $p) use ($base): string {
+        $url = function (int $p) use ($base): string {
             return (new moodle_url('/local/imageblog/index.php', $base + ['page' => $p]))->out(false);
         };
 
