@@ -140,3 +140,17 @@
 .local-imageblog-image-status--processing { color: #6c757d; }
 .local-imageblog-image-status--done       { color: #198754; }
 .local-imageblog-image-status--error      { color: #dc3545; }
+
+.local-imageblog-post__panorama {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 320px;
+    background: #000;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+.local-imageblog-panorama-fallback::before {
+    content: attr(data-imgurl);
+    color: #6c757d;
+    font-size: 0.75rem;
+}

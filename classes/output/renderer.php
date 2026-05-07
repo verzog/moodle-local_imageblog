@@ -96,6 +96,7 @@ class renderer extends plugin_renderer_base {
         );
 
         $imgurl = $post->get_featured_image_url();
+        $panourl = $post->get_panorama_url();
         $syscontext = \context_system::instance();
         $canmanage = has_capability('local/imageblog:editanypost', $syscontext);
         $ispublished = ($post->status === post::STATUS_PUBLISHED);
@@ -112,6 +113,8 @@ class renderer extends plugin_renderer_base {
                 : '',
             'hasimage'      => !empty($imgurl),
             'imageurl'      => $imgurl ? $imgurl->out(false) : '',
+            'haspanorama'   => !empty($panourl),
+            'panoramaurl'   => $panourl ? $panourl->out(false) : '',
             'listingurl'    => (new moodle_url('/local/imageblog/index.php'))->out(false),
             'lazyimages'    => !empty($post->lazyimages),
             'isdraft'       => !$ispublished,

@@ -66,6 +66,8 @@ class post {
     const FILEAREA_BODY     = 'post_images';
     /** @var string Filearea for the featured (cover) image. */
     const FILEAREA_FEATURED = 'featured_image';
+    /** @var string Filearea for an equirectangular 360° panorama. */
+    const FILEAREA_PANORAMA = 'panorama';
 
     /**
      * Fetch a single post by id.
@@ -240,6 +242,18 @@ class post {
             );
         }
 
+        // Save 360° panorama draft files into the permanent area.
+        if (!empty($data->panorama_image)) {
+            file_save_draft_area_files(
+                (int)$data->panorama_image,
+                $context->id,
+                'local_imageblog',
+                self::FILEAREA_PANORAMA,
+                $record->id,
+                self::panorama_options()
+            );
+        }
+
         $categoryid    = !empty($data->categoryid) ? (int)$data->categoryid : null;
         $subcategoryid = !empty($data->subcategoryid) ? (int)$data->subcategoryid : null;
         $tagids        = isset($data->tagids) && is_array($data->tagids)
@@ -277,6 +291,21 @@ class post {
         return [
             'maxbytes'       => 2097152,
             'accepted_types' => ['.jpg', '.jpeg', '.png', '.webp'],
+            'maxfiles'       => 1,
+            'subdirs'        => 0,
+        ];
+    }
+
+    /**
+     * Filemanager options for a 360° panorama image. Allows larger files
+     * because equirectangular sources are typically high-resolution.
+     *
+     * @return array
+     */
+    public static function panorama_options(): array {
+        return [
+            'maxbytes'       => 20 * 1024 * 1024,
+            'accepted_types' => ['.jpg', '.jpeg', '.png'],
             'maxfiles'       => 1,
             'subdirs'        => 0,
         ];
@@ -471,6 +500,36 @@ class post {
             $context->id,
             'local_imageblog',
             self::FILEAREA_FEATURED,
+            $this->id,
+            'itemid, filepath, filename',
+            false
+        );
+        if (!$files) {
+            return null;
+        }
+        $file = reset($files);
+        return \moodle_url::make_pluginfile_url(
+            $file->get_contextid(),
+            $file->get_component(),
+            $file->get_filearea(),
+            $file->get_itemid(),
+            $file->get_filepath(),
+            $file->get_filename()
+        );
+    }
+
+    /**
+     * URL to the 360° panorama image, or null if none.
+     *
+     * @return \moodle_url|null
+     */
+    public function get_panorama_url(): ?\moodle_url {
+        $context = \context_system::instance();
+        $fs      = get_file_storage();
+        $files   = $fs->get_area_files(
+            $context->id,
+            'local_imageblog',
+            self::FILEAREA_PANORAMA,
             $this->id,
             'itemid, filepath, filename',
             false

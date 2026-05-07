@@ -141,6 +141,12 @@ class provider implements
                         'local_imageblog',
                         'post_images',
                         $record->id
+                    )
+                    ->export_area_files(
+                        [get_string('pluginname', 'local_imageblog'), 'post-' . $record->id],
+                        'local_imageblog',
+                        'panorama',
+                        $record->id
                     );
             }
         }
@@ -224,6 +230,7 @@ class provider implements
         foreach ($postids as $postid) {
             $fs->delete_area_files($context->id, 'local_imageblog', 'featured_image', $postid);
             $fs->delete_area_files($context->id, 'local_imageblog', 'post_images', $postid);
+            $fs->delete_area_files($context->id, 'local_imageblog', 'panorama', $postid);
         }
 
         $DB->delete_records_select('local_imageblog_post_tags', "postid $insql", $inparams);
