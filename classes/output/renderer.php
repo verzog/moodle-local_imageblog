@@ -86,12 +86,15 @@ class renderer extends plugin_renderer_base {
         );
 
         $imgurl = $post->get_featured_image_url();
+        $syscontext = \context_system::instance();
+        $canmanage = has_capability('local/imageblog:editanypost', $syscontext);
+        $ispublished = ($post->status === post::STATUS_PUBLISHED);
 
         $context = [
             'id'            => $post->id,
             'title'         => format_string($post->title),
             'body'          => format_text($post->body, $post->bodyformat, [
-                'context' => \context_system::instance(),
+                'context' => $syscontext,
             ]),
             'authorname'    => $author ? fullname($author) : '',
             'datepublished' => $post->timepublished
@@ -101,6 +104,13 @@ class renderer extends plugin_renderer_base {
             'imageurl'      => $imgurl ? $imgurl->out(false) : '',
             'listingurl'    => (new moodle_url('/local/imageblog/index.php'))->out(false),
             'lazyimages'    => !empty($post->lazyimages),
+            'isdraft'       => !$ispublished,
+            'statuslabel'   => get_string('status_' . $post->status, 'local_imageblog'),
+            'canunpublish'  => $canmanage && $ispublished,
+            'unpublishurl'  => (new moodle_url(
+                '/local/imageblog/view.php',
+                ['id' => $post->id, 'action' => 'unpublish', 'sesskey' => sesskey()]
+            ))->out(false),
         ];
 
         return $this->render_from_template('local_imageblog/post', $context);

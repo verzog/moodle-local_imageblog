@@ -13,11 +13,26 @@
     * imageurl      string
     * listingurl    string
     * lazyimages    bool
+    * isdraft       bool
+    * statuslabel   string
+    * canunpublish  bool
+    * unpublishurl  string
 }}
 <div class="local-imageblog-post">
-    <a href="{{listingurl}}" class="btn btn-sm btn-outline-secondary mb-3">
-        {{#str}}backtoposts, local_imageblog{{/str}}
-    </a>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <a href="{{listingurl}}" class="btn btn-sm btn-outline-secondary">
+            {{#str}}backtoposts, local_imageblog{{/str}}
+        </a>
+        {{#canunpublish}}
+            <a href="{{unpublishurl}}" class="btn btn-sm btn-outline-warning">
+                {{#str}}reverttodraft, local_imageblog{{/str}}
+            </a>
+        {{/canunpublish}}
+    </div>
+
+    {{#isdraft}}
+        <div class="alert alert-warning">{{statuslabel}}</div>
+    {{/isdraft}}
 
     {{#hasimage}}
     <img src="{{imageurl}}" alt=""

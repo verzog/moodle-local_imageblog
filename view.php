@@ -30,12 +30,25 @@ $context = context_system::instance();
 require_capability('local/imageblog:view', $context);
 
 $id = required_param('id', PARAM_INT);
+$action = optional_param('action', '', PARAM_ALPHA);
 
 $post = \local_imageblog\post::get($id);
 if (!$post || $post->status !== \local_imageblog\post::STATUS_PUBLISHED) {
     if (!$post || !has_capability('local/imageblog:editanypost', $context)) {
         throw new moodle_exception('error_notfound', 'local_imageblog');
     }
+}
+
+if ($action === 'unpublish') {
+    require_sesskey();
+    require_capability('local/imageblog:editanypost', $context);
+    \local_imageblog\post::set_status($post->id, \local_imageblog\post::STATUS_DRAFT);
+    redirect(
+        new moodle_url('/local/imageblog/view.php', ['id' => $post->id]),
+        get_string('reverted_to_draft', 'local_imageblog'),
+        null,
+        \core\output\notification::NOTIFY_SUCCESS
+    );
 }
 
 $PAGE->set_context($context);

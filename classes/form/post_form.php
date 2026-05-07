@@ -129,13 +129,19 @@ class post_form extends moodleform {
             $tagoptions[$tag['id']] = $tag['name'];
         }
         $mform->addElement(
-            'select',
+            'autocomplete',
             'tagids',
             get_string('tags', 'local_imageblog'),
             $tagoptions,
-            ['multiple' => 'multiple', 'size' => 6]
+            [
+                'multiple' => true,
+                'tags'     => true,
+                'noselectionstring' => get_string('selecttags', 'local_imageblog'),
+                'placeholder'       => get_string('addtagplaceholder', 'local_imageblog'),
+            ]
         );
-        $mform->setType('tagids', PARAM_INT);
+        $mform->setType('tagids', PARAM_RAW);
+        $mform->addHelpButton('tagids', 'tags', 'local_imageblog');
 
         $leveloptions = [];
         foreach ($taxonomy['levels'] as $level) {

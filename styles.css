@@ -1,8 +1,7 @@
 /* Local imageblog plugin styles. */
 
 .local-imageblog-listing {
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 .local-imageblog-card-grid {
@@ -91,8 +90,7 @@
 .local-imageblog-badge--tag    { background: #e9ecef; color: #495057; }
 
 .local-imageblog-post {
-    max-width: 800px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 .local-imageblog-post__image {
