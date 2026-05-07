@@ -25,10 +25,24 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    $ADMIN->add('localplugins', new admin_externalpage(
+    $ADMIN->add('localplugins', new admin_category(
+        'local_imageblog_cat',
+        get_string('pluginname', 'local_imageblog')
+    ));
+
+    $ADMIN->add('local_imageblog_cat', new admin_externalpage(
         'local_imageblog',
-        get_string('pluginname', 'local_imageblog'),
+        get_string('blogposts', 'local_imageblog'),
         new moodle_url('/local/imageblog/index.php'),
         'local/imageblog:view'
     ));
+
+    foreach (['category', 'subcategory', 'tag', 'level'] as $tax) {
+        $ADMIN->add('local_imageblog_cat', new admin_externalpage(
+            'local_imageblog_manage_' . $tax,
+            get_string('manage_' . $tax, 'local_imageblog'),
+            new moodle_url('/local/imageblog/manage.php', ['type' => $tax]),
+            'local/imageblog:managetaxonomy'
+        ));
+    }
 }
