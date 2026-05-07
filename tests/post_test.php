@@ -3,11 +3,12 @@
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 or later.
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -24,10 +25,11 @@
 namespace local_imageblog;
 
 /**
+ * Unit tests for the post model.
+ *
  * @covers \local_imageblog\post
  */
 final class post_test extends \advanced_testcase {
-
     /**
      * Saving a new draft post creates a record owned by the current user.
      */

@@ -3,11 +3,12 @@
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 or later.
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -35,9 +36,8 @@ use core_privacy\local\request\writer;
  */
 class provider implements
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\core_userlist_provider {
-
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     /**
      * Describe what user data this plugin stores.
      *
@@ -172,8 +172,12 @@ class provider implements
             if ($context->contextlevel !== CONTEXT_SYSTEM) {
                 continue;
             }
-            $postids = $DB->get_fieldset_select('local_imageblog_posts', 'id',
-                'authorid = :userid', ['userid' => $user->id]);
+            $postids = $DB->get_fieldset_select(
+                'local_imageblog_posts',
+                'id',
+                'authorid = :userid',
+                ['userid' => $user->id]
+            );
             self::delete_posts($postids, $context);
         }
     }
@@ -194,8 +198,12 @@ class provider implements
             return;
         }
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
-        $postids = $DB->get_fieldset_select('local_imageblog_posts', 'id',
-            "authorid $insql", $inparams);
+        $postids = $DB->get_fieldset_select(
+            'local_imageblog_posts',
+            'id',
+            "authorid $insql",
+            $inparams
+        );
         self::delete_posts($postids, $context);
     }
 
@@ -218,9 +226,9 @@ class provider implements
             $fs->delete_area_files($context->id, 'local_imageblog', 'post_images', $postid);
         }
 
-        $DB->delete_records_select('local_imageblog_post_tags',   "postid $insql", $inparams);
-        $DB->delete_records_select('local_imageblog_post_cats',   "postid $insql", $inparams);
+        $DB->delete_records_select('local_imageblog_post_tags', "postid $insql", $inparams);
+        $DB->delete_records_select('local_imageblog_post_cats', "postid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_post_levels', "postid $insql", $inparams);
-        $DB->delete_records_select('local_imageblog_posts',       "id $insql",     $inparams);
+        $DB->delete_records_select('local_imageblog_posts', "id $insql", $inparams);
     }
 }

@@ -3,11 +3,12 @@
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 or later.
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -31,7 +32,6 @@ use plugin_renderer_base;
  * Renderer for local_imageblog.
  */
 class renderer extends plugin_renderer_base {
-
     /**
      * Render the listing page.
      *
@@ -51,7 +51,6 @@ class renderer extends plugin_renderer_base {
         array $filters,
         array $taxonomy
     ): string {
-
         $cards = [];
         foreach ($posts as $p) {
             $cards[] = $this->build_card_context($p);
@@ -79,8 +78,12 @@ class renderer extends plugin_renderer_base {
     public function render_post(post $post): string {
         global $DB;
 
-        $author = $DB->get_record('user', ['id' => $post->authorid],
-            'id, firstname, lastname', IGNORE_MISSING);
+        $author = $DB->get_record(
+            'user',
+            ['id' => $post->authorid],
+            'id, firstname, lastname',
+            IGNORE_MISSING
+        );
 
         $imgurl = $post->get_featured_image_url();
 
@@ -112,8 +115,12 @@ class renderer extends plugin_renderer_base {
     private function build_card_context(post $post): array {
         global $DB;
 
-        $author = $DB->get_record('user', ['id' => $post->authorid],
-            'id, firstname, lastname', IGNORE_MISSING);
+        $author = $DB->get_record(
+            'user',
+            ['id' => $post->authorid],
+            'id, firstname, lastname',
+            IGNORE_MISSING
+        );
         $imgurl = $post->get_featured_image_url();
         $tags   = $post->get_tags();
         $levels = $post->get_levels();
@@ -148,8 +155,8 @@ class renderer extends plugin_renderer_base {
      * @return array
      */
     private function build_filter_context(array $filters, array $taxonomy): array {
-        $mark = function(array $items, int $current): array {
-            return array_map(function($item) use ($current) {
+        $mark = function (array $items, int $current): array {
+            return array_map(function ($item) use ($current) {
                 return [
                     'id'       => $item['id'],
                     'name'     => $item['name'],
@@ -159,9 +166,9 @@ class renderer extends plugin_renderer_base {
         };
 
         return [
-            'authors'    => $mark($taxonomy['authors']    ?? [], (int)($filters['authorid']   ?? 0)),
+            'authors'    => $mark($taxonomy['authors'] ?? [], (int)($filters['authorid'] ?? 0)),
             'categories' => $mark($taxonomy['categories'] ?? [], (int)($filters['categoryid'] ?? 0)),
-            'tags'       => $mark($taxonomy['tags']       ?? [], (int)($filters['tagid']      ?? 0)),
+            'tags'       => $mark($taxonomy['tags'] ?? [], (int)($filters['tagid'] ?? 0)),
             'keyword'    => $filters['keyword'] ?? '',
             'formaction' => (new moodle_url('/local/imageblog/index.php'))->out(false),
         ];
@@ -185,7 +192,7 @@ class renderer extends plugin_renderer_base {
         $base = $filters;
         unset($base['page']);
 
-        $url = function(int $p) use ($base): string {
+        $url = function (int $p) use ($base): string {
             return (new moodle_url('/local/imageblog/index.php', $base + ['page' => $p]))->out(false);
         };
 

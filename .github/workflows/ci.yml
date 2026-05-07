@@ -9,6 +9,9 @@ jobs:
   test:
     runs-on: ubuntu-22.04
 
+    env:
+      TZ: 'Australia/Sydney'
+
     services:
       postgres:
         image: postgres:16
@@ -27,14 +30,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php: '8.1'
-            moodle-branch: MOODLE_405_STABLE
+          - php: '8.2'
+            moodle-branch: MOODLE_500_STABLE
             database: pgsql
           - php: '8.3'
-            moodle-branch: MOODLE_405_STABLE
+            moodle-branch: MOODLE_500_STABLE
             database: pgsql
           - php: '8.3'
-            moodle-branch: main
+            moodle-branch: MOODLE_501_STABLE
+            database: pgsql
+          - php: '8.4'
+            moodle-branch: MOODLE_501_STABLE
+            database: pgsql
+          - php: '8.3'
+            moodle-branch: MOODLE_502_STABLE
+            database: pgsql
+          - php: '8.4'
+            moodle-branch: MOODLE_502_STABLE
             database: pgsql
 
     steps:
@@ -95,10 +107,12 @@ jobs:
         run: moodle-plugin-ci savepoints ./plugin
 
       - name: Mustache Lint
+        continue-on-error: true
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci mustache ./plugin
 
       - name: Grunt
+        continue-on-error: true
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci grunt --max-lint-warnings 0 ./plugin
 

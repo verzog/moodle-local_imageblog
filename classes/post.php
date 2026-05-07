@@ -3,11 +3,12 @@
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 or later.
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -27,7 +28,6 @@ namespace local_imageblog;
  * Represents a single blog post and provides data-access methods.
  */
 class post {
-
     /** @var int */
     public int $id = 0;
     /** @var int */
@@ -39,7 +39,7 @@ class post {
     /** @var string */
     public string $body = '';
     /** @var int */
-    public int $bodyformat = FORMAT_HTML;
+    public int $bodyformat = 1;
     /** @var string draft|published|archived */
     public string $status = self::STATUS_DRAFT;
     /** @var int|null */
@@ -55,13 +55,16 @@ class post {
     /** @var int|null */
     public ?int $featuredimage = null;
 
-    /** Status constants. */
+    /** @var string Draft post status. */
     const STATUS_DRAFT     = 'draft';
+    /** @var string Published post status. */
     const STATUS_PUBLISHED = 'published';
+    /** @var string Archived post status. */
     const STATUS_ARCHIVED  = 'archived';
 
-    /** Editor / filearea names. */
+    /** @var string Filearea for embedded body images. */
     const FILEAREA_BODY     = 'post_images';
+    /** @var string Filearea for the featured (cover) image. */
     const FILEAREA_FEATURED = 'featured_image';
 
     /**
@@ -166,8 +169,10 @@ class post {
         } else {
             $record->id = (int)$data->id;
             $existing = $DB->get_record('local_imageblog_posts', ['id' => $record->id], '*', MUST_EXIST);
-            if ($existing->status !== self::STATUS_PUBLISHED
-                && $record->status === self::STATUS_PUBLISHED) {
+            if (
+                $existing->status !== self::STATUS_PUBLISHED
+                && $record->status === self::STATUS_PUBLISHED
+            ) {
                 $record->timepublished = $now;
             }
             $DB->update_record('local_imageblog_posts', $record);
@@ -204,9 +209,9 @@ class post {
             );
         }
 
-        $categoryid    = !empty($data->categoryid)    ? (int)$data->categoryid    : null;
+        $categoryid    = !empty($data->categoryid) ? (int)$data->categoryid : null;
         $subcategoryid = !empty($data->subcategoryid) ? (int)$data->subcategoryid : null;
-        $tagids        = isset($data->tagids)   && is_array($data->tagids)   ? $data->tagids   : [];
+        $tagids        = isset($data->tagids)   && is_array($data->tagids) ? $data->tagids : [];
         $levelids      = isset($data->levelids) && is_array($data->levelids) ? $data->levelids : [];
         self::set_taxonomy($record->id, $categoryid, $subcategoryid, $tagids, $levelids);
 
@@ -253,12 +258,17 @@ class post {
      * @param int[]    $tagids
      * @param int[]    $levelids
      */
-    public static function set_taxonomy(int $postid, ?int $categoryid, ?int $subcategoryid,
-            array $tagids, array $levelids): void {
+    public static function set_taxonomy(
+        int $postid,
+        ?int $categoryid,
+        ?int $subcategoryid,
+        array $tagids,
+        array $levelids
+    ): void {
         global $DB;
 
-        $DB->delete_records('local_imageblog_post_cats',   ['postid' => $postid]);
-        $DB->delete_records('local_imageblog_post_tags',   ['postid' => $postid]);
+        $DB->delete_records('local_imageblog_post_cats', ['postid' => $postid]);
+        $DB->delete_records('local_imageblog_post_tags', ['postid' => $postid]);
         $DB->delete_records('local_imageblog_post_levels', ['postid' => $postid]);
 
         if ($categoryid) {
@@ -291,8 +301,12 @@ class post {
      */
     public function get_category_ids(): array {
         global $DB;
-        $row = $DB->get_record('local_imageblog_post_cats', ['postid' => $this->id],
-            'categoryid, subcategoryid', IGNORE_MISSING);
+        $row = $DB->get_record(
+            'local_imageblog_post_cats',
+            ['postid' => $this->id],
+            'categoryid, subcategoryid',
+            IGNORE_MISSING
+        );
         if (!$row) {
             return [null, null];
         }
@@ -307,7 +321,9 @@ class post {
     public function get_tag_ids(): array {
         global $DB;
         return array_map('intval', array_values($DB->get_fieldset_select(
-            'local_imageblog_post_tags', 'tagid', 'postid = :postid',
+            'local_imageblog_post_tags',
+            'tagid',
+            'postid = :postid',
             ['postid' => $this->id]
         )));
     }
@@ -320,7 +336,9 @@ class post {
     public function get_level_ids(): array {
         global $DB;
         return array_map('intval', array_values($DB->get_fieldset_select(
-            'local_imageblog_post_levels', 'levelid', 'postid = :postid',
+            'local_imageblog_post_levels',
+            'levelid',
+            'postid = :postid',
             ['postid' => $this->id]
         )));
     }

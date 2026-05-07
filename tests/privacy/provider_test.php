@@ -3,11 +3,12 @@
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 or later.
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -30,12 +31,17 @@ use core_privacy\local\request\writer;
 use local_imageblog\post;
 
 /**
+ * Privacy provider tests for local_imageblog.
+ *
  * @covers \local_imageblog\privacy\provider
  */
 final class provider_test extends \core_privacy\tests\provider_testcase {
-
     /**
      * Create a published post owned by the given user.
+     *
+     * @param \stdClass $user
+     * @param string    $title
+     * @return int Post id
      */
     private function create_post_for(\stdClass $user, string $title = 'Test'): int {
         $this->setUser($user);
