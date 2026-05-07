@@ -173,11 +173,14 @@ class post {
         $wheresql = implode(' AND ', $where);
         $page     = max(0, (int)($filters['page'] ?? 0));
 
-        $sql = "SELECT DISTINCT p.*
+        // Postgres requires DISTINCT ORDER BY columns to appear in the
+        // SELECT list, so expose the sort key explicitly.
+        $sql = "SELECT DISTINCT p.*,
+                       COALESCE(p.timepublished, p.timemodified, p.timecreated) AS sortkey
                   FROM {local_imageblog_posts} p
                   $joins
                  WHERE $wheresql
-              ORDER BY COALESCE(p.timepublished, p.timemodified, p.timecreated) DESC, p.id DESC";
+              ORDER BY sortkey DESC, p.id DESC";
 
         $countsql = "SELECT COUNT(DISTINCT p.id)
                        FROM {local_imageblog_posts} p
