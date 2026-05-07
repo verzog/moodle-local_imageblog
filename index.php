@@ -29,12 +29,23 @@ require_login();
 $context = context_system::instance();
 require_capability('local/imageblog:view', $context);
 
+$datefromraw = optional_param('datefrom', '', PARAM_TEXT);
+$datetoraw   = optional_param('dateto', '', PARAM_TEXT);
+$datefrom    = $datefromraw !== '' ? strtotime($datefromraw . ' 00:00:00') : 0;
+$dateto      = $datetoraw !== '' ? strtotime($datetoraw . ' 23:59:59') : 0;
+
 $filters = [
-    'authorid'   => optional_param('authorid', 0, PARAM_INT),
-    'categoryid' => optional_param('categoryid', 0, PARAM_INT),
-    'tagid'      => optional_param('tagid', 0, PARAM_INT),
-    'keyword'    => optional_param('keyword', '', PARAM_TEXT),
-    'page'       => optional_param('page', 0, PARAM_INT),
+    'authorid'      => optional_param('authorid', 0, PARAM_INT),
+    'categoryid'    => optional_param('categoryid', 0, PARAM_INT),
+    'subcategoryid' => optional_param('subcategoryid', 0, PARAM_INT),
+    'tagid'         => optional_param('tagid', 0, PARAM_INT),
+    'levelid'       => optional_param('levelid', 0, PARAM_INT),
+    'keyword'       => optional_param('keyword', '', PARAM_TEXT),
+    'datefrom'      => $datefrom ?: 0,
+    'dateto'        => $dateto ?: 0,
+    'datefromraw'   => $datefromraw,
+    'datetoraw'     => $datetoraw,
+    'page'          => optional_param('page', 0, PARAM_INT),
 ];
 
 $PAGE->set_context($context);

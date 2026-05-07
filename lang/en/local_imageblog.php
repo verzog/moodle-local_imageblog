@@ -68,6 +68,9 @@ $string['selecttags']            = 'Select tags';
 $string['selectauthors']         = 'Select author';
 $string['keyword']               = 'Keyword';
 $string['daterange']             = 'Date range';
+$string['datefrom']              = 'From';
+$string['dateto']                = 'To';
+$string['alllevels']             = 'All levels';
 $string['datepublished']         = 'Date published';
 $string['resetfilters']          = 'Reset';
 

@@ -82,7 +82,8 @@ class post {
     /**
      * Fetch published posts for the listing page.
      *
-     * @param array $filters Keys: authorid, categoryid, tagid, keyword, page
+     * @param array $filters Keys: authorid, categoryid, subcategoryid, tagid,
+     *                       levelid, keyword, datefrom, dateto, page
      * @param int   $perpage
      * @return array{posts: self[], total: int}
      */
@@ -98,10 +99,16 @@ class post {
             $params['authorid'] = (int)$filters['authorid'];
         }
 
-        if (!empty($filters['categoryid'])) {
+        if (!empty($filters['categoryid']) || !empty($filters['subcategoryid'])) {
             $joins .= ' JOIN {local_imageblog_post_cats} pc ON pc.postid = p.id ';
-            $where[]              = 'pc.categoryid = :categoryid';
-            $params['categoryid'] = (int)$filters['categoryid'];
+            if (!empty($filters['categoryid'])) {
+                $where[]              = 'pc.categoryid = :categoryid';
+                $params['categoryid'] = (int)$filters['categoryid'];
+            }
+            if (!empty($filters['subcategoryid'])) {
+                $where[]                 = 'pc.subcategoryid = :subcategoryid';
+                $params['subcategoryid'] = (int)$filters['subcategoryid'];
+            }
         }
 
         if (!empty($filters['tagid'])) {
@@ -110,9 +117,33 @@ class post {
             $params['tagid'] = (int)$filters['tagid'];
         }
 
+        if (!empty($filters['levelid'])) {
+            $joins .= ' JOIN {local_imageblog_post_levels} pl ON pl.postid = p.id ';
+            $where[]           = 'pl.levelid = :levelid';
+            $params['levelid'] = (int)$filters['levelid'];
+        }
+
+        if (!empty($filters['datefrom'])) {
+            $where[]            = 'p.timepublished >= :datefrom';
+            $params['datefrom'] = (int)$filters['datefrom'];
+        }
+        if (!empty($filters['dateto'])) {
+            $where[]          = 'p.timepublished <= :dateto';
+            $params['dateto'] = (int)$filters['dateto'];
+        }
+
         if (!empty($filters['keyword'])) {
-            $where[]           = $DB->sql_like('p.title', ':keyword', false);
-            $params['keyword'] = '%' . $DB->sql_like_escape($filters['keyword']) . '%';
+            $titlelike = $DB->sql_like('p.title', ':keyword_title', false);
+            $taglike   = $DB->sql_like('t.name', ':keyword_tag', false);
+            $where[] = "($titlelike OR EXISTS (
+                            SELECT 1
+                              FROM {local_imageblog_post_tags} kt
+                              JOIN {local_imageblog_tags} t ON t.id = kt.tagid
+                             WHERE kt.postid = p.id AND $taglike
+                        ))";
+            $kw = '%' . $DB->sql_like_escape($filters['keyword']) . '%';
+            $params['keyword_title'] = $kw;
+            $params['keyword_tag']   = $kw;
         }
 
         $wheresql = implode(' AND ', $where);

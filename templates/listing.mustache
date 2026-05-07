@@ -6,27 +6,40 @@
     Context variables:
     * cards         array  — see card.mustache
     * hascards      bool
-    * filterbar     object — authors, categories, tags, keyword, formaction
+    * filterbar     object — authors, categories, subcategories, tags, levels,
+                            keyword, datefrom, dateto, formaction
     * pagination    object — show, pages, hasprev, hasnext, prevurl, nexturl
     * cancreate     bool
     * newposturl    string
+    * subcatdata    string — JSON map of categoryid -> [{id,name}] for dependent dropdown
 }}
-<div class="local-imageblog-listing">
+<div class="local-imageblog-listing"
+     data-region="local-imageblog-filters"
+     data-subcats="{{subcatdata}}">
 
     <div class="local-imageblog-filters card mb-4">
         <div class="card-body">
             <form method="get" action="{{filterbar.formaction}}">
                 <div class="row g-2 mb-2">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label small text-muted" for="local-imageblog-filter-cat">{{#str}}category, local_imageblog{{/str}}</label>
-                        <select id="local-imageblog-filter-cat" name="categoryid" class="form-select form-select-sm">
+                        <select id="local-imageblog-filter-cat" name="categoryid" class="form-select form-select-sm" data-action="category-change">
                             <option value="">{{#str}}selectcategory, local_imageblog{{/str}}</option>
                             {{#filterbar.categories}}
                             <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
                             {{/filterbar.categories}}
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted" for="local-imageblog-filter-subcat">{{#str}}subcategory, local_imageblog{{/str}}</label>
+                        <select id="local-imageblog-filter-subcat" name="subcategoryid" class="form-select form-select-sm" data-region="subcategory">
+                            <option value="">{{#str}}selectsubcategory, local_imageblog{{/str}}</option>
+                            {{#filterbar.subcategories}}
+                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                            {{/filterbar.subcategories}}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label small text-muted" for="local-imageblog-filter-tag">{{#str}}tags, local_imageblog{{/str}}</label>
                         <select id="local-imageblog-filter-tag" name="tagid" class="form-select form-select-sm">
                             <option value="">{{#str}}selecttags, local_imageblog{{/str}}</option>
@@ -35,7 +48,7 @@
                             {{/filterbar.tags}}
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label small text-muted" for="local-imageblog-filter-author">{{#str}}selectauthors, local_imageblog{{/str}}</label>
                         <select id="local-imageblog-filter-author" name="authorid" class="form-select form-select-sm">
                             <option value="">{{#str}}selectauthors, local_imageblog{{/str}}</option>
@@ -45,14 +58,37 @@
                         </select>
                     </div>
                 </div>
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-6">
+                <div class="row g-2 mb-2">
+                    {{#filterbar.haslevels}}
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted" for="local-imageblog-filter-level">{{#str}}level, local_imageblog{{/str}}</label>
+                        <select id="local-imageblog-filter-level" name="levelid" class="form-select form-select-sm">
+                            <option value="">{{#str}}alllevels, local_imageblog{{/str}}</option>
+                            {{#filterbar.levels}}
+                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                            {{/filterbar.levels}}
+                        </select>
+                    </div>
+                    {{/filterbar.haslevels}}
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted" for="local-imageblog-filter-datefrom">{{#str}}datefrom, local_imageblog{{/str}}</label>
+                        <input id="local-imageblog-filter-datefrom" type="date" name="datefrom"
+                               class="form-control form-control-sm" value="{{filterbar.datefrom}}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted" for="local-imageblog-filter-dateto">{{#str}}dateto, local_imageblog{{/str}}</label>
+                        <input id="local-imageblog-filter-dateto" type="date" name="dateto"
+                               class="form-control form-control-sm" value="{{filterbar.dateto}}">
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label small text-muted" for="local-imageblog-filter-keyword">{{#str}}keyword, local_imageblog{{/str}}</label>
                         <input id="local-imageblog-filter-keyword" type="text" name="keyword"
                                class="form-control form-control-sm"
                                value="{{filterbar.keyword}}">
                     </div>
-                    <div class="col-md-6 d-flex justify-content-end gap-2">
+                </div>
+                <div class="row g-2">
+                    <div class="col-12 d-flex justify-content-end gap-2">
                         <button type="submit" class="btn btn-sm btn-primary">
                             {{#str}}searchposts, local_imageblog{{/str}}
                         </button>
@@ -103,3 +139,8 @@
     {{/pagination.show}}
 
 </div>
+{{#js}}
+require(['local_imageblog/filter'], function(Filter) {
+    Filter.init();
+});
+{{/js}}
