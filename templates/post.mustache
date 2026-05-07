@@ -11,6 +11,8 @@
     * datepublished string
     * hasimage      bool
     * imageurl      string
+    * haspanorama   bool
+    * panoramaurl   string
     * listingurl    string
     * lazyimages    bool
     * isdraft       bool
@@ -34,10 +36,19 @@
         <div class="alert alert-warning">{{statuslabel}}</div>
     {{/isdraft}}
 
+    {{#haspanorama}}
+    <div class="local-imageblog-post__panorama mb-3"
+         data-region="local-imageblog-panorama"
+         data-imgurl="{{panoramaurl}}"
+         aria-label="{{#str}}panorama, local_imageblog{{/str}}"></div>
+    {{/haspanorama}}
+
     {{#hasimage}}
-    <img src="{{imageurl}}" alt=""
-         class="local-imageblog-post__image mb-3"
-         {{#lazyimages}}loading="lazy"{{/lazyimages}}>
+        {{^haspanorama}}
+        <img src="{{imageurl}}" alt=""
+             class="local-imageblog-post__image mb-3"
+             {{#lazyimages}}loading="lazy"{{/lazyimages}}>
+        {{/haspanorama}}
     {{/hasimage}}
 
     <h1 class="local-imageblog-post__title mb-2">{{title}}</h1>

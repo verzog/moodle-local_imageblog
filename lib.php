@@ -42,7 +42,7 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
     require_login();
     require_capability('local/imageblog:view', $context);
 
-    $allowedareas = ['featured_image', 'post_images'];
+    $allowedareas = ['featured_image', 'post_images', 'panorama'];
     if (!in_array($filearea, $allowedareas, true)) {
         return false;
     }
@@ -58,7 +58,7 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
         return false;
     }
 
-    $cachelifetime = ($filearea === 'featured_image') ? DAYSECS : HOURSECS;
+    $cachelifetime = in_array($filearea, ['featured_image', 'panorama'], true) ? DAYSECS : HOURSECS;
     send_stored_file($file, $cachelifetime, 0, $forcedownload, $options);
 }
 

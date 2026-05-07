@@ -80,6 +80,15 @@ class post_form extends moodleform {
         $mform->addHelpButton('featured_image', 'featuredimage', 'local_imageblog');
 
         $mform->addElement(
+            'filemanager',
+            'panorama_image',
+            get_string('panorama', 'local_imageblog'),
+            null,
+            post::panorama_options()
+        );
+        $mform->addHelpButton('panorama_image', 'panorama', 'local_imageblog');
+
+        $mform->addElement(
             'advcheckbox',
             'lazyimages',
             get_string('lazyimages', 'local_imageblog')
@@ -212,6 +221,17 @@ class post_form extends moodleform {
             post::featured_options()
         );
         $defaults->featured_image = $draftitemid;
+
+        $panodraftid = file_get_submitted_draft_itemid('panorama_image');
+        file_prepare_draft_area(
+            $panodraftid,
+            $context->id,
+            'local_imageblog',
+            post::FILEAREA_PANORAMA,
+            $defaults->id ?: null,
+            post::panorama_options()
+        );
+        $defaults->panorama_image = $panodraftid;
 
         $this->set_data($defaults);
     }
