@@ -94,6 +94,23 @@ $string['imageblog:managetaxonomy']  = 'Manage categories, tags and levels';
 $string['error_notfound']            = 'Post not found.';
 $string['error_nopermission']        = 'You do not have permission to perform this action.';
 $string['error_invalidstatus']       = 'Invalid post status.';
+$string['error_nameempty']           = 'Name cannot be empty.';
+$string['error_subcategoryparent']   = 'A subcategory must have a parent category.';
+
+// Taxonomy management.
+$string['manage_category']           = 'Manage categories';
+$string['manage_subcategory']        = 'Manage subcategories';
+$string['manage_tag']                = 'Manage tags';
+$string['manage_level']              = 'Manage difficulty levels';
+$string['notaxonomyrows']            = 'No items defined yet.';
+$string['slug']                      = 'Slug';
+$string['slug_help']                 = 'URL-friendly identifier. Leave blank to auto-generate from the name.';
+$string['sortorder']                 = 'Sort order';
+$string['colour']                    = 'Colour';
+$string['colour_amber']              = 'Amber';
+$string['colour_teal']               = 'Teal';
+$string['colour_coral']              = 'Coral';
+$string['colour_purple']             = 'Purple';
 
 // Privacy.
 $string['privacy:metadata:posts']                = 'Information about blog posts authored by users.';

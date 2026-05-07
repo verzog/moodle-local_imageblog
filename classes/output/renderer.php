@@ -214,4 +214,90 @@ class renderer extends plugin_renderer_base {
             'nexturl' => $url(min($totalpages - 1, $page + 1)),
         ];
     }
+
+    /**
+     * Render the taxonomy admin index for the given type.
+     *
+     * @param string $type One of \local_imageblog\taxonomy::TYPE_*
+     * @param \stdClass[] $items
+     * @return string
+     */
+    public function render_taxonomy_index(string $type, array $items): string {
+        global $DB;
+
+        $rows = [];
+        foreach ($items as $item) {
+            $row = [
+                'id'   => (int)$item->id,
+                'name' => format_string($item->name),
+            ];
+            if (property_exists($item, 'sortorder')) {
+                $row['sortorder'] = (int)$item->sortorder;
+            }
+            if (property_exists($item, 'slug')) {
+                $row['slug'] = $item->slug;
+            }
+            if (property_exists($item, 'colourkey')) {
+                $row['colourkey'] = $item->colourkey;
+            }
+            if (property_exists($item, 'categoryid')) {
+                $parent = $DB->get_field('local_imageblog_categories', 'name', ['id' => $item->categoryid]);
+                $row['parentname'] = $parent ? format_string($parent) : '';
+            }
+            $row['editurl'] = (new moodle_url(
+                '/local/imageblog/manage.php',
+                ['type' => $type, 'action' => 'edit', 'id' => (int)$item->id]
+            ))->out(false);
+            $row['deleteurl'] = (new moodle_url(
+                '/local/imageblog/manage.php',
+                ['type' => $type, 'action' => 'delete', 'id' => (int)$item->id, 'sesskey' => sesskey()]
+            ))->out(false);
+            $rows[] = $row;
+        }
+
+        $context = [
+            'type'      => $type,
+            'rows'      => $rows,
+            'hasrows'   => !empty($rows),
+            'addurl'    => (new moodle_url(
+                '/local/imageblog/manage.php',
+                ['type' => $type, 'action' => 'add']
+            ))->out(false),
+            'showslug'  => $type === \local_imageblog\taxonomy::TYPE_TAG,
+            'showcolour' => $type === \local_imageblog\taxonomy::TYPE_LEVEL,
+            'showparent' => $type === \local_imageblog\taxonomy::TYPE_SUBCATEGORY,
+            'showorder'  => in_array($type, [
+                \local_imageblog\taxonomy::TYPE_CATEGORY,
+                \local_imageblog\taxonomy::TYPE_SUBCATEGORY,
+                \local_imageblog\taxonomy::TYPE_LEVEL,
+            ], true),
+            'tabs'      => $this->build_taxonomy_tabs($type),
+        ];
+
+        return $this->render_from_template('local_imageblog/taxonomy_index', $context);
+    }
+
+    /**
+     * Build the tab strip for the taxonomy admin pages.
+     *
+     * @param string $current
+     * @return array[]
+     */
+    private function build_taxonomy_tabs(string $current): array {
+        $types = [
+            \local_imageblog\taxonomy::TYPE_CATEGORY,
+            \local_imageblog\taxonomy::TYPE_SUBCATEGORY,
+            \local_imageblog\taxonomy::TYPE_TAG,
+            \local_imageblog\taxonomy::TYPE_LEVEL,
+        ];
+        $tabs = [];
+        foreach ($types as $type) {
+            $tabs[] = [
+                'label'  => get_string('manage_' . $type, 'local_imageblog'),
+                'url'    => (new moodle_url('/local/imageblog/manage.php', ['type' => $type]))->out(false),
+                'active' => $type === $current,
+            ];
+        }
+        return $tabs;
+    }
 }
