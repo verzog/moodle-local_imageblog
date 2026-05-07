@@ -4,31 +4,30 @@
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 or later.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Blog listing page.
  *
- * @package   local_scca_blog
- * @copyright 2026 Skin Cancer College of Australasia
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_imageblog
+ * @copyright  2026 Skin Cancer College of Australasia
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . '/../../config.php');
-require_once($CFG->dirroot . '/local/scca_blog/lib.php');
-
-defined('MOODLE_INTERNAL') || die();
+require(__DIR__ . '/../../config.php');
+require_once($CFG->dirroot . '/local/imageblog/lib.php');
 
 require_login();
-require_capability('local/scca_blog:view', context_system::instance());
+$context = context_system::instance();
+require_capability('local/imageblog:view', $context);
 
-// ── Page setup ──────────────────────────────────────────────────────────────
-$PAGE->set_context(context_system::instance());
-$PAGE->set_url(new moodle_url('/local/scca_blog/index.php'));
-$PAGE->set_title(get_string('blogposts', 'local_scca_blog'));
-$PAGE->set_heading(get_string('blogposts', 'local_scca_blog'));
-$PAGE->set_pagelayout('standard');
-
-// ── Filter parameters ────────────────────────────────────────────────────────
 $filters = [
     'authorid'   => optional_param('authorid',   0,  PARAM_INT),
     'categoryid' => optional_param('categoryid', 0,  PARAM_INT),
@@ -37,22 +36,24 @@ $filters = [
     'page'       => optional_param('page',       0,  PARAM_INT),
 ];
 
-// ── Data ─────────────────────────────────────────────────────────────────────
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/local/imageblog/index.php'));
+$PAGE->set_title(get_string('blogposts', 'local_imageblog'));
+$PAGE->set_heading(get_string('blogposts', 'local_imageblog'));
+$PAGE->set_pagelayout('standard');
+
 $perpage = 12;
-$result  = \local_scca_blog\post::get_published($filters, $perpage);
+$result = \local_imageblog\post::get_published($filters, $perpage);
+$taxonomy = local_imageblog_get_taxonomy();
 
-// Build taxonomy arrays for filter dropdowns.
-$taxonomy = local_scca_blog_get_taxonomy();
-
-// ── Render ───────────────────────────────────────────────────────────────────
-/** @var \local_scca_blog\output\renderer $renderer */
-$renderer = $PAGE->get_renderer('local_scca_blog');
+/** @var \local_imageblog\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('local_imageblog');
 
 echo $OUTPUT->header();
 echo $renderer->render_listing(
     $result['posts'],
     $result['total'],
-    $filters['page'],
+    (int)$filters['page'],
     $perpage,
     $filters,
     $taxonomy

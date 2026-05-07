@@ -1,69 +1,62 @@
 {{!
+    @template local_imageblog/card
+
     Single blog post card — used in the listing grid.
 
-    @template local_scca_blog/card
-    @copyright 2026 Skin Cancer College of Australasia
-    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-
     Context variables:
-    * id           int
-    * viewurl      string
-    * title        string
-    * summary      string
-    * authorname   string
-    * datepublished string  — already formatted via userdate() in renderer
-    * hasimage     bool
-    * imageurl     string
-    * tags         array   [{name}]
-    * levels       array   [{name, colourkey}]
-    * hastags      bool
-    * haslevels    bool
+    * id            int
+    * viewurl       string
+    * title         string
+    * summary       string
+    * authorname    string
+    * datepublished string
+    * hasimage      bool
+    * imageurl      string
+    * tags          array  [{name}]
+    * levels        array  [{name, colourkey}]
+    * hastags       bool
+    * haslevels     bool
 }}
-
-<div class="scca-blog-card">
-    <a href="{{viewurl}}" class="scca-blog-card__link" tabindex="-1" aria-hidden="true">
+<article class="local-imageblog-card">
+    <a href="{{viewurl}}" class="local-imageblog-card__link" tabindex="-1" aria-hidden="true">
         {{#hasimage}}
-        <img src="{{imageurl}}"
-             alt=""
-             class="scca-blog-card__image"
-             loading="eager"
-             width="800" height="530">
+        <img src="{{imageurl}}" alt=""
+             class="local-imageblog-card__image"
+             loading="lazy" width="800" height="530">
         {{/hasimage}}
         {{^hasimage}}
-        <div class="scca-blog-card__image scca-blog-card__image--placeholder" aria-hidden="true"></div>
+        <div class="local-imageblog-card__image local-imageblog-card__image--placeholder" aria-hidden="true"></div>
         {{/hasimage}}
     </a>
 
-    <div class="scca-blog-card__body">
-
-        <div class="scca-blog-card__meta">
-            <span class="scca-blog-card__date">{{datepublished}}</span>
-            <span class="scca-blog-card__author">{{authorname}}</span>
+    <div class="local-imageblog-card__body">
+        <div class="local-imageblog-card__meta">
+            <span class="local-imageblog-card__date">{{datepublished}}</span>
+            <span class="local-imageblog-card__author">{{authorname}}</span>
         </div>
 
-        <h2 class="scca-blog-card__title">
+        <h2 class="local-imageblog-card__title">
             <a href="{{viewurl}}">{{title}}</a>
         </h2>
 
         {{#summary}}
-        <p class="scca-blog-card__summary">{{summary}}</p>
+        <p class="local-imageblog-card__summary">{{summary}}</p>
         {{/summary}}
 
         {{#haslevels}}
-        <div class="scca-blog-card__levels" aria-label="{{#str}}levels, local_scca_blog{{/str}}">
+        <div class="local-imageblog-card__levels" aria-label="{{#str}}levels, local_imageblog{{/str}}">
             {{#levels}}
-            <span class="scca-blog-badge scca-blog-badge--{{colourkey}}">{{name}}</span>
+            <span class="local-imageblog-badge local-imageblog-badge--{{colourkey}}">{{name}}</span>
             {{/levels}}
         </div>
         {{/haslevels}}
 
         {{#hastags}}
-        <div class="scca-blog-card__tags" aria-label="{{#str}}tags, local_scca_blog{{/str}}">
+        <div class="local-imageblog-card__tags" aria-label="{{#str}}tags, local_imageblog{{/str}}">
             {{#tags}}
-            <span class="scca-blog-badge scca-blog-badge--tag">{{name}}</span>
+            <span class="local-imageblog-badge local-imageblog-badge--tag">{{name}}</span>
             {{/tags}}
         </div>
         {{/hastags}}
-
     </div>
-</div>
+</article>

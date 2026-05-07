@@ -11,20 +11,26 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version information.
+ * Upgrade script.
  *
- * @package   local_imageblog
- * @copyright 2026 Skin Cancer College of Australasia
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_imageblog
+ * @copyright  2026 Skin Cancer College of Australasia
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_imageblog';
-$plugin->version   = 2026050702;
-$plugin->requires  = 2024100700; // Moodle 4.5.
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.3.0';
+/**
+ * Run upgrade steps from older versions of the plugin.
+ *
+ * @param int $oldversion
+ * @return bool
+ */
+function xmldb_local_imageblog_upgrade(int $oldversion): bool {
+    // No upgrade steps yet — this scaffold is provided so that future schema
+    // changes can be applied incrementally without losing data.
+    return true;
+}

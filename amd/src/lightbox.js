@@ -3,75 +3,79 @@
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 or later.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Initialise GLightbox for clinical image zoom on the post view page.
+ * Native image lightbox for the post view page.
  *
- * @module     local_scca_blog/lightbox
+ * Uses the platform <dialog> element to show a full-size version of any
+ * image clicked inside the post body, with no external dependencies.
+ *
+ * @module     local_imageblog/lightbox
  * @copyright  2026 Skin Cancer College of Australasia
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-const GLIGHTBOX_JS  = 'https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js';
-const GLIGHTBOX_CSS = 'https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css';
+import Templates from 'core/templates';
+import Log from 'core/log';
 
-/**
- * Dynamically load GLightbox JS (CSS is loaded server-side in view.php).
- *
- * @returns {Promise<object>} GLightbox constructor
- */
-const loadGLightbox = () => new Promise((resolve, reject) => {
-    if (window.GLightbox) {
-        resolve(window.GLightbox);
-        return;
-    }
-    const script = document.createElement('script');
-    script.src = GLIGHTBOX_JS;
-    script.onload = () => resolve(window.GLightbox);
-    script.onerror = reject;
-    document.head.appendChild(script);
-});
-
-/**
- * Wrap all clinical images in the post body with lightbox anchor tags.
- * Images must have the class `scca-blog-image` and optionally a
- * `data-href` attribute pointing to a higher-res version.
- */
-const wrapImages = () => {
-    document.querySelectorAll('.scca-blog-post-body img.scca-blog-image').forEach((img) => {
-        if (img.closest('a')) {
-            return; // Already wrapped.
-        }
-        const href = img.dataset.href || img.src;
-        const a    = document.createElement('a');
-        a.href          = href;
-        a.className     = 'glightbox';
-        a.dataset.type  = 'image';
-        a.dataset.title = img.alt || '';
-        img.parentNode.insertBefore(a, img);
-        a.appendChild(img);
-    });
+const SELECTOR = {
+    body:   '.local-imageblog-post-body',
+    image:  '.local-imageblog-post-body img',
+    dialog: '.local-imageblog-lightbox',
+    close:  '[data-action="close"]',
+    img:    '.local-imageblog-lightbox img',
 };
 
-/**
- * Initialise lightbox on the post view page.
- * Called from view.php via $PAGE->requires->js_call_amd().
- */
-export const init = async() => {
-    try {
-        wrapImages();
-        const GLightbox = await loadGLightbox();
-        GLightbox({
-            selector:        '.glightbox',
-            touchNavigation: true,
-            loop:            false,
-            zoomable:        true,
-            openEffect:      'fade',
-            closeEffect:     'fade',
-        });
-    } catch (err) {
-        // Non-fatal — images still display inline without lightbox.
-        // eslint-disable-next-line no-console
-        console.warn('[scca_blog] lightbox init failed:', err);
+const ensureDialog = async() => {
+    let dialog = document.querySelector(SELECTOR.dialog);
+    if (dialog) {
+        return dialog;
     }
+    const {html} = await Templates.renderForPromise('local_imageblog/lightbox', {});
+    document.body.insertAdjacentHTML('beforeend', html);
+    dialog = document.querySelector(SELECTOR.dialog);
+
+    dialog.addEventListener('click', (e) => {
+        if (e.target.matches(SELECTOR.close) || e.target === dialog) {
+            dialog.close();
+        }
+    });
+    return dialog;
+};
+
+const openImage = async(src, alt) => {
+    const dialog = await ensureDialog();
+    const img = dialog.querySelector(SELECTOR.img);
+    img.src = src;
+    img.alt = alt || '';
+    if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+    } else {
+        dialog.setAttribute('open', 'open');
+    }
+};
+
+export const init = () => {
+    const body = document.querySelector(SELECTOR.body);
+    if (!body) {
+        return;
+    }
+    body.addEventListener('click', (e) => {
+        const img = e.target.closest(SELECTOR.image);
+        if (!img) {
+            return;
+        }
+        e.preventDefault();
+        openImage(img.dataset.href || img.src, img.alt).catch((err) => {
+            Log.debug('local_imageblog/lightbox failed: ' + err);
+        });
+    });
 };

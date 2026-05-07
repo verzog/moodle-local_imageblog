@@ -11,20 +11,23 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version information.
+ * Adds an admin menu link to the blog index.
  *
- * @package   local_imageblog
- * @copyright 2026 Skin Cancer College of Australasia
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_imageblog
+ * @copyright  2026 Skin Cancer College of Australasia
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_imageblog';
-$plugin->version   = 2026050702;
-$plugin->requires  = 2024100700; // Moodle 4.5.
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.3.0';
+if ($hassiteconfig) {
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_imageblog',
+        get_string('pluginname', 'local_imageblog'),
+        new moodle_url('/local/imageblog/index.php'),
+        'local/imageblog:view'
+    ));
+}

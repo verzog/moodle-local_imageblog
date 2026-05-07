@@ -1,0 +1,13 @@
+{{!
+    @template local_imageblog/lightbox
+
+    Lightbox dialog injected by the lightbox.js module on the post view page.
+    Rendered once on first image click and reused.
+
+    No context variables.
+}}
+<dialog class="local-imageblog-lightbox">
+    <button type="button" class="local-imageblog-lightbox__close" data-action="close"
+            aria-label="{{#str}}close, local_imageblog{{/str}}">&times;</button>
+    <img src="" alt="">
+</dialog>
