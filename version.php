@@ -24,6 +24,6 @@
 
 $plugin->component = 'local_imageblog';
 $plugin->version   = 2026050702;
-$plugin->requires  = 2024100700; // Moodle 4.5.
+$plugin->requires  = 2025041100; // Moodle 5.0.
 $plugin->maturity  = MATURITY_ALPHA;
 $plugin->release   = '0.3.0';
