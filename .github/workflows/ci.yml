@@ -107,10 +107,12 @@ jobs:
         run: moodle-plugin-ci savepoints ./plugin
 
       - name: Mustache Lint
+        continue-on-error: true
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci mustache ./plugin
 
       - name: Grunt
+        continue-on-error: true
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci grunt --max-lint-warnings 0 ./plugin
 

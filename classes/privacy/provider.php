@@ -38,7 +38,6 @@ class provider implements
     \core_privacy\local\metadata\provider,
     \core_privacy\local\request\core_userlist_provider,
     \core_privacy\local\request\plugin\provider {
-
     /**
      * Describe what user data this plugin stores.
      *
@@ -173,8 +172,12 @@ class provider implements
             if ($context->contextlevel !== CONTEXT_SYSTEM) {
                 continue;
             }
-            $postids = $DB->get_fieldset_select('local_imageblog_posts', 'id',
-                'authorid = :userid', ['userid' => $user->id]);
+            $postids = $DB->get_fieldset_select(
+                'local_imageblog_posts',
+                'id',
+                'authorid = :userid',
+                ['userid' => $user->id]
+            );
             self::delete_posts($postids, $context);
         }
     }
@@ -195,8 +198,12 @@ class provider implements
             return;
         }
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
-        $postids = $DB->get_fieldset_select('local_imageblog_posts', 'id',
-            "authorid $insql", $inparams);
+        $postids = $DB->get_fieldset_select(
+            'local_imageblog_posts',
+            'id',
+            "authorid $insql",
+            $inparams
+        );
         self::delete_posts($postids, $context);
     }
 
@@ -219,9 +226,9 @@ class provider implements
             $fs->delete_area_files($context->id, 'local_imageblog', 'post_images', $postid);
         }
 
-        $DB->delete_records_select('local_imageblog_post_tags',   "postid $insql", $inparams);
-        $DB->delete_records_select('local_imageblog_post_cats',   "postid $insql", $inparams);
+        $DB->delete_records_select('local_imageblog_post_tags', "postid $insql", $inparams);
+        $DB->delete_records_select('local_imageblog_post_cats', "postid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_post_levels', "postid $insql", $inparams);
-        $DB->delete_records_select('local_imageblog_posts',       "id $insql",     $inparams);
+        $DB->delete_records_select('local_imageblog_posts', "id $insql", $inparams);
     }
 }

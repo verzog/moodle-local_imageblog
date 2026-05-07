@@ -32,7 +32,6 @@ use plugin_renderer_base;
  * Renderer for local_imageblog.
  */
 class renderer extends plugin_renderer_base {
-
     /**
      * Render the listing page.
      *
@@ -79,8 +78,12 @@ class renderer extends plugin_renderer_base {
     public function render_post(post $post): string {
         global $DB;
 
-        $author = $DB->get_record('user', ['id' => $post->authorid],
-            'id, firstname, lastname', IGNORE_MISSING);
+        $author = $DB->get_record(
+            'user',
+            ['id' => $post->authorid],
+            'id, firstname, lastname',
+            IGNORE_MISSING
+        );
 
         $imgurl = $post->get_featured_image_url();
 
@@ -112,8 +115,12 @@ class renderer extends plugin_renderer_base {
     private function build_card_context(post $post): array {
         global $DB;
 
-        $author = $DB->get_record('user', ['id' => $post->authorid],
-            'id, firstname, lastname', IGNORE_MISSING);
+        $author = $DB->get_record(
+            'user',
+            ['id' => $post->authorid],
+            'id, firstname, lastname',
+            IGNORE_MISSING
+        );
         $imgurl = $post->get_featured_image_url();
         $tags   = $post->get_tags();
         $levels = $post->get_levels();
@@ -159,9 +166,9 @@ class renderer extends plugin_renderer_base {
         };
 
         return [
-            'authors'    => $mark($taxonomy['authors']    ?? [], (int)($filters['authorid']   ?? 0)),
+            'authors'    => $mark($taxonomy['authors'] ?? [], (int)($filters['authorid'] ?? 0)),
             'categories' => $mark($taxonomy['categories'] ?? [], (int)($filters['categoryid'] ?? 0)),
-            'tags'       => $mark($taxonomy['tags']       ?? [], (int)($filters['tagid']      ?? 0)),
+            'tags'       => $mark($taxonomy['tags'] ?? [], (int)($filters['tagid'] ?? 0)),
             'keyword'    => $filters['keyword'] ?? '',
             'formaction' => (new moodle_url('/local/imageblog/index.php'))->out(false),
         ];

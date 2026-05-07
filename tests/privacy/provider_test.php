@@ -31,12 +31,17 @@ use core_privacy\local\request\writer;
 use local_imageblog\post;
 
 /**
+ * Privacy provider tests for local_imageblog.
+ *
  * @covers \local_imageblog\privacy\provider
  */
 final class provider_test extends \core_privacy\tests\provider_testcase {
-
     /**
      * Create a published post owned by the given user.
+     *
+     * @param \stdClass $user
+     * @param string    $title
+     * @return int Post id
      */
     private function create_post_for(\stdClass $user, string $title = 'Test'): int {
         $this->setUser($user);

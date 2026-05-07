@@ -25,10 +25,11 @@
 namespace local_imageblog;
 
 /**
+ * Unit tests for the post model.
+ *
  * @covers \local_imageblog\post
  */
 final class post_test extends \advanced_testcase {
-
     /**
      * Saving a new draft post creates a record owned by the current user.
      */

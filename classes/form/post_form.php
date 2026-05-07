@@ -27,6 +27,8 @@ namespace local_imageblog\form;
 use moodleform;
 use local_imageblog\post;
 
+defined('MOODLE_INTERNAL') || die();
+
 global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
@@ -34,7 +36,6 @@ require_once($CFG->libdir . '/formslib.php');
  * Form for creating and editing blog posts.
  */
 class post_form extends moodleform {
-
     /**
      * Define form elements.
      */
@@ -50,22 +51,39 @@ class post_form extends moodleform {
         $mform->setType('title', PARAM_TEXT);
         $mform->addRule('title', null, 'required', null, 'client');
 
-        $mform->addElement('textarea', 'summary', get_string('summary', 'local_imageblog'),
-            ['rows' => 3, 'cols' => 80]);
+        $mform->addElement(
+            'textarea',
+            'summary',
+            get_string('summary', 'local_imageblog'),
+            ['rows' => 3, 'cols' => 80]
+        );
         $mform->setType('summary', PARAM_TEXT);
         $mform->addHelpButton('summary', 'summary', 'local_imageblog');
 
-        $mform->addElement('editor', 'body_editor', get_string('body', 'local_imageblog'),
-            null, post::editor_options($context));
+        $mform->addElement(
+            'editor',
+            'body_editor',
+            get_string('body', 'local_imageblog'),
+            null,
+            post::editor_options($context)
+        );
         $mform->setType('body_editor', PARAM_RAW);
         $mform->addRule('body_editor', null, 'required', null, 'client');
 
-        $mform->addElement('filemanager', 'featured_image',
-            get_string('featuredimage', 'local_imageblog'), null, post::featured_options());
+        $mform->addElement(
+            'filemanager',
+            'featured_image',
+            get_string('featuredimage', 'local_imageblog'),
+            null,
+            post::featured_options()
+        );
         $mform->addHelpButton('featured_image', 'featuredimage', 'local_imageblog');
 
-        $mform->addElement('advcheckbox', 'lazyimages',
-            get_string('lazyimages', 'local_imageblog'));
+        $mform->addElement(
+            'advcheckbox',
+            'lazyimages',
+            get_string('lazyimages', 'local_imageblog')
+        );
         $mform->setDefault('lazyimages', 1);
         $mform->addHelpButton('lazyimages', 'lazyimages', 'local_imageblog');
 
@@ -77,8 +95,12 @@ class post_form extends moodleform {
         foreach ($taxonomy['categories'] as $cat) {
             $catoptions[$cat['id']] = $cat['name'];
         }
-        $mform->addElement('select', 'categoryid',
-            get_string('category', 'local_imageblog'), $catoptions);
+        $mform->addElement(
+            'select',
+            'categoryid',
+            get_string('category', 'local_imageblog'),
+            $catoptions
+        );
         $mform->setType('categoryid', PARAM_INT);
 
         $subcatoptions = ['' => get_string('selectsubcategory', 'local_imageblog')];
@@ -94,33 +116,51 @@ class post_form extends moodleform {
             $label = $parentname !== '' ? "{$parentname} / {$sub['name']}" : $sub['name'];
             $subcatoptions[$sub['id']] = $label;
         }
-        $mform->addElement('select', 'subcategoryid',
-            get_string('subcategory', 'local_imageblog'), $subcatoptions);
+        $mform->addElement(
+            'select',
+            'subcategoryid',
+            get_string('subcategory', 'local_imageblog'),
+            $subcatoptions
+        );
         $mform->setType('subcategoryid', PARAM_INT);
 
         $tagoptions = [];
         foreach ($taxonomy['tags'] as $tag) {
             $tagoptions[$tag['id']] = $tag['name'];
         }
-        $mform->addElement('select', 'tagids',
-            get_string('tags', 'local_imageblog'), $tagoptions, ['multiple' => 'multiple', 'size' => 6]);
+        $mform->addElement(
+            'select',
+            'tagids',
+            get_string('tags', 'local_imageblog'),
+            $tagoptions,
+            ['multiple' => 'multiple', 'size' => 6]
+        );
         $mform->setType('tagids', PARAM_INT);
 
         $leveloptions = [];
         foreach ($taxonomy['levels'] as $level) {
             $leveloptions[$level['id']] = $level['name'];
         }
-        $mform->addElement('select', 'levelids',
-            get_string('levels', 'local_imageblog'), $leveloptions, ['multiple' => 'multiple', 'size' => 4]);
+        $mform->addElement(
+            'select',
+            'levelids',
+            get_string('levels', 'local_imageblog'),
+            $leveloptions,
+            ['multiple' => 'multiple', 'size' => 4]
+        );
         $mform->setType('levelids', PARAM_INT);
 
         $statusoptions = [
-            post::STATUS_DRAFT     => get_string('status_draft',     'local_imageblog'),
+            post::STATUS_DRAFT     => get_string('status_draft', 'local_imageblog'),
             post::STATUS_PUBLISHED => get_string('status_published', 'local_imageblog'),
-            post::STATUS_ARCHIVED  => get_string('status_archived',  'local_imageblog'),
+            post::STATUS_ARCHIVED  => get_string('status_archived', 'local_imageblog'),
         ];
-        $mform->addElement('select', 'status',
-            get_string('status', 'local_imageblog'), $statusoptions);
+        $mform->addElement(
+            'select',
+            'status',
+            get_string('status', 'local_imageblog'),
+            $statusoptions
+        );
         $mform->setDefault('status', post::STATUS_DRAFT);
 
         $this->add_action_buttons();
