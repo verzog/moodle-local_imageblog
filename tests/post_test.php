@@ -121,7 +121,7 @@ final class post_test extends \advanced_testcase {
             'name' => 'News', 'sortorder' => 0, 'timecreated' => time(),
         ]);
         $tagid = $DB->insert_record('local_imageblog_tags', (object)[
-            'name' => 'feature', 'slug' => 'feature',
+            'name' => 'test-feature', 'slug' => 'test-feature',
         ]);
         post::set_taxonomy($postalice, $catid, null, [$tagid], []);
 

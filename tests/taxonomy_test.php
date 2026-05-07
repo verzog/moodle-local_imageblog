@@ -30,6 +30,22 @@ namespace local_imageblog;
  * @covers \local_imageblog\taxonomy
  */
 final class taxonomy_test extends \advanced_testcase {
+    /**
+     * Wipe seeded taxonomy rows so each test starts from an empty slate.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        global $DB;
+        $this->resetAfterTest();
+        $DB->delete_records('local_imageblog_post_cats');
+        $DB->delete_records('local_imageblog_post_tags');
+        $DB->delete_records('local_imageblog_post_levels');
+        $DB->delete_records('local_imageblog_subcategories');
+        $DB->delete_records('local_imageblog_categories');
+        $DB->delete_records('local_imageblog_tags');
+        $DB->delete_records('local_imageblog_levels');
+    }
+
     public function test_save_and_fetch_category(): void {
         $this->resetAfterTest();
         $id = taxonomy::save(taxonomy::TYPE_CATEGORY, (object)['name' => 'News', 'sortorder' => 5]);
