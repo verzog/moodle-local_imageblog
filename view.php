@@ -59,8 +59,22 @@ $PAGE->set_pagelayout('standard');
 $PAGE->requires->js_call_amd('local_imageblog/lightbox', 'init');
 
 if ($post->get_panorama_url()) {
-    $jsurl  = (new moodle_url('/local/imageblog/thirdparty/pannellum/pannellum.js'))->out(false);
-    $cssurl = (new moodle_url('/local/imageblog/thirdparty/pannellum/pannellum.css'))->out(false);
+    $jsurl = moodle_url::make_pluginfile_url(
+        $context->id,
+        'local_imageblog',
+        'thirdparty',
+        0,
+        '/pannellum/',
+        'pannellum.js'
+    )->out(false);
+    $cssurl = moodle_url::make_pluginfile_url(
+        $context->id,
+        'local_imageblog',
+        'thirdparty',
+        0,
+        '/pannellum/',
+        'pannellum.css'
+    )->out(false);
     $PAGE->requires->js_call_amd('local_imageblog/panorama', 'init', [$jsurl, $cssurl]);
 }
 
