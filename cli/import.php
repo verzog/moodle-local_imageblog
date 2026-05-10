@@ -113,7 +113,7 @@ $levelcache = [];
 $catcache   = [];
 $subcatcache = [];
 
-$resolve_user = function (string $email) use (&$usercache, $fallback): int {
+$resolveuser = function (string $email) use (&$usercache, $fallback): int {
     $email = strtolower(trim($email));
     if ($email === '') {
         return (int)$fallback->id;
@@ -126,7 +126,7 @@ $resolve_user = function (string $email) use (&$usercache, $fallback): int {
     return $usercache[$email] = (int)($u ? $u->id : $fallback->id);
 };
 
-$resolve_category = function (string $name) use (&$catcache): ?int {
+$resolvecategory = function (string $name) use (&$catcache): ?int {
     $name = trim($name);
     if ($name === '') {
         return null;
@@ -146,7 +146,7 @@ $resolve_category = function (string $name) use (&$catcache): ?int {
     ]);
 };
 
-$resolve_subcategory = function (string $name, ?int $categoryid) use (&$subcatcache): ?int {
+$resolvesubcategory = function (string $name, ?int $categoryid) use (&$subcatcache): ?int {
     $name = trim($name);
     if ($name === '' || !$categoryid) {
         return null;
@@ -167,7 +167,7 @@ $resolve_subcategory = function (string $name, ?int $categoryid) use (&$subcatca
     ]);
 };
 
-$resolve_tag = function (string $name) use (&$tagcache): int {
+$resolvetag = function (string $name) use (&$tagcache): int {
     $name = trim($name);
     if (isset($tagcache[$name])) {
         return $tagcache[$name];
@@ -178,7 +178,7 @@ $resolve_tag = function (string $name) use (&$tagcache): int {
     );
 };
 
-$resolve_level = function (string $name) use (&$levelcache): ?int {
+$resolvelevel = function (string $name) use (&$levelcache): ?int {
     $name = trim($name);
     if ($name === '') {
         return null;
@@ -195,7 +195,7 @@ $resolve_level = function (string $name) use (&$levelcache): ?int {
         ]));
 };
 
-$parse_time = function (string $value): ?int {
+$parsetime = function (string $value): ?int {
     $value = trim($value);
     if ($value === '') {
         return null;
@@ -207,8 +207,7 @@ $parse_time = function (string $value): ?int {
     return $ts ?: null;
 };
 
-$store_image = function (string $relpath, string $filearea, int $postid)
-        use ($imagedir, $context, $fs): bool {
+$storeimage = function (string $relpath, string $filearea, int $postid) use ($imagedir, $context, $fs): bool {
     if (!$imagedir || trim($relpath) === '') {
         return false;
     }
@@ -235,7 +234,7 @@ $skipped = 0;
 $batch   = [];
 $now     = time();
 
-$flush = function () use (&$batch, $dryrun, $store_image, $continue, &$ok, &$failed) {
+$flush = function () use (&$batch, $dryrun, $storeimage, $continue, &$ok, &$failed) {
     if (!$batch) {
         return;
     }
@@ -251,10 +250,10 @@ $flush = function () use (&$batch, $dryrun, $store_image, $continue, &$ok, &$fai
             $postid = (int)$DB->insert_record('local_imageblog_posts', $item['record']);
 
             if (!empty($item['featured'])) {
-                $store_image($item['featured'], \local_imageblog\post::FILEAREA_FEATURED, $postid);
+                $storeimage($item['featured'], \local_imageblog\post::FILEAREA_FEATURED, $postid);
             }
             if (!empty($item['panorama'])) {
-                $store_image($item['panorama'], \local_imageblog\post::FILEAREA_PANORAMA, $postid);
+                $storeimage($item['panorama'], \local_imageblog\post::FILEAREA_PANORAMA, $postid);
             }
 
             \local_imageblog\post::set_taxonomy(
@@ -295,23 +294,23 @@ while (($cols = fgetcsv($handle)) !== false) {
     if (!in_array($status, ['draft', 'published', 'archived'], true)) {
         $status = 'published';
     }
-    $timepublished = $parse_time((string)($data['timepublished'] ?? ''));
+    $timepublished = $parsetime((string)($data['timepublished'] ?? ''));
     if ($status === 'published' && !$timepublished) {
         $timepublished = $now;
     }
 
-    $categoryid    = $resolve_category((string)($data['category'] ?? ''));
-    $subcategoryid = $resolve_subcategory((string)($data['subcategory'] ?? ''), $categoryid);
+    $categoryid    = $resolvecategory((string)($data['category'] ?? ''));
+    $subcategoryid = $resolvesubcategory((string)($data['subcategory'] ?? ''), $categoryid);
 
     $tagids = [];
     foreach (preg_split('/\|/', (string)($data['tags'] ?? '')) as $t) {
         if (trim($t) !== '') {
-            $tagids[] = $resolve_tag($t);
+            $tagids[] = $resolvetag($t);
         }
     }
     $levelids = [];
     foreach (preg_split('/\|/', (string)($data['levels'] ?? '')) as $l) {
-        $id = $resolve_level($l);
+        $id = $resolvelevel($l);
         if ($id) {
             $levelids[] = $id;
         }
@@ -319,7 +318,7 @@ while (($cols = fgetcsv($handle)) !== false) {
 
     $batch[] = [
         'record' => (object)[
-            'authorid'      => $resolve_user((string)($data['author_email'] ?? '')),
+            'authorid'      => $resolveuser((string)($data['author_email'] ?? '')),
             'title'         => $title,
             'summary'       => (string)($data['summary'] ?? ''),
             'body'          => (string)($data['body'] ?? ''),
