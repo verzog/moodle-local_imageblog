@@ -57,24 +57,30 @@ switch ($action) {
         $diagnosis = trim(required_param('diagnosis', PARAM_TEXT));
         $reasoning = trim(optional_param('reasoning', '', PARAM_TEXT));
         if ($diagnosis === '') {
-            redirect($returnurl, get_string('required'), null,
-                \core\output\notification::NOTIFY_ERROR);
+            redirect($returnurl, get_string('required'), null, \core\output\notification::NOTIFY_ERROR);
         }
         \local_imageblog\case_post::submit_diagnosis($postid, (int)$USER->id, $diagnosis, $reasoning);
-        redirect($returnurl, get_string('case_diagnosis_saved', 'local_imageblog'),
-            null, \core\output\notification::NOTIFY_SUCCESS);
+        redirect(
+            $returnurl,
+            get_string('case_diagnosis_saved', 'local_imageblog'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
         break;
 
     case 'ask':
         require_capability('local/imageblog:askcasequestion', $context);
         $question = trim(required_param('question', PARAM_TEXT));
         if ($question === '') {
-            redirect($returnurl, get_string('required'), null,
-                \core\output\notification::NOTIFY_ERROR);
+            redirect($returnurl, get_string('required'), null, \core\output\notification::NOTIFY_ERROR);
         }
         \local_imageblog\case_post::ask_question($postid, (int)$USER->id, $question);
-        redirect($returnurl, get_string('case_question_submitted', 'local_imageblog'),
-            null, \core\output\notification::NOTIFY_SUCCESS);
+        redirect(
+            $returnurl,
+            get_string('case_question_submitted', 'local_imageblog'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
         break;
 
     case 'answer':
@@ -84,12 +90,15 @@ switch ($action) {
         $qid = required_param('questionid', PARAM_INT);
         $answer = trim(required_param('answer', PARAM_TEXT));
         if ($answer === '') {
-            redirect($returnurl, get_string('required'), null,
-                \core\output\notification::NOTIFY_ERROR);
+            redirect($returnurl, get_string('required'), null, \core\output\notification::NOTIFY_ERROR);
         }
         \local_imageblog\case_post::answer_question($qid, (int)$USER->id, $answer);
-        redirect($returnurl, get_string('case_answer_submitted', 'local_imageblog'),
-            null, \core\output\notification::NOTIFY_SUCCESS);
+        redirect(
+            $returnurl,
+            get_string('case_answer_submitted', 'local_imageblog'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
         break;
 
     case 'reveal':
@@ -97,8 +106,12 @@ switch ($action) {
             throw new moodle_exception('error_nopermission', 'local_imageblog');
         }
         \local_imageblog\case_post::reveal($postid);
-        redirect($returnurl, get_string('case_revealed', 'local_imageblog'),
-            null, \core\output\notification::NOTIFY_SUCCESS);
+        redirect(
+            $returnurl,
+            get_string('case_revealed', 'local_imageblog'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
         break;
 
     case 'markbest':
@@ -110,8 +123,12 @@ switch ($action) {
         }
         $diagid = required_param('diagnosisid', PARAM_INT);
         \local_imageblog\case_post::set_best_diagnosis($postid, $diagid);
-        redirect($returnurl, get_string('case_revealed', 'local_imageblog'),
-            null, \core\output\notification::NOTIFY_SUCCESS);
+        redirect(
+            $returnurl,
+            get_string('case_revealed', 'local_imageblog'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
         break;
 
     default:
