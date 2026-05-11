@@ -44,7 +44,7 @@ if ($hassiteconfig) {
         'local_imageblog/cpd_basehours',
         get_string('cpd_basehours', 'local_imageblog'),
         get_string('cpd_basehours_desc', 'local_imageblog'),
-        '1.0',
+        '1',
         PARAM_FLOAT
     ));
     $settings->add(new admin_setting_configtext(
