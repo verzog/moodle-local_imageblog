@@ -25,6 +25,7 @@
 namespace local_imageblog\output;
 
 use local_imageblog\post;
+use local_imageblog\case_post;
 use moodle_url;
 use plugin_renderer_base;
 
@@ -134,9 +135,107 @@ class renderer extends plugin_renderer_base {
                 '/local/imageblog/edit.php',
                 ['id' => $post->id]
             ))->out(false),
+            'iscase'        => $post->posttype === case_post::TYPE_CASE,
+            'casepanel'     => $post->posttype === case_post::TYPE_CASE
+                ? $this->build_case_context($post, (int)$USER->id, $isowner || $canmanage)
+                : null,
         ];
 
         return $this->render_from_template('local_imageblog/post', $context);
+    }
+
+    /**
+     * Build the Mustache context for the case panel rendered under a post.
+     *
+     * @param post $post
+     * @param int  $userid    Viewer id
+     * @param bool $isauthor  True when viewer can manage the case
+     * @return array
+     */
+    private function build_case_context(post $post, int $userid, bool $isauthor): array {
+        $syscontext = \context_system::instance();
+        $revealed = !empty($post->caserevealed);
+        $usersub = case_post::get_user_diagnosis($post->id, $userid);
+        $allquestions = case_post::get_questions($post->id);
+
+        // Once revealed, award the view-only CPD for non-participants.
+        if ($revealed && !$usersub && has_capability('local/imageblog:submitdiagnosis', $syscontext, $userid)) {
+            case_post::award_view_if_eligible($post->id, $userid);
+        }
+
+        $diagnoses = [];
+        if ($revealed || $isauthor) {
+            foreach (case_post::get_diagnoses($post->id) as $d) {
+                $diagnoses[] = [
+                    'id'         => (int)$d->id,
+                    'userid'     => (int)$d->userid,
+                    'username'   => fullname($d),
+                    'diagnosis'  => format_text($d->diagnosis, FORMAT_PLAIN, ['context' => $syscontext]),
+                    'reasoning'  => $d->reasoning
+                        ? format_text($d->reasoning, FORMAT_PLAIN, ['context' => $syscontext])
+                        : '',
+                    'hasreasoning' => !empty($d->reasoning),
+                    'isbest'     => $post->casebestdiagnosisid && (int)$d->id === (int)$post->casebestdiagnosisid,
+                    'markbesturl' => (new moodle_url('/local/imageblog/case_action.php', [
+                        'postid'       => $post->id,
+                        'diagnosisid'  => (int)$d->id,
+                        'action'       => 'markbest',
+                        'sesskey'      => sesskey(),
+                    ]))->out(false),
+                    'time'       => userdate((int)$d->timecreated, get_string('strftimedatetimeshort', 'langconfig')),
+                ];
+            }
+        }
+
+        $questions = [];
+        foreach ($allquestions as $q) {
+            $questions[] = [
+                'id'        => (int)$q->id,
+                'username'  => fullname($q),
+                'question'  => format_text($q->question, FORMAT_PLAIN, ['context' => $syscontext]),
+                'hasanswer' => !empty($q->answer),
+                'answer'    => $q->answer
+                    ? format_text($q->answer, FORMAT_PLAIN, ['context' => $syscontext])
+                    : '',
+                'asktime'   => userdate((int)$q->timeasked, get_string('strftimedatetimeshort', 'langconfig')),
+                'answertime' => $q->timeanswered
+                    ? userdate((int)$q->timeanswered, get_string('strftimedatetimeshort', 'langconfig'))
+                    : '',
+            ];
+        }
+
+        $totalhours = case_post::get_user_total_hours($post->id, $userid);
+
+        return [
+            'postid'           => $post->id,
+            'revealed'         => $revealed,
+            'isauthor'         => $isauthor,
+            'cansubmit'        => !$revealed && has_capability('local/imageblog:submitdiagnosis', $syscontext)
+                && !$isauthor,
+            'canask'           => has_capability('local/imageblog:askcasequestion', $syscontext) && !$isauthor,
+            'hasusersub'       => !empty($usersub),
+            'userdiagnosis'    => $usersub ? format_text($usersub->diagnosis, FORMAT_PLAIN, ['context' => $syscontext]) : '',
+            'userreasoning'    => $usersub && $usersub->reasoning
+                ? format_text($usersub->reasoning, FORMAT_PLAIN, ['context' => $syscontext]) : '',
+            'outcome'          => $revealed
+                ? format_text($post->caseoutcome, $post->caseoutcomeformat, ['context' => $syscontext])
+                : '',
+            'difficulty'       => (int)$post->casedifficulty,
+            'diagnoses'        => $diagnoses,
+            'hasdiagnoses'     => !empty($diagnoses),
+            'showdiagnoses'    => $revealed || $isauthor,
+            'questions'        => $questions,
+            'hasquestions'     => !empty($questions),
+            'sesskey'          => sesskey(),
+            'actionurl'        => (new moodle_url('/local/imageblog/case_action.php'))->out(false),
+            'revealurl'        => (new moodle_url('/local/imageblog/case_action.php', [
+                'postid'  => $post->id,
+                'action'  => 'reveal',
+                'sesskey' => sesskey(),
+            ]))->out(false),
+            'cpdtotal'         => $totalhours > 0 ? number_format($totalhours, 2) : '',
+            'hascpd'           => $totalhours > 0,
+        ];
     }
 
     /**

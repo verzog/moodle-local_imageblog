@@ -17,6 +17,13 @@
         <FIELD NAME="lazyimages"     TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1=lazy load body images"/>
         <FIELD NAME="forumpostid"     TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Linked forum discussion id"/>
         <FIELD NAME="featuredimage"   TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="mdl_files id for card thumbnail"/>
+        <FIELD NAME="posttype"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="blog" SEQUENCE="false" COMMENT="blog|case"/>
+        <FIELD NAME="caseoutcome"     TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Author-provided outcome/diagnosis, shown after reveal"/>
+        <FIELD NAME="caseoutcomeformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="caserevealed"    TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 once the author has revealed the outcome"/>
+        <FIELD NAME="caserevealedtime" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="casebestdiagnosisid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Optional id of best diagnosis chosen by author"/>
+        <FIELD NAME="casedifficulty"  TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Author-rated difficulty 1-5 used for CPD scaling"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -123,6 +130,66 @@
         <KEY NAME="fk_post"  TYPE="foreign" FIELDS="postid"  REFTABLE="local_imageblog_posts"  REFFIELDS="id"/>
         <KEY NAME="fk_level" TYPE="foreign" FIELDS="levelid" REFTABLE="local_imageblog_levels" REFFIELDS="id"/>
       </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_imageblog_case_diags" COMMENT="Reader-submitted diagnoses on a case post">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="postid"        TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="diagnosis"     TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="reasoning"     TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_post" TYPE="foreign" FIELDS="postid" REFTABLE="local_imageblog_posts" REFFIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_post_user" UNIQUE="true" FIELDS="postid, userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_imageblog_case_qs" COMMENT="Reader questions and author answers on a case post">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="postid"        TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Asker"/>
+        <FIELD NAME="question"      TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="answer"        TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="answeredby"    TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timeasked"     TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timeanswered"  TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_post" TYPE="foreign" FIELDS="postid" REFTABLE="local_imageblog_posts" REFFIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_postid" UNIQUE="false" FIELDS="postid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_imageblog_case_cpd" COMMENT="CPD hours awarded for case participation">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"    LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="postid"        TYPE="int"    LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid"        TYPE="int"    LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="hours"         TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="reason"        TYPE="char"   LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="participation|bestanswer|view"/>
+        <FIELD NAME="timeawarded"   TYPE="int"    LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_post" TYPE="foreign" FIELDS="postid" REFTABLE="local_imageblog_posts" REFFIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_post_user_reason" UNIQUE="true" FIELDS="postid, userid, reason"/>
+      </INDEXES>
     </TABLE>
 
   </TABLES>

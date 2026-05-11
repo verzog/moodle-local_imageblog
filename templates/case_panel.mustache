@@ -1,0 +1,152 @@
+{{!
+    @template local_imageblog/case_panel
+
+    Interactive panel rendered under a case-type post.
+
+    Context: see renderer::build_case_context().
+}}
+<div class="local-imageblog-case mt-4 p-3 border rounded">
+
+    {{#hascpd}}
+        <div class="alert alert-success py-2">
+            {{#str}}case_cpd_awarded, local_imageblog, {{cpdtotal}}{{/str}}
+        </div>
+    {{/hascpd}}
+
+    {{^revealed}}
+        <div class="alert alert-info py-2">
+            {{#str}}case_not_revealed, local_imageblog{{/str}}
+        </div>
+    {{/revealed}}
+
+    {{#isauthor}}
+        {{^revealed}}
+        <form method="post" action="{{revealurl}}"
+              onsubmit="return confirm('{{#str}}case_reveal_confirm, local_imageblog{{/str}}');">
+            <button type="submit" class="btn btn-primary mb-3">
+                {{#str}}case_reveal, local_imageblog{{/str}}
+            </button>
+        </form>
+        {{/revealed}}
+    {{/isauthor}}
+
+    {{#cansubmit}}
+        <form method="post" action="{{actionurl}}" class="mb-4">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <input type="hidden" name="postid" value="{{postid}}">
+            <input type="hidden" name="action" value="diagnose">
+            <h3 class="h5">{{#str}}case_submitdiagnosis, local_imageblog{{/str}}</h3>
+            <div class="mb-2">
+                <label class="form-label" for="local-imageblog-diagnosis">
+                    {{#str}}case_yourdiagnosis, local_imageblog{{/str}}
+                </label>
+                <input id="local-imageblog-diagnosis" type="text" name="diagnosis"
+                       class="form-control" required value="{{userdiagnosis}}">
+            </div>
+            <div class="mb-2">
+                <label class="form-label" for="local-imageblog-reasoning">
+                    {{#str}}case_yourreasoning, local_imageblog{{/str}}
+                </label>
+                <textarea id="local-imageblog-reasoning" name="reasoning"
+                          class="form-control" rows="2">{{userreasoning}}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                {{#hasusersub}}{{#str}}case_update, local_imageblog{{/str}}{{/hasusersub}}
+                {{^hasusersub}}{{#str}}case_submit, local_imageblog{{/str}}{{/hasusersub}}
+            </button>
+        </form>
+    {{/cansubmit}}
+
+    {{#revealed}}
+        <h3 class="h5">{{#str}}case_outcome_heading, local_imageblog{{/str}}</h3>
+        <div class="local-imageblog-case__outcome mb-4">
+            {{{outcome}}}
+        </div>
+    {{/revealed}}
+
+    <h3 class="h5">{{#str}}case_diagnoses_heading, local_imageblog{{/str}}</h3>
+    {{#showdiagnoses}}
+        {{^hasdiagnoses}}<p class="text-muted">{{#str}}case_no_diagnoses, local_imageblog{{/str}}</p>{{/hasdiagnoses}}
+        <ul class="list-unstyled">
+            {{#diagnoses}}
+                <li class="mb-2 p-2 border rounded {{#isbest}}border-success bg-success-subtle{{/isbest}}">
+                    <strong>{{username}}</strong>
+                    <span class="text-muted small">· {{time}}</span>
+                    {{#isbest}}
+                        <span class="badge bg-success ms-2">
+                            {{#str}}case_isbest, local_imageblog{{/str}}
+                        </span>
+                    {{/isbest}}
+                    <div>{{{diagnosis}}}</div>
+                    {{#hasreasoning}}<div class="text-muted small">{{{reasoning}}}</div>{{/hasreasoning}}
+                    {{#isauthor}}
+                        {{#revealed}}
+                            {{^isbest}}
+                            <form method="post" action="{{markbesturl}}" class="d-inline">
+                                <button type="submit" class="btn btn-link btn-sm p-0">
+                                    {{#str}}case_markbest, local_imageblog{{/str}}
+                                </button>
+                            </form>
+                            {{/isbest}}
+                        {{/revealed}}
+                    {{/isauthor}}
+                </li>
+            {{/diagnoses}}
+        </ul>
+    {{/showdiagnoses}}
+    {{^showdiagnoses}}
+        <p class="text-muted">{{#str}}case_diagnoses_hidden, local_imageblog{{/str}}</p>
+    {{/showdiagnoses}}
+
+    <h3 class="h5 mt-4">{{#str}}case_questions_heading, local_imageblog{{/str}}</h3>
+    {{^hasquestions}}<p class="text-muted">{{#str}}case_no_questions, local_imageblog{{/str}}</p>{{/hasquestions}}
+    <ul class="list-unstyled">
+        {{#questions}}
+            <li class="mb-2 p-2 border rounded">
+                <div>
+                    <strong>{{username}}</strong>
+                    <span class="text-muted small">· {{asktime}}</span>
+                </div>
+                <div class="mb-1">{{{question}}}</div>
+                {{#hasanswer}}
+                    <div class="ms-3 p-2 bg-light rounded">
+                        <strong>{{#str}}by, local_imageblog{{/str}}</strong>
+                        <span class="text-muted small">{{answertime}}</span>
+                        <div>{{{answer}}}</div>
+                    </div>
+                {{/hasanswer}}
+                {{^hasanswer}}
+                    {{#isauthor}}
+                        <form method="post" action="{{actionurl}}" class="mt-1">
+                            <input type="hidden" name="sesskey" value="{{sesskey}}">
+                            <input type="hidden" name="postid" value="{{postid}}">
+                            <input type="hidden" name="action" value="answer">
+                            <input type="hidden" name="questionid" value="{{id}}">
+                            <textarea name="answer" class="form-control mb-1" rows="2"
+                                placeholder="{{#str}}case_answer_placeholder, local_imageblog{{/str}}" required></textarea>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                {{#str}}case_submit, local_imageblog{{/str}}
+                            </button>
+                        </form>
+                    {{/isauthor}}
+                {{/hasanswer}}
+            </li>
+        {{/questions}}
+    </ul>
+
+    {{#canask}}
+        <form method="post" action="{{actionurl}}" class="mt-3">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <input type="hidden" name="postid" value="{{postid}}">
+            <input type="hidden" name="action" value="ask">
+            <label class="form-label" for="local-imageblog-question">
+                {{#str}}case_ask_question, local_imageblog{{/str}}
+            </label>
+            <textarea id="local-imageblog-question" name="question" class="form-control mb-2" rows="2"
+                placeholder="{{#str}}case_question_placeholder, local_imageblog{{/str}}" required></textarea>
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+                {{#str}}case_submit, local_imageblog{{/str}}
+            </button>
+        </form>
+    {{/canask}}
+</div>

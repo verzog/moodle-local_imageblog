@@ -26,6 +26,7 @@ namespace local_imageblog\form;
 
 use moodleform;
 use local_imageblog\post;
+use local_imageblog\case_post;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -46,6 +47,13 @@ class post_form extends moodleform {
 
         $mform->addElement('hidden', 'id', $post?->id ?? 0);
         $mform->setType('id', PARAM_INT);
+
+        $mform->addElement('select', 'posttype', get_string('posttype', 'local_imageblog'), [
+            case_post::TYPE_BLOG => get_string('posttype_blog', 'local_imageblog'),
+            case_post::TYPE_CASE => get_string('posttype_case', 'local_imageblog'),
+        ]);
+        $mform->setType('posttype', PARAM_ALPHA);
+        $mform->addHelpButton('posttype', 'posttype', 'local_imageblog');
 
         $mform->addElement('text', 'title', get_string('title', 'local_imageblog'), ['size' => 80]);
         $mform->setType('title', PARAM_TEXT);
@@ -165,6 +173,32 @@ class post_form extends moodleform {
         );
         $mform->setType('levelids', PARAM_INT);
 
+        $diffoptions = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $diffoptions[$i] = (string)$i;
+        }
+        $mform->addElement(
+            'select',
+            'casedifficulty',
+            get_string('casedifficulty', 'local_imageblog'),
+            $diffoptions
+        );
+        $mform->setType('casedifficulty', PARAM_INT);
+        $mform->setDefault('casedifficulty', 3);
+        $mform->addHelpButton('casedifficulty', 'casedifficulty', 'local_imageblog');
+        $mform->hideIf('casedifficulty', 'posttype', 'neq', case_post::TYPE_CASE);
+
+        $mform->addElement(
+            'editor',
+            'caseoutcome_editor',
+            get_string('caseoutcome', 'local_imageblog'),
+            null,
+            post::editor_options($context)
+        );
+        $mform->setType('caseoutcome_editor', PARAM_RAW);
+        $mform->addHelpButton('caseoutcome_editor', 'caseoutcome', 'local_imageblog');
+        $mform->hideIf('caseoutcome_editor', 'posttype', 'neq', case_post::TYPE_CASE);
+
         $statusoptions = [
             post::STATUS_DRAFT     => get_string('status_draft', 'local_imageblog'),
             post::STATUS_PUBLISHED => get_string('status_published', 'local_imageblog'),
@@ -195,10 +229,18 @@ class post_form extends moodleform {
             $defaults->subcategoryid = $subcatid;
             $defaults->tagids        = $post->get_tag_ids();
             $defaults->levelids      = $post->get_level_ids();
+            $defaults->posttype          = $post->posttype;
+            $defaults->casedifficulty    = $post->casedifficulty;
+            $defaults->caseoutcome       = $post->caseoutcome;
+            $defaults->caseoutcomeformat = $post->caseoutcomeformat;
         } else {
             $defaults->id         = 0;
             $defaults->body       = '';
             $defaults->bodyformat = FORMAT_HTML;
+            $defaults->posttype          = case_post::TYPE_BLOG;
+            $defaults->casedifficulty    = 3;
+            $defaults->caseoutcome       = '';
+            $defaults->caseoutcomeformat = FORMAT_HTML;
         }
 
         $defaults = file_prepare_standard_editor(
@@ -208,6 +250,16 @@ class post_form extends moodleform {
             $context,
             'local_imageblog',
             post::FILEAREA_BODY,
+            $defaults->id ?: null
+        );
+
+        $defaults = file_prepare_standard_editor(
+            $defaults,
+            'caseoutcome',
+            post::editor_options($context),
+            $context,
+            'local_imageblog',
+            post::FILEAREA_CASEOUTCOME,
             $defaults->id ?: null
         );
 
