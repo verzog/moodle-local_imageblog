@@ -45,7 +45,7 @@ if ($hassiteconfig) {
         get_string('cpd_basehours', 'local_imageblog'),
         get_string('cpd_basehours_desc', 'local_imageblog'),
         '1',
-        PARAM_FLOAT
+        PARAM_RAW_TRIMMED
     ));
     $settings->add(new admin_setting_configtext(
         'local_imageblog/cpd_difficulty_scale',
@@ -59,21 +59,21 @@ if ($hassiteconfig) {
         get_string('cpd_view_factor', 'local_imageblog'),
         get_string('cpd_view_factor_desc', 'local_imageblog'),
         '0.25',
-        PARAM_FLOAT
+        PARAM_RAW_TRIMMED
     ));
     $settings->add(new admin_setting_configtext(
         'local_imageblog/cpd_submit_factor',
         get_string('cpd_submit_factor', 'local_imageblog'),
         get_string('cpd_submit_factor_desc', 'local_imageblog'),
         '0.75',
-        PARAM_FLOAT
+        PARAM_RAW_TRIMMED
     ));
     $settings->add(new admin_setting_configtext(
         'local_imageblog/cpd_best_bonus',
         get_string('cpd_best_bonus', 'local_imageblog'),
         get_string('cpd_best_bonus_desc', 'local_imageblog'),
         '0.25',
-        PARAM_FLOAT
+        PARAM_RAW_TRIMMED
     ));
 
     $ADMIN->add('local_imageblog_cat', $settings);
