@@ -157,6 +157,8 @@ class case_post {
 
     /**
      * Mark the case as revealed and award CPD hours to participants.
+     *
+     * @param int $postid
      */
     public static function reveal(int $postid): void {
         global $DB;
@@ -174,6 +176,9 @@ class case_post {
     /**
      * Choose (or clear) the "best diagnosis". Only meaningful after reveal.
      * Pass 0 to clear. Awards a one-time bonus to the chosen submitter.
+     *
+     * @param int $postid
+     * @param int $diagnosisid
      */
     public static function set_best_diagnosis(int $postid, int $diagnosisid): void {
         global $DB;
@@ -193,6 +198,8 @@ class case_post {
 
     /**
      * Award (or refresh) CPD rows for everyone who has participated in this case.
+     *
+     * @param int $postid
      */
     public static function award_cpd_for_case(int $postid): void {
         global $DB;
@@ -206,6 +213,10 @@ class case_post {
      * Record CPD hours for a single (user, reason) on a case. Idempotent —
      * relies on the unique (postid,userid,reason) index, refreshes the value
      * if the admin rates have changed.
+     *
+     * @param int    $postid
+     * @param int    $userid
+     * @param string $reason
      */
     public static function record_cpd(int $postid, int $userid, string $reason): void {
         global $DB;
@@ -240,6 +251,9 @@ class case_post {
     /**
      * Award the view-only CPD when a non-participant reads a revealed case.
      * Skipped if the user already has a participation row.
+     *
+     * @param int $postid
+     * @param int $userid
      */
     public static function award_view_if_eligible(int $postid, int $userid): void {
         global $DB;
@@ -252,6 +266,10 @@ class case_post {
 
     /**
      * Compute hours for a (difficulty, reason) pair using admin config.
+     *
+     * @param int    $difficulty
+     * @param string $reason
+     * @return float
      */
     public static function compute_hours(int $difficulty, string $reason): float {
         $base = (float)get_config('local_imageblog', 'cpd_basehours');
@@ -280,6 +298,10 @@ class case_post {
 
     /**
      * Total CPD hours awarded to a user on this case (across all reasons).
+     *
+     * @param int $postid
+     * @param int $userid
+     * @return float
      */
     public static function get_user_total_hours(int $postid, int $userid): float {
         global $DB;
