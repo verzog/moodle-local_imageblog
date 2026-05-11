@@ -75,6 +75,8 @@ class renderer extends plugin_renderer_base {
             'cancreate'  => has_capability('local/imageblog:createpost', \context_system::instance()),
             'newposturl' => (new moodle_url('/local/imageblog/edit.php'))->out(false),
             'subcatdata' => s(json_encode($subcatmap)),
+            'subsenabled' => (bool)get_config('local_imageblog', 'subscriptions_enabled'),
+            'subscribeurl' => (new moodle_url('/local/imageblog/subscribe.php'))->out(false),
         ];
 
         return $this->render_from_template('local_imageblog/listing', $context);
@@ -142,6 +144,65 @@ class renderer extends plugin_renderer_base {
         ];
 
         return $this->render_from_template('local_imageblog/post', $context);
+    }
+
+    /**
+     * Render the subscription digest email for one recipient.
+     *
+     * @param post[]    $posts
+     * @param \stdClass $user      Recipient user record.
+     * @param string    $frequency Subscription frequency.
+     * @return array{0: string, 1: string, 2: string} [html, text, subject]
+     */
+    public function render_digest_email(array $posts, \stdClass $user, string $frequency): array {
+        global $SITE;
+
+        $items = [];
+        foreach ($posts as $p) {
+            $imgurl = $p->get_featured_image_url();
+            $items[] = [
+                'title'    => format_string($p->title),
+                'summary'  => format_string($p->summary),
+                'hasimage' => !empty($imgurl),
+                'imageurl' => $imgurl ? $imgurl->out(false) : '',
+                'viewurl'  => (new moodle_url('/local/imageblog/view.php', ['id' => $p->id]))->out(false),
+            ];
+        }
+
+        $sitename = format_string($SITE->fullname);
+        $context = [
+            'sitename'        => $sitename,
+            'recipientname'   => fullname($user),
+            'frequencylabel'  => get_string('frequency_' . $frequency, 'local_imageblog'),
+            'items'           => $items,
+            'count'           => count($items),
+            'listingurl'      => (new moodle_url('/local/imageblog/index.php'))->out(false),
+            'subscribeurl'    => (new moodle_url('/local/imageblog/subscribe.php'))->out(false),
+            'readmorelabel'   => get_string('readmore', 'local_imageblog'),
+        ];
+
+        $html = $this->render_from_template('local_imageblog/digest_email', $context);
+
+        $textlines = [];
+        $textlines[] = get_string('digest_intro', 'local_imageblog', $sitename);
+        $textlines[] = '';
+        foreach ($items as $item) {
+            $textlines[] = '* ' . $item['title'];
+            if ($item['summary'] !== '') {
+                $textlines[] = '  ' . $item['summary'];
+            }
+            $textlines[] = '  ' . $item['viewurl'];
+            $textlines[] = '';
+        }
+        $textlines[] = get_string('digest_footer', 'local_imageblog', $context['subscribeurl']);
+        $text = implode("\n", $textlines);
+
+        $subject = get_string('digest_subject', 'local_imageblog', (object)[
+            'site'  => $sitename,
+            'count' => count($items),
+        ]);
+
+        return [$html, $text, $subject];
     }
 
     /**

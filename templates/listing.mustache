@@ -105,6 +105,11 @@
                         <a href="{{filterbar.formaction}}" class="btn btn-sm btn-outline-secondary">
                             {{#str}}resetfilters, local_imageblog{{/str}}
                         </a>
+                        {{#subsenabled}}
+                        <a href="{{subscribeurl}}" class="btn btn-sm btn-outline-primary">
+                            {{#str}}subscribe_link, local_imageblog{{/str}}
+                        </a>
+                        {{/subsenabled}}
                         {{#cancreate}}
                         <a href="{{newposturl}}" class="btn btn-sm btn-success">
                             {{#str}}newpost, local_imageblog{{/str}}

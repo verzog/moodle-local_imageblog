@@ -76,6 +76,18 @@ if ($hassiteconfig) {
         PARAM_RAW_TRIMMED
     ));
 
+    $settings->add(new admin_setting_heading(
+        'local_imageblog/subs_heading',
+        get_string('subs_heading', 'local_imageblog'),
+        get_string('subs_heading_desc', 'local_imageblog')
+    ));
+    $settings->add(new admin_setting_configcheckbox(
+        'local_imageblog/subscriptions_enabled',
+        get_string('subscriptions_enabled', 'local_imageblog'),
+        get_string('subscriptions_enabled_desc', 'local_imageblog'),
+        0
+    ));
+
     $ADMIN->add('local_imageblog_cat', $settings);
 
     $ADMIN->add('local_imageblog_cat', new admin_externalpage(

@@ -15,17 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version information.
+ * Scheduled task definitions.
  *
- * @package   local_imageblog
- * @copyright 2026 Skin Cancer College of Australasia
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_imageblog
+ * @copyright  2026 Skin Cancer College of Australasia
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_imageblog';
-$plugin->version   = 2026051200;
-$plugin->requires  = 2025041100; // Moodle 5.0.
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.3.0';
+$tasks = [
+    [
+        'classname' => 'local_imageblog\task\send_subscription_digest',
+        'blocking'  => 0,
+        'minute'    => '5',
+        'hour'      => '*',
+        'day'       => '*',
+        'month'     => '*',
+        'dayofweek' => '*',
+    ],
+];
