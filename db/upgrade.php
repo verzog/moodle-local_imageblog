@@ -95,5 +95,21 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051100, 'local', 'imageblog');
     }
 
+    if ($oldversion < 2026051200) {
+        $subs = new xmldb_table('local_imageblog_subs');
+        if (!$dbman->table_exists($subs)) {
+            $subs->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $subs->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $subs->add_field('frequency', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'weekly');
+            $subs->add_field('lastsent', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $subs->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $subs->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $subs->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $subs->add_index('idx_userid', XMLDB_INDEX_UNIQUE, ['userid']);
+            $dbman->create_table($subs);
+        }
+        upgrade_plugin_savepoint(true, 2026051200, 'local', 'imageblog');
+    }
+
     return true;
 }

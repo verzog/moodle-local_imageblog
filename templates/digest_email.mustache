@@ -1,0 +1,90 @@
+{{!
+    @template local_imageblog/digest_email
+
+    Subscription digest email. Inline styles only — most email clients
+    strip <style> blocks. Designed for ~600px wide.
+
+    Context:
+    * sitename       string
+    * recipientname  string
+    * frequencylabel string
+    * items          [{title, summary, hasimage, imageurl, viewurl}]
+    * count          int
+    * listingurl     string
+    * subscribeurl   string
+    * readmorelabel  string
+}}
+<table width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background:#f4f6f9;padding:24px 0;font-family:Helvetica,Arial,sans-serif;color:#1f2937;">
+    <tr>
+        <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" border="0"
+                   style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;
+                          box-shadow:0 2px 6px rgba(15,23,42,0.08);">
+                <tr>
+                    <td style="background:#0f172a;color:#ffffff;padding:20px 24px;">
+                        <div style="font-size:14px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.7;">
+                            {{frequencylabel}}
+                        </div>
+                        <div style="font-size:22px;font-weight:600;margin-top:4px;">
+                            {{sitename}}
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:24px;font-size:15px;line-height:1.5;">
+                        <p style="margin:0 0 16px 0;">
+                            {{#str}}digest_greeting, local_imageblog, {{recipientname}}{{/str}}
+                        </p>
+                        {{#items}}
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                   style="margin:0 0 24px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
+                                {{#hasimage}}
+                                <tr>
+                                    <td>
+                                        <img src="{{imageurl}}" alt=""
+                                             width="600"
+                                             style="display:block;width:100%;height:auto;border:0;">
+                                    </td>
+                                </tr>
+                                {{/hasimage}}
+                                <tr>
+                                    <td style="padding:16px 20px;">
+                                        <h2 style="margin:0 0 8px 0;font-size:18px;color:#0f172a;">
+                                            <a href="{{viewurl}}"
+                                               style="color:#0f172a;text-decoration:none;">{{title}}</a>
+                                        </h2>
+                                        <p style="margin:0 0 16px 0;color:#475569;font-size:14px;line-height:1.5;">
+                                            {{summary}}
+                                        </p>
+                                        <a href="{{viewurl}}"
+                                           style="display:inline-block;background:#2563eb;color:#ffffff;
+                                                  padding:8px 16px;border-radius:4px;text-decoration:none;
+                                                  font-size:14px;font-weight:600;">
+                                            {{readmorelabel}}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        {{/items}}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:#f8fafc;color:#64748b;padding:16px 24px;font-size:12px;line-height:1.5;
+                               border-top:1px solid #e5e7eb;">
+                        <p style="margin:0 0 8px 0;">
+                            <a href="{{listingurl}}" style="color:#2563eb;">
+                                {{#str}}digest_viewall, local_imageblog{{/str}}
+                            </a>
+                        </p>
+                        <p style="margin:0;">
+                            <a href="{{subscribeurl}}" style="color:#64748b;">
+                                {{#str}}digest_unsubscribe, local_imageblog{{/str}}
+                            </a>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>

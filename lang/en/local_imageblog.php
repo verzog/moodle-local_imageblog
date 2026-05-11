@@ -191,3 +191,27 @@ $string['cpd_best_bonus_desc']       = 'Additional share of base hours awarded t
 $string['error_casenotrevealed']     = 'Outcome cannot be acted on — it has not been revealed yet.';
 $string['error_caseclosed']          = 'Submissions are closed for this case.';
 $string['error_notacase']            = 'This post is not a clinical case.';
+
+// Subscriptions.
+$string['subs_heading']             = 'Subscription emails';
+$string['subs_heading_desc']        = 'Periodic digest of recently published posts. Users opt in from the blog index.';
+$string['subscriptions_enabled']    = 'Enable digest emails';
+$string['subscriptions_enabled_desc'] = 'When enabled, a scheduled task sends each subscriber a digest of new posts at their chosen frequency.';
+$string['subscribe_title']          = 'Blog email subscription';
+$string['subscribe_link']           = 'Email me new posts';
+$string['subscribe_optin']          = 'Email me when new posts are published';
+$string['subscribe_optin_help']     = 'Each digest contains the title, summary and featured image of every post published since your last email.';
+$string['subscribe_saved']          = 'Your subscription preferences have been saved.';
+$string['subscribe_removed']        = 'You will no longer receive blog digest emails.';
+$string['subscribe_disabled']       = 'Email subscriptions are not enabled on this site.';
+$string['frequency']                = 'Frequency';
+$string['frequency_daily']          = 'Daily';
+$string['frequency_weekly']         = 'Weekly';
+$string['frequency_monthly']        = 'Monthly';
+$string['task_send_digest']         = 'Send blog subscription digest emails';
+$string['digest_subject']           = 'New on {$a->site}: {$a->count} recent post(s)';
+$string['digest_intro']             = 'Latest posts from {$a}:';
+$string['digest_greeting']          = 'Hi {$a}, here\'s what\'s new on the blog:';
+$string['digest_footer']            = 'Manage your subscription: {$a}';
+$string['digest_viewall']           = 'View all posts on the site';
+$string['digest_unsubscribe']       = 'Unsubscribe or change frequency';
