@@ -157,3 +157,45 @@ function local_imageblog_extend_navigation(global_navigation $navigation): void 
         'local_imageblog'
     );
 }
+
+/**
+ * Surface the blog email subscription page on the user's preferences page.
+ *
+ * Called by Moodle when building the navigation tree for user/preferences.php,
+ * so the new node appears under "Miscellaneous" for any logged-in user who
+ * can view the blog.
+ *
+ * @param navigation_node $navigation
+ * @param stdClass        $user
+ * @param context         $usercontext
+ * @param stdClass        $course
+ * @param context         $coursecontext
+ */
+function local_imageblog_extend_navigation_user_settings(
+    navigation_node $navigation,
+    $user,
+    $usercontext,
+    $course,
+    $coursecontext
+): void {
+    global $USER;
+
+    if (!get_config('local_imageblog', 'subscriptions_enabled')) {
+        return;
+    }
+    // Only the user themselves (or a manager managing their account) should
+    // see the link — editing someone else's subscription is out of scope.
+    if ((int)$user->id !== (int)$USER->id) {
+        return;
+    }
+    if (!has_capability('local/imageblog:view', context_system::instance())) {
+        return;
+    }
+    $navigation->add(
+        get_string('subscribe_title', 'local_imageblog'),
+        new moodle_url('/local/imageblog/subscribe.php'),
+        navigation_node::TYPE_SETTING,
+        null,
+        'local_imageblog_subscribe'
+    );
+}
