@@ -54,6 +54,20 @@ class post {
     public ?int $forumpostid = null;
     /** @var int|null */
     public ?int $featuredimage = null;
+    /** @var string blog|case */
+    public string $posttype = 'blog';
+    /** @var string */
+    public string $caseoutcome = '';
+    /** @var int */
+    public int $caseoutcomeformat = 1;
+    /** @var bool */
+    public bool $caserevealed = false;
+    /** @var int|null */
+    public ?int $caserevealedtime = null;
+    /** @var int|null */
+    public ?int $casebestdiagnosisid = null;
+    /** @var int */
+    public int $casedifficulty = 1;
 
     /** @var string Draft post status. */
     const STATUS_DRAFT     = 'draft';
@@ -68,6 +82,8 @@ class post {
     const FILEAREA_FEATURED = 'featured_image';
     /** @var string Filearea for an equirectangular 360° panorama. */
     const FILEAREA_PANORAMA = 'panorama';
+    /** @var string Filearea for embedded images in the case outcome editor. */
+    const FILEAREA_CASEOUTCOME = 'case_outcome';
 
     /**
      * Fetch a single post by id.
@@ -218,6 +234,12 @@ class post {
         $record->bodyformat  = FORMAT_HTML;
         $record->body        = '';
         $record->timemodified = $now;
+        $record->posttype    = !empty($data->posttype) && $data->posttype === case_post::TYPE_CASE
+            ? case_post::TYPE_CASE
+            : case_post::TYPE_BLOG;
+        if ($record->posttype === case_post::TYPE_CASE) {
+            $record->casedifficulty = max(1, min(5, (int)($data->casedifficulty ?? 1)));
+        }
 
         if ($isnew) {
             $record->authorid    = (int)$USER->id;
@@ -252,6 +274,25 @@ class post {
                 'id'         => $record->id,
                 'body'       => $data->body,
                 'bodyformat' => $data->bodyformat,
+            ]);
+        }
+
+        // Process the case outcome editor when this is a case post.
+        if ($record->posttype === case_post::TYPE_CASE && !empty($data->caseoutcome_editor)) {
+            $data->id = $record->id;
+            $data = file_postupdate_standard_editor(
+                $data,
+                'caseoutcome',
+                self::editor_options($context),
+                $context,
+                'local_imageblog',
+                self::FILEAREA_CASEOUTCOME,
+                $record->id
+            );
+            $DB->update_record('local_imageblog_posts', (object)[
+                'id'                => $record->id,
+                'caseoutcome'       => $data->caseoutcome,
+                'caseoutcomeformat' => $data->caseoutcomeformat,
             ]);
         }
 
@@ -594,6 +635,13 @@ class post {
         $post->lazyimages    = !empty($record->lazyimages);
         $post->forumpostid   = isset($record->forumpostid) ? (int)$record->forumpostid : null;
         $post->featuredimage = isset($record->featuredimage) ? (int)$record->featuredimage : null;
+        $post->posttype          = $record->posttype ?? 'blog';
+        $post->caseoutcome       = $record->caseoutcome ?? '';
+        $post->caseoutcomeformat = (int)($record->caseoutcomeformat ?? FORMAT_HTML);
+        $post->caserevealed      = !empty($record->caserevealed);
+        $post->caserevealedtime  = isset($record->caserevealedtime) ? (int)$record->caserevealedtime : null;
+        $post->casebestdiagnosisid = isset($record->casebestdiagnosisid) ? (int)$record->casebestdiagnosisid : null;
+        $post->casedifficulty    = (int)($record->casedifficulty ?? 1);
         return $post;
     }
 }
