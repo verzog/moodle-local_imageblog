@@ -153,8 +153,8 @@ class provider implements
         $userlist->add_from_sql('authorid', "SELECT authorid FROM {local_imageblog_posts}", []);
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_imageblog_case_diags}", []);
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_imageblog_case_qs}", []);
-        $userlist->add_from_sql('answeredby',
-            "SELECT answeredby FROM {local_imageblog_case_qs} WHERE answeredby IS NOT NULL", []);
+        $sql = "SELECT answeredby FROM {local_imageblog_case_qs} WHERE answeredby IS NOT NULL";
+        $userlist->add_from_sql('answeredby', $sql, []);
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_imageblog_case_cpd}", []);
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_imageblog_subs}", []);
     }
@@ -186,16 +186,12 @@ class provider implements
                         ? \core_privacy\local\request\transform::datetime($record->timepublished)
                         : null,
                 ];
-                writer::with_context($context)
-                    ->export_data([$pluginname, 'post-' . $record->id], $data)
-                    ->export_area_files([$pluginname, 'post-' . $record->id], 'local_imageblog',
-                        'featured_image', $record->id)
-                    ->export_area_files([$pluginname, 'post-' . $record->id], 'local_imageblog',
-                        'post_images', $record->id)
-                    ->export_area_files([$pluginname, 'post-' . $record->id], 'local_imageblog',
-                        'panorama', $record->id)
-                    ->export_area_files([$pluginname, 'post-' . $record->id], 'local_imageblog',
-                        'case_outcome', $record->id);
+                $path = [$pluginname, 'post-' . $record->id];
+                $w = writer::with_context($context);
+                $w->export_data($path, $data);
+                foreach (['featured_image', 'post_images', 'panorama', 'case_outcome'] as $area) {
+                    $w->export_area_files($path, 'local_imageblog', $area, $record->id);
+                }
             }
 
             // Case diagnoses submitted by the user.
