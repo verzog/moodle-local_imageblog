@@ -117,10 +117,27 @@
     background: rgba(0, 0, 0, 0.85);
 }
 
+.local-imageblog-lightbox__figure {
+    margin: 0;
+}
+
 .local-imageblog-lightbox img {
     max-width: 95vw;
-    max-height: 90vh;
+    max-height: 85vh;
     display: block;
+}
+
+.local-imageblog-lightbox figcaption {
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    text-align: center;
+    max-width: 95vw;
+}
+
+.local-imageblog-lightbox figcaption[hidden] {
+    display: none;
 }
 
 .local-imageblog-lightbox__close {
