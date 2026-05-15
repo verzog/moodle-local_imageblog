@@ -64,7 +64,7 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
         return true;
     }
 
-    $allowedareas = ['featured_image', 'post_images', 'panorama'];
+    $allowedareas = ['featured_image', 'post_images', 'panorama', 'case_outcome'];
     if (!in_array($filearea, $allowedareas, true)) {
         return false;
     }
