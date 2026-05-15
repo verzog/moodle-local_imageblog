@@ -85,6 +85,28 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
 }
 
 /**
+ * Build an inline <style> block for the admin-configured custom CSS.
+ *
+ * Emitted only by this plugin's own pages, so a mistake in the setting
+ * cannot affect the rest of the Moodle site.
+ *
+ * @return string HTML, or '' when no custom CSS is configured.
+ */
+function local_imageblog_get_custom_css_html(): string {
+    $css = trim((string)get_config('local_imageblog', 'customcss'));
+    if ($css === '') {
+        return '';
+    }
+    // Defensively prevent breaking out of the style element.
+    $css = str_ireplace('</style', '<\/style', $css);
+    return \html_writer::tag(
+        'style',
+        $css,
+        ['type' => 'text/css', 'data-region' => 'local-imageblog-customcss']
+    );
+}
+
+/**
  * Return taxonomy arrays (authors, categories, tags) for filter dropdowns.
  *
  * @return array{authors: array, categories: array, tags: array}

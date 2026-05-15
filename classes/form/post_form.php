@@ -88,6 +88,14 @@ class post_form extends moodleform {
         $mform->addHelpButton('featured_image', 'featuredimage', 'local_imageblog');
 
         $mform->addElement(
+            'advcheckbox',
+            'haspanorama',
+            get_string('haspanorama', 'local_imageblog')
+        );
+        $mform->setType('haspanorama', PARAM_BOOL);
+        $mform->addHelpButton('haspanorama', 'haspanorama', 'local_imageblog');
+
+        $mform->addElement(
             'filemanager',
             'panorama_image',
             get_string('panorama', 'local_imageblog'),
@@ -95,6 +103,7 @@ class post_form extends moodleform {
             post::panorama_options()
         );
         $mform->addHelpButton('panorama_image', 'panorama', 'local_imageblog');
+        $mform->hideIf('panorama_image', 'haspanorama', 'notchecked');
 
         $mform->addElement(
             'advcheckbox',
@@ -233,6 +242,7 @@ class post_form extends moodleform {
             $defaults->casedifficulty    = $post->casedifficulty;
             $defaults->caseoutcome       = $post->caseoutcome;
             $defaults->caseoutcomeformat = $post->caseoutcomeformat;
+            $defaults->haspanorama       = $post->get_panorama_url() ? 1 : 0;
         } else {
             $defaults->id         = 0;
             $defaults->body       = '';
@@ -241,6 +251,7 @@ class post_form extends moodleform {
             $defaults->casedifficulty    = 3;
             $defaults->caseoutcome       = '';
             $defaults->caseoutcomeformat = FORMAT_HTML;
+            $defaults->haspanorama       = 0;
         }
 
         $defaults = file_prepare_standard_editor(

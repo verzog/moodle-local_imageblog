@@ -95,6 +95,7 @@ $taxonomy = local_imageblog_get_taxonomy();
 $renderer = $PAGE->get_renderer('local_imageblog');
 
 echo $OUTPUT->header();
+echo local_imageblog_get_custom_css_html();
 echo $renderer->render_listing(
     $result['posts'],
     $result['total'],

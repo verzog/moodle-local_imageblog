@@ -308,8 +308,10 @@ class post {
             );
         }
 
-        // Save 360° panorama draft files into the permanent area.
-        if (!empty($data->panorama_image)) {
+        // The 360° panorama is an optional component. Persist its draft
+        // files only when the author enabled it; otherwise clear any
+        // previously stored panorama so disabling the toggle removes it.
+        if (!empty($data->haspanorama) && !empty($data->panorama_image)) {
             file_save_draft_area_files(
                 (int)$data->panorama_image,
                 $context->id,
@@ -317,6 +319,13 @@ class post {
                 self::FILEAREA_PANORAMA,
                 $record->id,
                 self::panorama_options()
+            );
+        } else {
+            get_file_storage()->delete_area_files(
+                $context->id,
+                'local_imageblog',
+                self::FILEAREA_PANORAMA,
+                $record->id
             );
         }
 

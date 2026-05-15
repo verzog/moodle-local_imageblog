@@ -24,6 +24,8 @@
 
 $string['addtagplaceholder']     = 'Type to find or add a tag…';
 $string['alllevels']             = 'All levels';
+$string['appearance_heading'] = 'Appearance';
+$string['appearance_heading_desc'] = 'Customise how the blog looks to readers. These settings apply only to the blog listing and post pages.';
 $string['backtoposts']      = 'Back to posts';
 $string['blogposts']        = 'Blog posts';
 $string['body']                  = 'Post content';
@@ -80,6 +82,8 @@ $string['cpd_submit_factor']         = 'Factor: submitted a diagnosis';
 $string['cpd_submit_factor_desc']    = 'Share of base hours awarded to readers who submitted a diagnosis before the reveal.';
 $string['cpd_view_factor']           = 'Factor: viewed reveal';
 $string['cpd_view_factor_desc']      = 'Share of base hours awarded to readers who view the revealed outcome without submitting a diagnosis.';
+$string['customcss'] = 'Custom CSS';
+$string['customcss_desc'] = 'CSS injected into the blog listing and post pages only. Use this to restyle the blog without affecting the rest of the Moodle site.';
 $string['datefrom']              = 'From';
 $string['datepublished']         = 'Date published';
 $string['daterange']             = 'Date range';
@@ -105,6 +109,8 @@ $string['frequency']                = 'Frequency';
 $string['frequency_daily']          = 'Daily';
 $string['frequency_monthly']        = 'Monthly';
 $string['frequency_weekly']         = 'Weekly';
+$string['haspanorama'] = 'Include a 360° panorama';
+$string['haspanorama_help'] = 'Tick to add an interactive 360° panorama to the top of the post. Leave it unticked to keep the panorama uploader hidden.';
 $string['imageblog:askcasequestion']     = 'Ask a question on a clinical case';
 $string['imageblog:createpost']      = 'Create blog posts';
 $string['imageblog:deleteanypost']   = 'Delete any blog post';
