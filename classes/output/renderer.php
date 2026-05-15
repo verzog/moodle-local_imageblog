@@ -112,9 +112,18 @@ class renderer extends plugin_renderer_base {
         $context = [
             'id'            => $post->id,
             'title'         => format_string($post->title),
-            'body'          => format_text($post->body, $post->bodyformat, [
-                'context' => $syscontext,
-            ]),
+            'body'          => format_text(
+                file_rewrite_pluginfile_urls(
+                    $post->body,
+                    'pluginfile.php',
+                    $syscontext->id,
+                    'local_imageblog',
+                    post::FILEAREA_BODY,
+                    $post->id
+                ),
+                $post->bodyformat,
+                ['context' => $syscontext]
+            ),
             'authorname'    => $author ? fullname($author) : '',
             'datepublished' => $post->timepublished
                 ? userdate($post->timepublished, get_string('strftimedate', 'langconfig'))
@@ -279,7 +288,18 @@ class renderer extends plugin_renderer_base {
             'userreasoning'    => $usersub && $usersub->reasoning
                 ? format_text($usersub->reasoning, FORMAT_PLAIN, ['context' => $syscontext]) : '',
             'outcome'          => $revealed
-                ? format_text($post->caseoutcome, $post->caseoutcomeformat, ['context' => $syscontext])
+                ? format_text(
+                    file_rewrite_pluginfile_urls(
+                        $post->caseoutcome,
+                        'pluginfile.php',
+                        $syscontext->id,
+                        'local_imageblog',
+                        post::FILEAREA_CASEOUTCOME,
+                        $post->id
+                    ),
+                    $post->caseoutcomeformat,
+                    ['context' => $syscontext]
+                )
                 : '',
             'difficulty'       => (int)$post->casedifficulty,
             'diagnoses'        => $diagnoses,
