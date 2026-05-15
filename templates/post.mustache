@@ -9,8 +9,6 @@
     * body          string  — already passed through format_text()
     * authorname    string
     * datepublished string
-    * hasimage      bool
-    * imageurl      string
     * haspanorama   bool
     * panoramaurl   string
     * listingurl    string
@@ -51,14 +49,6 @@
          data-imgurl="{{panoramaurl}}"
          aria-label="{{#str}}panorama, local_imageblog{{/str}}"></div>
     {{/haspanorama}}
-
-    {{#hasimage}}
-        {{^haspanorama}}
-        <img src="{{imageurl}}" alt=""
-             class="local-imageblog-post__image mb-3"
-             {{#lazyimages}}loading="lazy"{{/lazyimages}}>
-        {{/haspanorama}}
-    {{/hasimage}}
 
     <h1 class="local-imageblog-post__title mb-2">{{title}}</h1>
 

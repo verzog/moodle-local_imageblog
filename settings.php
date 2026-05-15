@@ -88,6 +88,19 @@ if ($hassiteconfig) {
         0
     ));
 
+    $settings->add(new admin_setting_heading(
+        'local_imageblog/appearance_heading',
+        get_string('appearance_heading', 'local_imageblog'),
+        get_string('appearance_heading_desc', 'local_imageblog')
+    ));
+    $settings->add(new admin_setting_configtextarea(
+        'local_imageblog/customcss',
+        get_string('customcss', 'local_imageblog'),
+        get_string('customcss_desc', 'local_imageblog'),
+        '',
+        PARAM_RAW
+    ));
+
     $ADMIN->add('local_imageblog_cat', $settings);
 
     $ADMIN->add('local_imageblog_cat', new admin_externalpage(

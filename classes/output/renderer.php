@@ -100,7 +100,6 @@ class renderer extends plugin_renderer_base {
 
         global $USER;
 
-        $imgurl = $post->get_featured_image_url();
         $panourl = $post->get_panorama_url();
         $syscontext = \context_system::instance();
         $canmanage = has_capability('local/imageblog:editanypost', $syscontext);
@@ -128,8 +127,6 @@ class renderer extends plugin_renderer_base {
             'datepublished' => $post->timepublished
                 ? userdate($post->timepublished, get_string('strftimedate', 'langconfig'))
                 : '',
-            'hasimage'      => !empty($imgurl),
-            'imageurl'      => $imgurl ? $imgurl->out(false) : '',
             'haspanorama'   => !empty($panourl),
             'panoramaurl'   => $panourl ? $panourl->out(false) : '',
             'listingurl'    => (new moodle_url('/local/imageblog/index.php'))->out(false),

@@ -82,5 +82,6 @@ if ($post->get_panorama_url()) {
 $renderer = $PAGE->get_renderer('local_imageblog');
 
 echo $OUTPUT->header();
+echo local_imageblog_get_custom_css_html();
 echo $renderer->render_post($post);
 echo $OUTPUT->footer();
