@@ -92,7 +92,8 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
 function local_imageblog_get_taxonomy(): array {
     global $DB;
 
-    $sql = "SELECT DISTINCT u.id, u.firstname, u.lastname
+    $namefields = \core_user\fields::for_name()->get_sql('u', true)->selects;
+    $sql = "SELECT DISTINCT u.id{$namefields}
               FROM {user} u
               JOIN {local_imageblog_posts} p ON p.authorid = u.id
              WHERE p.status = :status
