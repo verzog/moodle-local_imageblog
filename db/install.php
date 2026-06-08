@@ -74,5 +74,7 @@ function xmldb_local_imageblog_install(): bool {
         $DB->insert_record('local_imageblog_levels', (object)$level);
     }
 
+    \local_imageblog\local\author_role::ensure();
+
     return true;
 }

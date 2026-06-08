@@ -111,5 +111,10 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051200, 'local', 'imageblog');
     }
 
+    if ($oldversion < 2026060800) {
+        \local_imageblog\local\author_role::ensure();
+        upgrade_plugin_savepoint(true, 2026060800, 'local', 'imageblog');
+    }
+
     return true;
 }
