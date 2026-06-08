@@ -50,7 +50,7 @@ export const init = () => {
         ? subSelect.options[0].textContent
         : '';
 
-    const rebuild = async () => {
+    const rebuild = async() => {
         const categoryid = categorySelect.value;
         const placeholder = categoryid
             ? initialPlaceholder
