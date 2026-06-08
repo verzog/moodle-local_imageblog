@@ -24,10 +24,14 @@
 
 namespace local_imageblog;
 
+defined('MOODLE_INTERNAL') || die();
+
 global $CFG;
 require_once($CFG->dirroot . '/local/imageblog/lib.php');
 
 /**
+ * Unit tests for plugin library helpers.
+ *
  * @coversNothing
  */
 final class lib_test extends \advanced_testcase {
@@ -83,11 +87,15 @@ final class lib_test extends \advanced_testcase {
         $bob   = $this->getDataGenerator()->create_user(['firstname' => 'Bob']);
 
         $this->setUser($alice);
-        post::save((object)['title' => 'Alice published', 'status' => post::STATUS_PUBLISHED],
-            \context_system::instance());
+        post::save(
+            (object)['title' => 'Alice published', 'status' => post::STATUS_PUBLISHED],
+            \context_system::instance()
+        );
         $this->setUser($bob);
-        post::save((object)['title' => 'Bob draft', 'status' => post::STATUS_DRAFT],
-            \context_system::instance());
+        post::save(
+            (object)['title' => 'Bob draft', 'status' => post::STATUS_DRAFT],
+            \context_system::instance()
+        );
 
         $tax = local_imageblog_get_taxonomy();
         $authorids = array_map(fn($a) => (int)$a['id'], $tax['authors']);

@@ -25,6 +25,8 @@
 namespace local_imageblog;
 
 /**
+ * Unit tests for digest subscription preferences.
+ *
  * @covers \local_imageblog\subscription
  */
 final class subscription_test extends \advanced_testcase {

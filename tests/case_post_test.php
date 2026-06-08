@@ -25,6 +25,8 @@
 namespace local_imageblog;
 
 /**
+ * Unit tests for clinical case operations.
+ *
  * @covers \local_imageblog\case_post
  */
 final class case_post_test extends \advanced_testcase {
@@ -92,7 +94,7 @@ final class case_post_test extends \advanced_testcase {
         $this->resetAfterTest();
         $author = $this->getDataGenerator()->create_user();
         $alice  = $this->getDataGenerator()->create_user(['firstname' => 'Alice', 'lastname' => 'A']);
-        $bob    = $this->getDataGenerator()->create_user(['firstname' => 'Bob',   'lastname' => 'B']);
+        $bob    = $this->getDataGenerator()->create_user(['firstname' => 'Bob', 'lastname' => 'B']);
         $postid = $this->create_case($author);
 
         case_post::ask_question($postid, (int)$alice->id, 'Border?');
@@ -253,7 +255,7 @@ final class case_post_test extends \advanced_testcase {
         case_post::set_best_diagnosis($postid, $diagid);
 
         $total = case_post::get_user_total_hours($postid, (int)$reader->id);
-        // participation 0.75 + best 0.25 = 1.0.
+        // Participation 0.75 + best 0.25 = 1.0.
         $this->assertEqualsWithDelta(1.0, $total, 0.01);
     }
 }
