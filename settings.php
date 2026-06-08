@@ -110,6 +110,13 @@ if ($hassiteconfig) {
         'local/imageblog:view'
     ));
 
+    $ADMIN->add('local_imageblog_cat', new admin_externalpage(
+        'local_imageblog_authors',
+        get_string('manage_authors', 'local_imageblog'),
+        new moodle_url('/local/imageblog/authors.php'),
+        'moodle/role:assign'
+    ));
+
     foreach (['category', 'subcategory', 'tag', 'level'] as $tax) {
         $ADMIN->add('local_imageblog_cat', new admin_externalpage(
             'local_imageblog_manage_' . $tax,
