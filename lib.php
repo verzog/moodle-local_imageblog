@@ -42,28 +42,6 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
     require_login();
     require_capability('local/imageblog:view', $context);
 
-    // Static third-party assets shipped with the plugin (Pannellum, etc.)
-    // are served straight from disk so the upstream library's relative URL
-    // references resolve under the same pluginfile.php path.
-    if ($filearea === 'thirdparty') {
-        $relparts = array_slice($args, 1); // First arg is the unused itemid.
-        if (!$relparts) {
-            return false;
-        }
-        $relpath = implode('/', $relparts);
-        $diskpath = realpath(__DIR__ . '/thirdparty/' . $relpath);
-        $allowedroot = realpath(__DIR__ . '/thirdparty');
-        if (
-            !$diskpath || !$allowedroot
-                || strpos($diskpath, $allowedroot . DIRECTORY_SEPARATOR) !== 0
-                || !is_file($diskpath)
-        ) {
-            return false;
-        }
-        send_file($diskpath, basename($diskpath), DAYSECS, 0, false, $forcedownload);
-        return true;
-    }
-
     $allowedareas = ['featured_image', 'post_images', 'panorama', 'case_outcome'];
     if (!in_array($filearea, $allowedareas, true)) {
         return false;

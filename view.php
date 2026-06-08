@@ -41,7 +41,13 @@ if (!$post || $post->status !== \local_imageblog\post::STATUS_PUBLISHED) {
 
 if ($action === 'unpublish') {
     require_sesskey();
-    require_capability('local/imageblog:editanypost', $context);
+    $isauthor = ((int)$post->authorid === (int)$USER->id);
+    $canpublishown = $isauthor
+        && has_capability('local/imageblog:createpost', $context)
+        && has_capability('local/imageblog:publishpost', $context);
+    if (!has_capability('local/imageblog:editanypost', $context) && !$canpublishown) {
+        throw new moodle_exception('error_nopermission', 'local_imageblog');
+    }
     \local_imageblog\post::set_status($post->id, \local_imageblog\post::STATUS_DRAFT);
     redirect(
         new moodle_url('/local/imageblog/view.php', ['id' => $post->id]),
@@ -49,6 +55,17 @@ if ($action === 'unpublish') {
         null,
         \core\output\notification::NOTIFY_SUCCESS
     );
+}
+
+// Award the view-only CPD for a revealed case when the viewer is eligible.
+// Done here (after access checks, before render) rather than in the renderer
+// so reads stay side-effect-free.
+if (
+    $post->posttype === \local_imageblog\case_post::TYPE_CASE
+    && !empty($post->caserevealed)
+    && has_capability('local/imageblog:submitdiagnosis', $context)
+) {
+    \local_imageblog\case_post::award_view_if_eligible($post->id, (int)$USER->id);
 }
 
 $PAGE->set_context($context);
@@ -59,22 +76,8 @@ $PAGE->set_pagelayout('standard');
 $PAGE->requires->js_call_amd('local_imageblog/lightbox', 'init');
 
 if ($post->get_panorama_url()) {
-    $jsurl = moodle_url::make_pluginfile_url(
-        $context->id,
-        'local_imageblog',
-        'thirdparty',
-        0,
-        '/pannellum/',
-        'pannellum.js'
-    )->out(false);
-    $cssurl = moodle_url::make_pluginfile_url(
-        $context->id,
-        'local_imageblog',
-        'thirdparty',
-        0,
-        '/pannellum/',
-        'pannellum.css'
-    )->out(false);
+    $jsurl  = (new moodle_url('/local/imageblog/thirdparty/pannellum/pannellum.js'))->out(false);
+    $cssurl = (new moodle_url('/local/imageblog/thirdparty/pannellum/pannellum.css'))->out(false);
     $PAGE->requires->js_call_amd('local_imageblog/panorama', 'init', [$jsurl, $cssurl]);
 }
 

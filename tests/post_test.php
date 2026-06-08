@@ -31,6 +31,20 @@ namespace local_imageblog;
  */
 final class post_test extends \advanced_testcase {
     /**
+     * Grant the publish/create capabilities to the authenticated user role so
+     * the test fixtures (which use plain users, not managers) can save posts
+     * in any status.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $syscontext = \context_system::instance();
+        $userrole = $GLOBALS['DB']->get_field('role', 'id', ['shortname' => 'user'], MUST_EXIST);
+        assign_capability('local/imageblog:createpost', CAP_ALLOW, $userrole, $syscontext->id, true);
+        assign_capability('local/imageblog:publishpost', CAP_ALLOW, $userrole, $syscontext->id, true);
+    }
+
+    /**
      * Saving a new draft post creates a record owned by the current user.
      */
     public function test_save_creates_post_for_current_user(): void {

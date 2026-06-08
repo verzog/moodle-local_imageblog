@@ -139,21 +139,31 @@ class subscription {
     public static function get_due_subscribers(int $now): array {
         global $DB;
 
+        $params = [
+            'fdaily'   => self::FREQ_DAILY,
+            'idaily'   => self::interval_seconds(self::FREQ_DAILY),
+            'fweekly'  => self::FREQ_WEEKLY,
+            'iweekly'  => self::interval_seconds(self::FREQ_WEEKLY),
+            'fmonthly' => self::FREQ_MONTHLY,
+            'imonthly' => self::interval_seconds(self::FREQ_MONTHLY),
+            'now1'     => $now,
+            'now2'     => $now,
+            'now3'     => $now,
+        ];
+
         $sql = "SELECT s.id AS subid, s.userid, s.frequency, s.lastsent,
                        u.id AS uid, u.email, u.firstname, u.lastname, u.mailformat,
                        u.auth, u.suspended, u.deleted, u.emailstop
                   FROM {local_imageblog_subs} s
                   JOIN {user} u ON u.id = s.userid
-                 WHERE u.deleted = 0 AND u.suspended = 0 AND u.emailstop = 0";
-        $rows = $DB->get_records_sql($sql);
-
-        $due = [];
-        foreach ($rows as $row) {
-            $interval = self::interval_seconds($row->frequency);
-            if (empty($row->lastsent) || ((int)$row->lastsent + $interval) <= $now) {
-                $due[] = $row;
-            }
-        }
-        return $due;
+                 WHERE u.deleted = 0 AND u.suspended = 0 AND u.emailstop = 0
+                   AND u.confirmed = 1
+                   AND (
+                        s.lastsent IS NULL
+                        OR (s.frequency = :fdaily   AND s.lastsent + :idaily   <= :now1)
+                        OR (s.frequency = :fweekly  AND s.lastsent + :iweekly  <= :now2)
+                        OR (s.frequency = :fmonthly AND s.lastsent + :imonthly <= :now3)
+                   )";
+        return array_values($DB->get_records_sql($sql, $params));
     }
 }

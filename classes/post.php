@@ -226,10 +226,31 @@ class post {
         $now = time();
         $isnew = empty($data->id);
 
+        $requestedstatus = $data->status ?? self::STATUS_DRAFT;
+        if (!in_array($requestedstatus, [self::STATUS_DRAFT, self::STATUS_PUBLISHED, self::STATUS_ARCHIVED], true)) {
+            $requestedstatus = self::STATUS_DRAFT;
+        }
+
+        $existing = $isnew
+            ? null
+            : $DB->get_record('local_imageblog_posts', ['id' => (int)$data->id], '*', MUST_EXIST);
+
+        // Status transitions to/from published require the publish capability.
+        $canpublish = has_capability('local/imageblog:publishpost', $context)
+            || has_capability('local/imageblog:editanypost', $context);
+        $previousstatus = $existing->status ?? self::STATUS_DRAFT;
+        if (!$canpublish) {
+            if ($requestedstatus === self::STATUS_PUBLISHED && $previousstatus !== self::STATUS_PUBLISHED) {
+                $requestedstatus = self::STATUS_DRAFT;
+            } else if ($previousstatus === self::STATUS_PUBLISHED && $requestedstatus !== self::STATUS_PUBLISHED) {
+                $requestedstatus = self::STATUS_PUBLISHED;
+            }
+        }
+
         $record = new \stdClass();
         $record->title       = $data->title;
         $record->summary     = $data->summary ?? '';
-        $record->status      = $data->status ?? self::STATUS_DRAFT;
+        $record->status      = $requestedstatus;
         $record->lazyimages  = !empty($data->lazyimages) ? 1 : 0;
         $record->bodyformat  = FORMAT_HTML;
         $record->body        = '';
@@ -247,8 +268,7 @@ class post {
             $record->timepublished = ($record->status === self::STATUS_PUBLISHED) ? $now : null;
             $record->id = (int)$DB->insert_record('local_imageblog_posts', $record);
         } else {
-            $record->id = (int)$data->id;
-            $existing = $DB->get_record('local_imageblog_posts', ['id' => $record->id], '*', MUST_EXIST);
+            $record->id = (int)$existing->id;
             if (
                 $existing->status !== self::STATUS_PUBLISHED
                 && $record->status === self::STATUS_PUBLISHED
