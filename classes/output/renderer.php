@@ -145,7 +145,7 @@ class renderer extends plugin_renderer_base {
             ))->out(false),
             'iscase'        => $post->posttype === case_post::TYPE_CASE,
             'casepanel'     => $post->posttype === case_post::TYPE_CASE
-                ? $this->build_case_context($post, (int)$USER->id, $isowner || $canmanage)
+                ? $this->build_case_context($post, (int)$USER->id, $canmanage || ($isowner && $canauthor))
                 : null,
         ];
 
@@ -224,11 +224,6 @@ class renderer extends plugin_renderer_base {
         $revealed = !empty($post->caserevealed);
         $usersub = case_post::get_user_diagnosis($post->id, $userid);
         $allquestions = case_post::get_questions($post->id);
-
-        // Once revealed, award the view-only CPD for non-participants.
-        if ($revealed && !$usersub && has_capability('local/imageblog:submitdiagnosis', $syscontext, $userid)) {
-            case_post::award_view_if_eligible($post->id, $userid);
-        }
 
         $diagnoses = [];
         if ($revealed || $isauthor) {

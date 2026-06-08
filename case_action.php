@@ -43,8 +43,10 @@ if ($post->posttype !== \local_imageblog\case_post::TYPE_CASE) {
     throw new moodle_exception('error_notacase', 'local_imageblog');
 }
 
-$isauthor = ((int)$post->authorid === (int)$USER->id)
-    || has_capability('local/imageblog:editanypost', $context);
+// "Can manage this case" — author with createpost still held, or any-post editor.
+$canmanagecase = has_capability('local/imageblog:editanypost', $context)
+    || ((int)$post->authorid === (int)$USER->id
+        && has_capability('local/imageblog:createpost', $context));
 
 $returnurl = new moodle_url('/local/imageblog/view.php', ['id' => $postid]);
 
@@ -84,7 +86,7 @@ switch ($action) {
         break;
 
     case 'answer':
-        if (!$isauthor) {
+        if (!$canmanagecase) {
             throw new moodle_exception('error_nopermission', 'local_imageblog');
         }
         $qid = required_param('questionid', PARAM_INT);
@@ -102,7 +104,7 @@ switch ($action) {
         break;
 
     case 'reveal':
-        if (!$isauthor) {
+        if (!$canmanagecase) {
             throw new moodle_exception('error_nopermission', 'local_imageblog');
         }
         \local_imageblog\case_post::reveal($postid);
@@ -115,7 +117,7 @@ switch ($action) {
         break;
 
     case 'markbest':
-        if (!$isauthor) {
+        if (!$canmanagecase) {
             throw new moodle_exception('error_nopermission', 'local_imageblog');
         }
         if (empty($post->caserevealed)) {
