@@ -74,7 +74,11 @@ function xmldb_local_imageblog_install(): bool {
         $DB->insert_record('local_imageblog_levels', (object)$level);
     }
 
-    \local_imageblog\local\author_role::ensure();
+    // The "Blog author" role can't be created here — the capabilities
+    // declared in db/access.php are registered after this install hook
+    // returns, so calling assign_capability() now would fail. The role is
+    // created lazily on first visit to the Manage blog authors admin page
+    // (see authors.php), which is also idempotent for re-installs.
 
     return true;
 }
