@@ -339,8 +339,8 @@ class provider implements
         $DB->delete_records_select('local_imageblog_case_diags', "userid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_case_cpd', "userid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_subs', "userid $insql", $inparams);
-        // For questions, keep the row but null out user-identifying fields when
-        // a different user originally answered, otherwise drop the row.
+        // Drop rows where the user asked the question; for rows they only
+        // answered, keep the question intact and null out the answer fields.
         $DB->delete_records_select('local_imageblog_case_qs', "userid $insql", $inparams);
         $DB->execute(
             "UPDATE {local_imageblog_case_qs}

@@ -189,23 +189,36 @@ class post {
         $wheresql = implode(' AND ', $where);
         $page     = max(0, (int)($filters['page'] ?? 0));
 
-        // Postgres requires DISTINCT ORDER BY columns to appear in the
-        // SELECT list, so expose the sort key explicitly.
-        $sql = "SELECT DISTINCT p.*,
-                       COALESCE(p.timepublished, p.timemodified, p.timecreated) AS sortkey
-                  FROM {local_imageblog_posts} p
-                  $joins
-                 WHERE $wheresql
-              ORDER BY sortkey DESC, p.id DESC";
+        // Fetch ids first so the DISTINCT only operates on the id +
+        // sort-key columns — DISTINCT over the full row would have to sort
+        // body/summary text columns and is rejected by Postgres.
+        $idsql = "SELECT DISTINCT p.id,
+                         COALESCE(p.timepublished, p.timemodified, p.timecreated) AS sortkey
+                    FROM {local_imageblog_posts} p
+                    $joins
+                   WHERE $wheresql
+                ORDER BY sortkey DESC, p.id DESC";
 
         $countsql = "SELECT COUNT(DISTINCT p.id)
                        FROM {local_imageblog_posts} p
                        $joins
                       WHERE $wheresql";
 
-        $total   = (int)$DB->count_records_sql($countsql, $params);
-        $records = $DB->get_records_sql($sql, $params, $page * $perpage, $perpage);
-        $posts   = array_values(array_map([self::class, 'from_record'], $records));
+        $total = (int)$DB->count_records_sql($countsql, $params);
+        $idrows = $DB->get_records_sql($idsql, $params, $page * $perpage, $perpage);
+        $ids = array_map(fn($r) => (int)$r->id, array_values($idrows));
+        if (!$ids) {
+            return ['posts' => [], 'total' => $total];
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'pid');
+        $records = $DB->get_records_select('local_imageblog_posts', "id $insql", $inparams);
+        $ordered = [];
+        foreach ($ids as $id) {
+            if (isset($records[$id])) {
+                $ordered[] = $records[$id];
+            }
+        }
+        $posts = array_map([self::class, 'from_record'], $ordered);
 
         return ['posts' => $posts, 'total' => $total];
     }
@@ -440,9 +453,15 @@ class post {
             if ($value === '' || $value === null) {
                 continue;
             }
-            if (is_numeric($value)) {
-                $ids[] = (int)$value;
-                continue;
+            // Treat as an existing id only when a row with that id exists;
+            // otherwise (including numeric tag names like "2024") fall through
+            // to the slug/create path.
+            if (is_int($value) || (is_string($value) && ctype_digit($value))) {
+                $candidateid = (int)$value;
+                if ($candidateid > 0 && $DB->record_exists('local_imageblog_tags', ['id' => $candidateid])) {
+                    $ids[] = $candidateid;
+                    continue;
+                }
             }
             $name = trim((string)$value);
             if ($name === '') {

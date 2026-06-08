@@ -203,10 +203,48 @@ class case_post {
      */
     public static function award_cpd_for_case(int $postid): void {
         global $DB;
+        $post = $DB->get_record('local_imageblog_posts', ['id' => $postid], '*', MUST_EXIST);
+        if ($post->posttype !== self::TYPE_CASE || empty($post->caserevealed)) {
+            return;
+        }
+        // Compute hours once — config and difficulty don't change inside the loop.
+        $hours = self::compute_hours((int)$post->casedifficulty, self::REASON_PARTICIPATION);
+        if ($hours <= 0) {
+            return;
+        }
         $diags = $DB->get_records('local_imageblog_case_diags', ['postid' => $postid], '', 'id, userid');
         foreach ($diags as $d) {
-            self::record_cpd($postid, (int)$d->userid, self::REASON_PARTICIPATION);
+            self::upsert_cpd_row($postid, (int)$d->userid, self::REASON_PARTICIPATION, $hours);
         }
+    }
+
+    /**
+     * Insert or refresh a CPD row with a pre-computed hours value.
+     *
+     * @param int    $postid
+     * @param int    $userid
+     * @param string $reason
+     * @param float  $hours
+     */
+    private static function upsert_cpd_row(int $postid, int $userid, string $reason, float $hours): void {
+        global $DB;
+        $existing = $DB->get_record(
+            'local_imageblog_case_cpd',
+            ['postid' => $postid, 'userid' => $userid, 'reason' => $reason]
+        );
+        if ($existing) {
+            $existing->hours       = $hours;
+            $existing->timeawarded = time();
+            $DB->update_record('local_imageblog_case_cpd', $existing);
+            return;
+        }
+        $DB->insert_record('local_imageblog_case_cpd', (object)[
+            'postid'      => $postid,
+            'userid'      => $userid,
+            'hours'       => $hours,
+            'reason'      => $reason,
+            'timeawarded' => time(),
+        ]);
     }
 
     /**
@@ -228,24 +266,7 @@ class case_post {
         if ($hours <= 0) {
             return;
         }
-        $existing = $DB->get_record(
-            'local_imageblog_case_cpd',
-            ['postid' => $postid, 'userid' => $userid, 'reason' => $reason]
-        );
-        if ($existing) {
-            $existing->hours       = $hours;
-            $existing->timeawarded = time();
-            $DB->update_record('local_imageblog_case_cpd', $existing);
-            return;
-        }
-        $record = (object)[
-            'postid'      => $postid,
-            'userid'      => $userid,
-            'hours'       => $hours,
-            'reason'      => $reason,
-            'timeawarded' => time(),
-        ];
-        $DB->insert_record('local_imageblog_case_cpd', $record);
+        self::upsert_cpd_row($postid, $userid, $reason, $hours);
     }
 
     /**

@@ -121,8 +121,7 @@ class taxonomy {
                 break;
             case self::TYPE_TAG:
                 $record->slug = self::slugify($data->slug ?? $record->name);
-                self::ensure_unique_slug($record->slug, (int)($data->id ?? 0));
-                break;
+                return self::save_tag_with_unique_slug($record, (int)($data->id ?? 0));
             case self::TYPE_LEVEL:
                 $colour = (string)($data->colourkey ?? 'amber');
                 if (!in_array($colour, self::LEVEL_COLOURS, true)) {
@@ -183,22 +182,72 @@ class taxonomy {
      * @return string
      */
     public static function slugify(string $value): string {
-        $value = strtolower(trim($value));
+        $value = trim($value);
+        // Transliterate to ASCII when the intl extension is available so
+        // non-ASCII titles (accents, CJK, etc.) don't all collapse to "tag".
+        if (function_exists('transliterator_transliterate')) {
+            $transliterated = transliterator_transliterate(
+                'Any-Latin; Latin-ASCII; Lower()',
+                $value
+            );
+            if ($transliterated !== false) {
+                $value = $transliterated;
+            }
+        } else if (function_exists('mb_strtolower')) {
+            $value = mb_strtolower($value, 'UTF-8');
+        } else {
+            $value = strtolower($value);
+        }
         $value = preg_replace('/[^a-z0-9]+/', '-', $value);
         $value = trim((string)$value, '-');
         return $value !== '' ? $value : 'tag';
     }
 
     /**
-     * Ensure the given tag slug is unique by appending -2, -3, etc. when needed.
+     * Insert or update a tag, ensuring slug uniqueness against the database's
+     * UNIQUE index even under concurrent writers.
      *
-     * @param string $slug Mutated by reference to a unique value.
-     * @param int $excludeid Existing tag id to ignore (for updates).
+     * Computes a candidate slug (-2, -3, …) then retries on insert conflict
+     * because a second writer can claim the same slug between the existence
+     * check and the insert.
+     *
+     * @param \stdClass $record   Pre-populated tag record (without id on insert).
+     * @param int       $existingid Existing tag id (0 on insert).
+     * @return int Tag id.
      */
-    private static function ensure_unique_slug(string &$slug, int $excludeid = 0): void {
+    private static function save_tag_with_unique_slug(\stdClass $record, int $existingid): int {
         global $DB;
-        $candidate = $slug;
-        $i = 2;
+        $base = $record->slug;
+        $maxattempts = 8;
+        for ($attempt = 0; $attempt < $maxattempts; $attempt++) {
+            $record->slug = self::pick_slug_candidate($base, $existingid, $attempt);
+            try {
+                if ($existingid) {
+                    $record->id = $existingid;
+                    $DB->update_record('local_imageblog_tags', $record);
+                    return $existingid;
+                }
+                return (int)$DB->insert_record('local_imageblog_tags', $record);
+            } catch (\dml_write_exception $e) {
+                // Unique-index conflict from a racing writer — try the next suffix.
+                continue;
+            }
+        }
+        throw new \moodle_exception('error_nameempty', 'local_imageblog');
+    }
+
+    /**
+     * Pick the next free slug candidate by appending -2, -3, … as needed.
+     *
+     * @param string $base
+     * @param int    $excludeid
+     * @param int    $attempt   0 on the first try, then 1, 2, …
+     * @return string
+     */
+    private static function pick_slug_candidate(string $base, int $excludeid, int $attempt): string {
+        global $DB;
+        $candidate = $base;
+        $i = 2 + $attempt;
         $params = ['slug' => $candidate];
         $sql = 'slug = :slug';
         if ($excludeid) {
@@ -206,9 +255,9 @@ class taxonomy {
             $params['excludeid'] = $excludeid;
         }
         while ($DB->record_exists_select('local_imageblog_tags', $sql, $params)) {
-            $candidate = $slug . '-' . $i++;
+            $candidate = $base . '-' . $i++;
             $params['slug'] = $candidate;
         }
-        $slug = $candidate;
+        return $candidate;
     }
 }

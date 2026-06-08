@@ -59,7 +59,12 @@ switch ($action) {
         $diagnosis = trim(required_param('diagnosis', PARAM_TEXT));
         $reasoning = trim(optional_param('reasoning', '', PARAM_TEXT));
         if ($diagnosis === '') {
-            redirect($returnurl, get_string('required'), null, \core\output\notification::NOTIFY_ERROR);
+            redirect(
+                $returnurl,
+                get_string('error_emptyfield', 'local_imageblog'),
+                null,
+                \core\output\notification::NOTIFY_ERROR
+            );
         }
         \local_imageblog\case_post::submit_diagnosis($postid, (int)$USER->id, $diagnosis, $reasoning);
         redirect(
@@ -74,7 +79,12 @@ switch ($action) {
         require_capability('local/imageblog:askcasequestion', $context);
         $question = trim(required_param('question', PARAM_TEXT));
         if ($question === '') {
-            redirect($returnurl, get_string('required'), null, \core\output\notification::NOTIFY_ERROR);
+            redirect(
+                $returnurl,
+                get_string('error_emptyfield', 'local_imageblog'),
+                null,
+                \core\output\notification::NOTIFY_ERROR
+            );
         }
         \local_imageblog\case_post::ask_question($postid, (int)$USER->id, $question);
         redirect(
@@ -92,7 +102,12 @@ switch ($action) {
         $qid = required_param('questionid', PARAM_INT);
         $answer = trim(required_param('answer', PARAM_TEXT));
         if ($answer === '') {
-            redirect($returnurl, get_string('required'), null, \core\output\notification::NOTIFY_ERROR);
+            redirect(
+                $returnurl,
+                get_string('error_emptyfield', 'local_imageblog'),
+                null,
+                \core\output\notification::NOTIFY_ERROR
+            );
         }
         \local_imageblog\case_post::answer_question($qid, (int)$USER->id, $answer);
         redirect(
@@ -127,7 +142,7 @@ switch ($action) {
         \local_imageblog\case_post::set_best_diagnosis($postid, $diagid);
         redirect(
             $returnurl,
-            get_string('case_revealed', 'local_imageblog'),
+            get_string('changessaved'),
             null,
             \core\output\notification::NOTIFY_SUCCESS
         );
