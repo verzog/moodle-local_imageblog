@@ -92,10 +92,11 @@ class renderer extends plugin_renderer_base {
     public function render_post(post $post): string {
         global $DB;
 
+        $namefields = implode(', ', \core_user\fields::get_name_fields());
         $author = $DB->get_record(
             'user',
             ['id' => $post->authorid],
-            'id, firstname, lastname',
+            'id, ' . $namefields,
             IGNORE_MISSING
         );
 
