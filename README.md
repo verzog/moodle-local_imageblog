@@ -52,7 +52,7 @@ changes have been made to the upstream source.
 
 ## License ##
 
-2026 Skin Cancer College of Australasia
+2026 Vernon Spain
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

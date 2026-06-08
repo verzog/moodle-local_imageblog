@@ -21,7 +21,7 @@
  * element using the URL stored on its `data-imgurl` attribute.
  *
  * @module     local_imageblog/panorama
- * @copyright  2026 Skin Cancer College of Australasia
+ * @copyright  2026 Vernon Spain
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
