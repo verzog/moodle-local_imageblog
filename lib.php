@@ -47,8 +47,14 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
         return false;
     }
 
+    if (count($args) < 2) {
+        return false;
+    }
     $itemid   = (int)array_shift($args);
     $filename = array_pop($args);
+    if ($filename === null || $filename === '') {
+        return false;
+    }
     $filepath = $args ? '/' . implode('/', $args) . '/' : '/';
 
     $fs   = get_file_storage();

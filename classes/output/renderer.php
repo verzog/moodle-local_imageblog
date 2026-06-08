@@ -52,9 +52,10 @@ class renderer extends plugin_renderer_base {
         array $filters,
         array $taxonomy
     ): string {
+        $batch = $this->prefetch_card_data($posts);
         $cards = [];
         foreach ($posts as $p) {
-            $cards[] = $this->build_card_context($p);
+            $cards[] = $this->build_card_context($p, $batch);
         }
 
         // Build a categoryid -> [{id, name}] JSON map for the dependent
@@ -312,23 +313,104 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
+     * Pre-fetch tags, levels, authors and featured images for a page of posts
+     * in a fixed number of queries, so build_card_context doesn't have to do
+     * per-post lookups.
+     *
+     * @param post[] $posts
+     * @return array{tags: array, levels: array, authors: array, images: array}
+     */
+    private function prefetch_card_data(array $posts): array {
+        global $DB;
+        $batch = ['tags' => [], 'levels' => [], 'authors' => [], 'images' => []];
+        if (!$posts) {
+            return $batch;
+        }
+
+        $postids   = array_map(fn($p) => (int)$p->id, $posts);
+        $authorids = array_values(array_unique(array_map(fn($p) => (int)$p->authorid, $posts)));
+
+        [$pinsql, $pparams] = $DB->get_in_or_equal($postids, SQL_PARAMS_NAMED, 'pid');
+
+        $tagrows = $DB->get_records_sql(
+            "SELECT pt.id AS rowid, pt.postid, t.name
+               FROM {local_imageblog_post_tags} pt
+               JOIN {local_imageblog_tags} t ON t.id = pt.tagid
+              WHERE pt.postid $pinsql
+           ORDER BY t.name",
+            $pparams
+        );
+        foreach ($tagrows as $r) {
+            $batch['tags'][(int)$r->postid][] = $r->name;
+        }
+
+        $levelrows = $DB->get_records_sql(
+            "SELECT pl.id AS rowid, pl.postid, l.name, l.colourkey, l.sortorder
+               FROM {local_imageblog_post_levels} pl
+               JOIN {local_imageblog_levels} l ON l.id = pl.levelid
+              WHERE pl.postid $pinsql
+           ORDER BY l.sortorder",
+            $pparams
+        );
+        foreach ($levelrows as $r) {
+            $batch['levels'][(int)$r->postid][] = ['name' => $r->name, 'colourkey' => $r->colourkey];
+        }
+
+        if ($authorids) {
+            [$ainsql, $aparams] = $DB->get_in_or_equal($authorids, SQL_PARAMS_NAMED, 'uid');
+            $batch['authors'] = $DB->get_records_select(
+                'user',
+                "id $ainsql",
+                $aparams,
+                '',
+                'id, firstname, lastname, firstnamephonetic, lastnamephonetic, middlename, alternatename'
+            );
+        }
+
+        // One file-storage query covers all featured images for the page.
+        $syscontext = \context_system::instance();
+        $fs = get_file_storage();
+        $files = $fs->get_area_files(
+            $syscontext->id,
+            'local_imageblog',
+            post::FILEAREA_FEATURED,
+            false,
+            'itemid, filepath, filename',
+            false
+        );
+        $wanted = array_flip($postids);
+        foreach ($files as $f) {
+            $iid = (int)$f->get_itemid();
+            if (!isset($wanted[$iid]) || isset($batch['images'][$iid])) {
+                continue;
+            }
+            $batch['images'][$iid] = \moodle_url::make_pluginfile_url(
+                $f->get_contextid(),
+                $f->get_component(),
+                $f->get_filearea(),
+                $f->get_itemid(),
+                $f->get_filepath(),
+                $f->get_filename()
+            );
+        }
+
+        return $batch;
+    }
+
+    /**
      * Build the Mustache context for a single card.
      *
-     * @param post $post
+     * @param post  $post
+     * @param array $batch Pre-fetched data from prefetch_card_data().
      * @return array
      */
-    private function build_card_context(post $post): array {
-        global $DB, $USER;
+    private function build_card_context(post $post, array $batch = []): array {
+        global $USER;
 
-        $author = $DB->get_record(
-            'user',
-            ['id' => $post->authorid],
-            'id, firstname, lastname',
-            IGNORE_MISSING
-        );
-        $imgurl = $post->get_featured_image_url();
-        $tags   = $post->get_tags();
-        $levels = $post->get_levels();
+        $author = $batch['authors'][$post->authorid] ?? null;
+        $imgurl = $batch['images'][$post->id] ?? null;
+        $tags   = $batch['tags'][$post->id] ?? [];
+        $levels = $batch['levels'][$post->id] ?? [];
 
         $syscontext = \context_system::instance();
         $isowner    = ($post->authorid === (int)$USER->id);
@@ -346,10 +428,10 @@ class renderer extends plugin_renderer_base {
                 : '',
             'hasimage'      => !empty($imgurl),
             'imageurl'      => $imgurl ? $imgurl->out(false) : '',
-            'tags'          => array_map(fn($t) => ['name' => format_string($t->name)], $tags),
+            'tags'          => array_map(fn($name) => ['name' => format_string($name)], $tags),
             'levels'        => array_map(fn($l) => [
-                'name'      => format_string($l->name),
-                'colourkey' => $l->colourkey,
+                'name'      => format_string($l['name']),
+                'colourkey' => $l['colourkey'],
             ], $levels),
             'hastags'       => !empty($tags),
             'haslevels'     => !empty($levels),

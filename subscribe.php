@@ -35,6 +35,16 @@ $PAGE->set_title(get_string('subscribe_title', 'local_imageblog'));
 $PAGE->set_heading(get_string('subscribe_title', 'local_imageblog'));
 $PAGE->set_pagelayout('standard');
 
+if (!get_config('local_imageblog', 'subscriptions_enabled')) {
+    echo $OUTPUT->header();
+    echo $OUTPUT->notification(
+        get_string('subscribe_disabled', 'local_imageblog'),
+        \core\output\notification::NOTIFY_WARNING
+    );
+    echo $OUTPUT->footer();
+    exit;
+}
+
 $existing = \local_imageblog\subscription::get_for_user((int)$USER->id);
 
 $form = new \local_imageblog\form\subscription_form(
@@ -63,16 +73,6 @@ if ($data = $form->get_data()) {
         null,
         \core\output\notification::NOTIFY_SUCCESS
     );
-}
-
-if (!get_config('local_imageblog', 'subscriptions_enabled')) {
-    echo $OUTPUT->header();
-    echo $OUTPUT->notification(
-        get_string('subscribe_disabled', 'local_imageblog'),
-        \core\output\notification::NOTIFY_WARNING
-    );
-    echo $OUTPUT->footer();
-    exit;
 }
 
 echo $OUTPUT->header();
