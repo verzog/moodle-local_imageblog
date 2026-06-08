@@ -24,14 +24,14 @@
 
 $string['addtagplaceholder']     = 'Type to find or add a tag…';
 $string['alllevels']             = 'All levels';
+$string['appearance_heading'] = 'Appearance';
+$string['appearance_heading_desc'] = 'Customise how the blog looks to readers. These settings apply only to the blog listing and post pages.';
 $string['author_add']                = 'Add blog author';
 $string['author_add_placeholder']    = 'Search for a user…';
 $string['author_added']              = 'Blog author added.';
 $string['author_removed']            = 'Blog author removed.';
 $string['author_role_desc']          = 'Grants permission to create, publish and edit any blog post on the Image blog. Assigned from the admin "Manage blog authors" screen.';
 $string['author_role_name']          = 'Blog author';
-$string['appearance_heading'] = 'Appearance';
-$string['appearance_heading_desc'] = 'Customise how the blog looks to readers. These settings apply only to the blog listing and post pages.';
 $string['backtoposts']      = 'Back to posts';
 $string['blogposts']        = 'Blog posts';
 $string['body']                  = 'Post content';
@@ -102,8 +102,8 @@ $string['digest_unsubscribe']       = 'Unsubscribe or change frequency';
 $string['digest_viewall']           = 'View all posts on the site';
 $string['editpost']         = 'Edit post';
 $string['error_caseclosed']          = 'Submissions are closed for this case.';
-$string['error_emptyfield']          = 'This field cannot be empty.';
 $string['error_casenotrevealed']     = 'Outcome cannot be acted on — it has not been revealed yet.';
+$string['error_emptyfield']          = 'This field cannot be empty.';
 $string['error_invalidstatus']       = 'Invalid post status.';
 $string['error_nameempty']           = 'Name cannot be empty.';
 $string['error_nopermission']        = 'You do not have permission to perform this action.';
