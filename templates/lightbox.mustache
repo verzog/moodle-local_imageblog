@@ -2,15 +2,20 @@
     @template local_imageblog/lightbox
 
     Lightbox dialog injected by the lightbox.js module on the post view page.
-    Rendered once on first image click and reused.
+    Rendered once on first image click; src and alt are populated by JS as
+    the user clicks individual images.
 
-    No context variables.
+    Context variables required for this template:
+    * (none)
+
+    Example context (json):
+    {}
 }}
 <dialog class="local-imageblog-lightbox">
     <button type="button" class="local-imageblog-lightbox__close" data-action="close"
             aria-label="{{#str}}close, local_imageblog{{/str}}">&times;</button>
     <figure class="local-imageblog-lightbox__figure">
-        <img src="" alt="">
+        <img alt="" data-region="local-imageblog-lightbox__image">
         <figcaption hidden></figcaption>
     </figure>
 </dialog>

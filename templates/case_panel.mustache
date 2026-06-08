@@ -3,7 +3,30 @@
 
     Interactive panel rendered under a case-type post.
 
-    Context: see renderer::build_case_context().
+    Context variables required for this template:
+    * See renderer::build_case_context() for the full shape.
+
+    Example context (json):
+    {
+        "postid": 1,
+        "revealed": false,
+        "isauthor": false,
+        "cansubmit": false,
+        "canask": false,
+        "hasusersub": false,
+        "userdiagnosis": "",
+        "userreasoning": "",
+        "outcome": "",
+        "diagnoses": [],
+        "hasdiagnoses": false,
+        "questions": [],
+        "hasquestions": false,
+        "sesskey": "sesskey",
+        "actionurl": "https://moodle.local/local/imageblog/case_action.php",
+        "revealurl": "https://moodle.local/local/imageblog/case_action.php?postid=1&action=reveal&sesskey=sesskey",
+        "cpdtotal": "",
+        "hascpd": false
+    }
 }}
 <div class="local-imageblog-case mt-4 p-3 border rounded">
 

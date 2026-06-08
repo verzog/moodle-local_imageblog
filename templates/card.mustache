@@ -3,7 +3,7 @@
 
     Single blog post card — used in the listing grid.
 
-    Context variables:
+    Context variables required for this template:
     * id            int
     * viewurl       string
     * title         string
@@ -21,6 +21,27 @@
     * statuslabel   string
     * canedit       bool
     * editurl       string
+
+    Example context (json):
+    {
+        "id": 1,
+        "viewurl": "https://moodle.local/local/imageblog/view.php?id=1",
+        "title": "Dermoscopy of pigmented lesions",
+        "summary": "A short visual summary",
+        "authorname": "Jane Doe",
+        "datepublished": "1 June 2026",
+        "hasimage": true,
+        "imageurl": "https://moodle.local/pluginfile.php/1/local_imageblog/featured_image/1/example.jpg",
+        "tags": [{"name": "dermoscopy"}, {"name": "screening"}],
+        "levels": [{"name": "Beginner", "colourkey": "teal"}],
+        "hastags": true,
+        "haslevels": true,
+        "isdraft": false,
+        "isarchived": false,
+        "statuslabel": "",
+        "canedit": true,
+        "editurl": "https://moodle.local/local/imageblog/edit.php?id=1"
+    }
 }}
 <article class="local-imageblog-card">
     <a href="{{viewurl}}" class="local-imageblog-card__link" tabindex="-1" aria-hidden="true">

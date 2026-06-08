@@ -4,11 +4,19 @@
     Inline status indicator next to a file input while images are processed
     in the browser.
 
-    Context variables:
+    Context variables required for this template:
     * message     string
     * processing  bool
     * done        bool
     * error       bool
+
+    Example context (json):
+    {
+        "message": "Processing image…",
+        "processing": true,
+        "done": false,
+        "error": false
+    }
 }}
 <small class="local-imageblog-image-status form-text
     {{#processing}}local-imageblog-image-status--processing{{/processing}}

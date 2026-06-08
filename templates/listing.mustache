@@ -3,7 +3,7 @@
 
     Listing page — filter bar + card grid + pagination.
 
-    Context variables:
+    Context variables required for this template:
     * cards         array  — see card.mustache
     * hascards      bool
     * filterbar     object — authors, categories, subcategories, tags, levels,
@@ -12,6 +12,31 @@
     * cancreate     bool
     * newposturl    string
     * subcatdata    string — JSON map of categoryid -> [{id,name}] for dependent dropdown
+    * subsenabled   bool
+    * subscribeurl  string
+
+    Example context (json):
+    {
+        "cards": [],
+        "hascards": false,
+        "filterbar": {
+            "formaction": "https://moodle.local/local/imageblog/index.php",
+            "authors": [],
+            "categories": [],
+            "subcategories": [],
+            "tags": [],
+            "levels": [],
+            "keyword": "",
+            "datefrom": "",
+            "dateto": ""
+        },
+        "pagination": {"show": false, "pages": [], "hasprev": false, "hasnext": false, "prevurl": "", "nexturl": ""},
+        "cancreate": false,
+        "newposturl": "https://moodle.local/local/imageblog/edit.php",
+        "subcatdata": "{}",
+        "subsenabled": false,
+        "subscribeurl": "https://moodle.local/local/imageblog/subscribe.php"
+    }
 }}
 <div class="local-imageblog-listing"
      data-region="local-imageblog-filters"
