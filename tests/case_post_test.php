@@ -29,6 +29,19 @@ namespace local_imageblog;
  */
 final class case_post_test extends \advanced_testcase {
     /**
+     * Grant publish + create caps to the authenticated user role so test
+     * users can save published cases via post::save().
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $syscontext = \context_system::instance();
+        $userrole = $GLOBALS['DB']->get_field('role', 'id', ['shortname' => 'user'], MUST_EXIST);
+        assign_capability('local/imageblog:createpost', CAP_ALLOW, $userrole, $syscontext->id, true);
+        assign_capability('local/imageblog:publishpost', CAP_ALLOW, $userrole, $syscontext->id, true);
+    }
+
+    /**
      * Create a published case post owned by the given user.
      *
      * @param \stdClass $author

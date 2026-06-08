@@ -31,6 +31,19 @@ require_once($CFG->dirroot . '/local/imageblog/lib.php');
  * @coversNothing
  */
 final class lib_test extends \advanced_testcase {
+    /**
+     * Grant publish + create caps to the authenticated user role so test
+     * users can save posts in any status via post::save().
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $syscontext = \context_system::instance();
+        $userrole = $GLOBALS['DB']->get_field('role', 'id', ['shortname' => 'user'], MUST_EXIST);
+        assign_capability('local/imageblog:createpost', CAP_ALLOW, $userrole, $syscontext->id, true);
+        assign_capability('local/imageblog:publishpost', CAP_ALLOW, $userrole, $syscontext->id, true);
+    }
+
     public function test_get_custom_css_html_returns_empty_when_unset(): void {
         $this->resetAfterTest();
         set_config('customcss', '', 'local_imageblog');
