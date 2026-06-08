@@ -19,13 +19,29 @@
 
     Admin index page for managing one taxonomy type.
 
-    Context variables required:
+    Context variables required for this template:
     * type - taxonomy type identifier
     * rows - array of items with id, name, editurl, deleteurl
     * hasrows - boolean
     * addurl - URL to add a new item
     * tabs - array of {label, url, active}
     * showslug, showcolour, showparent, showorder - column visibility flags
+
+    Example context (json):
+    {
+        "type": "tag",
+        "rows": [],
+        "hasrows": false,
+        "addurl": "https://moodle.local/local/imageblog/manage.php?type=tag&action=add",
+        "tabs": [
+            {"label": "Categories", "url": "https://moodle.local/local/imageblog/manage.php?type=category", "active": false},
+            {"label": "Tags", "url": "https://moodle.local/local/imageblog/manage.php?type=tag", "active": true}
+        ],
+        "showslug": true,
+        "showcolour": false,
+        "showparent": false,
+        "showorder": false
+    }
 }}
 <div class="local-imageblog-taxonomy">
     <ul class="nav nav-tabs mb-3" role="tablist">

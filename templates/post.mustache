@@ -3,7 +3,7 @@
 
     Single post view.
 
-    Context variables:
+    Context variables required for this template:
     * id            int
     * title         string
     * body          string  — already passed through format_text()
@@ -19,6 +19,29 @@
     * unpublishurl  string
     * canedit       bool
     * editurl       string
+    * iscase        bool
+    * casepanel     object — see case_panel.mustache
+
+    Example context (json):
+    {
+        "id": 1,
+        "title": "Dermoscopy of pigmented lesions",
+        "body": "<p>Body content goes here.</p>",
+        "authorname": "Jane Doe",
+        "datepublished": "1 June 2026",
+        "haspanorama": false,
+        "panoramaurl": "",
+        "listingurl": "https://moodle.local/local/imageblog/index.php",
+        "lazyimages": true,
+        "isdraft": false,
+        "statuslabel": "Published",
+        "canunpublish": false,
+        "unpublishurl": "",
+        "canedit": false,
+        "editurl": "",
+        "iscase": false,
+        "casepanel": null
+    }
 }}
 <div class="local-imageblog-post">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
