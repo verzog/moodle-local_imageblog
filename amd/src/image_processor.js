@@ -29,10 +29,10 @@ import Log from 'core/log';
 
 const resizeToBlob = (bitmap, maxWidth, maxHeight, quality, mimeType) => new Promise((resolve) => {
     const ratio = Math.min(maxWidth / bitmap.width, maxHeight / bitmap.height, 1);
-    const dstW  = Math.round(bitmap.width * ratio);
-    const dstH  = Math.round(bitmap.height * ratio);
-    const canvas  = document.createElement('canvas');
-    canvas.width  = dstW;
+    const dstW = Math.round(bitmap.width * ratio);
+    const dstH = Math.round(bitmap.height * ratio);
+    const canvas = document.createElement('canvas');
+    canvas.width = dstW;
     canvas.height = dstH;
     canvas.getContext('2d').drawImage(bitmap, 0, 0, dstW, dstH);
     canvas.toBlob(resolve, mimeType, quality);
@@ -66,11 +66,11 @@ const showStatus = async(input, message, state) => {
 const processFile = async(file, config) => {
     const originalSize = file.size;
     const outputMime = config.mode === 'featured' ? 'image/jpeg' : 'image/png';
-    const outputExt  = outputMime === 'image/jpeg' ? '.jpg' : '.png';
+    const outputExt = outputMime === 'image/jpeg' ? '.jpg' : '.png';
     const outputName = file.name.replace(/\.[^.]+$/, outputExt);
 
     const bitmap = await createImageBitmap(file);
-    const blob   = await resizeToBlob(bitmap, config.maxWidth, config.maxHeight, config.quality, outputMime);
+    const blob = await resizeToBlob(bitmap, config.maxWidth, config.maxHeight, config.quality, outputMime);
     const processed = new File([blob], outputName, {type: outputMime, lastModified: Date.now()});
     processed._originalSize = originalSize;
     return processed;
@@ -95,7 +95,7 @@ const attachToInput = (input, config) => {
 
             const processed = await processFile(file, config);
             const fromStr = formatBytes(processed._originalSize);
-            const toStr   = formatBytes(processed.size);
+            const toStr = formatBytes(processed.size);
 
             const dt = new DataTransfer();
             dt.items.add(processed);

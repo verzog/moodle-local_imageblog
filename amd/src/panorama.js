@@ -86,6 +86,7 @@ export const init = (jsUrl, cssUrl) => {
                 hfov: 100,
             });
         });
+        return regions;
     }).catch(() => {
         // Surface a fallback message but don't break the page.
         regions.forEach(region => {
