@@ -43,7 +43,7 @@ if ($post->posttype !== \local_imageblog\case_post::TYPE_CASE) {
     throw new moodle_exception('error_notacase', 'local_imageblog');
 }
 
-// "Can manage this case" — author with createpost still held, or any-post editor.
+// Can manage this case — author with createpost still held, or any-post editor.
 $canmanagecase = has_capability('local/imageblog:editanypost', $context)
     || ((int)$post->authorid === (int)$USER->id
         && has_capability('local/imageblog:createpost', $context));
