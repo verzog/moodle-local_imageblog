@@ -39,7 +39,7 @@ class mailer {
      * @param string               $subject
      * @param string               $textbody    Plain-text alternative.
      * @param string               $htmlbody    HTML body referencing images as <img src="cid:KEY">.
-     * @param array<string, \stored_file> $inlineimages CID => file. Each file is embedded under that CID.
+     * @param array     $inlineimages CID => stored_file. Each file is embedded under that CID.
      * @return bool True on send success.
      */
     public static function send_html_with_inline_images(
