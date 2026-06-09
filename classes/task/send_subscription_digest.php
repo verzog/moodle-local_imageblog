@@ -25,6 +25,7 @@
 namespace local_imageblog\task;
 
 use core\task\scheduled_task;
+use local_imageblog\mailer;
 use local_imageblog\post;
 use local_imageblog\subscription;
 use moodle_url;
@@ -78,8 +79,12 @@ class send_subscription_digest extends scheduled_task {
             if (!$user) {
                 continue;
             }
-            [$html, $text, $subject] = $renderer->render_digest_email($posts, $user, $row->frequency);
-            email_to_user($user, $sender, $subject, $text, $html);
+            [$html, $text, $subject, $inlineimages] = $renderer->render_digest_email(
+                $posts,
+                $user,
+                $row->frequency
+            );
+            mailer::send_html_with_inline_images($user, $sender, $subject, $text, $html, $inlineimages);
             subscription::mark_sent((int)$row->subid, $now);
             $sent++;
         }

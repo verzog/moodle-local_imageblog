@@ -160,19 +160,38 @@ class renderer extends plugin_renderer_base {
      * @param post[]    $posts
      * @param \stdClass $user      Recipient user record.
      * @param string    $frequency Subscription frequency.
-     * @return array{0: string, 1: string, 2: string} [html, text, subject]
+     * @return array{0: string, 1: string, 2: string, 3: array<string, \stored_file>}
+     *   [html, text, subject, cid => stored_file for inline image embedding]
      */
     public function render_digest_email(array $posts, \stdClass $user, string $frequency): array {
         global $SITE;
 
+        $syscontext = \context_system::instance();
+        $fs = get_file_storage();
+        $inlineimages = [];
+
         $items = [];
         foreach ($posts as $p) {
-            $imgurl = $p->get_featured_image_url();
+            $imagecid = '';
+            $files = $fs->get_area_files(
+                $syscontext->id,
+                'local_imageblog',
+                post::FILEAREA_FEATURED,
+                $p->id,
+                'itemid, filepath, filename',
+                false
+            );
+            $file = $files ? reset($files) : null;
+            if ($file && !$file->is_directory()) {
+                $imagecid = 'imageblog-featured-' . $p->id;
+                $inlineimages[$imagecid] = $file;
+            }
+
             $items[] = [
                 'title'    => format_string($p->title),
                 'summary'  => format_string($p->summary),
-                'hasimage' => !empty($imgurl),
-                'imageurl' => $imgurl ? $imgurl->out(false) : '',
+                'hasimage' => $imagecid !== '',
+                'imagecid' => $imagecid,
                 'viewurl'  => (new moodle_url('/local/imageblog/view.php', ['id' => $p->id]))->out(false),
             ];
         }
@@ -210,7 +229,7 @@ class renderer extends plugin_renderer_base {
             'count' => count($items),
         ]);
 
-        return [$html, $text, $subject];
+        return [$html, $text, $subject, $inlineimages];
     }
 
     /**

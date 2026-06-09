@@ -8,11 +8,15 @@
     * sitename       string
     * recipientname  string
     * frequencylabel string
-    * items          [{title, summary, hasimage, imageurl, viewurl}]
+    * items          [{title, summary, hasimage, imagecid, viewurl}]
     * count          int
     * listingurl     string
     * subscribeurl   string
     * readmorelabel  string
+
+    The featured image is referenced via `cid:` so the mailer attaches the
+    bytes inline. Recipients see the image without needing to be logged in
+    to Moodle.
 
     Example context (json):
     {
@@ -24,7 +28,7 @@
                 "title": "Dermoscopy of pigmented lesions",
                 "summary": "Visual summary of the case.",
                 "hasimage": true,
-                "imageurl": "https://moodle.local/pluginfile.php/1/local_imageblog/featured_image/1/example.jpg",
+                "imagecid": "imageblog-featured-1",
                 "viewurl": "https://moodle.local/local/imageblog/view.php?id=1"
             }
         ],
@@ -65,7 +69,7 @@
                                 {{#hasimage}}
                                 <tr>
                                     <td>
-                                        <img src="{{imageurl}}" alt=""
+                                        <img src="cid:{{imagecid}}" alt=""
                                              style="display:block;width:100%;max-width:600px;
                                                     height:auto;border:0;">
                                     </td>
