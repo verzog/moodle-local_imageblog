@@ -46,6 +46,19 @@ class author_role {
             'local/imageblog:view',
             'local/imageblog:createpost',
             'local/imageblog:publishpost',
+            // File picker repository caps. The role is created with no
+            // archetype, so it inherits none of the repository/*:view caps
+            // that standard archetypes pick up from each subplugin's
+            // access.php. Without these the file picker throws
+            // 'nopermissiontoaccess' the moment it opens, because its
+            // default tab (typically Recent or Upload) fails its capability
+            // check before the user can click anything.
+            'repository/upload:view',
+            'repository/user:view',
+            'repository/recent:view',
+            'repository/url:view',
+            'repository/local:view',
+            'repository/areafiles:view',
         ];
     }
 
