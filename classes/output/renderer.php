@@ -74,6 +74,8 @@ class renderer extends plugin_renderer_base {
             && !isguestuser()
             && \local_imageblog\subscription::get_for_user((int)$USER->id) !== null;
 
+        $rssenabled = (bool)get_config('local_imageblog', 'rss_enabled');
+
         $context = [
             'cards'      => $cards,
             'hascards'   => !empty($cards),
@@ -86,6 +88,8 @@ class renderer extends plugin_renderer_base {
             'subsenabled' => $subsenabled,
             'issubscribed' => $issubscribed,
             'subscribeurl' => (new moodle_url('/local/imageblog/subscribe.php'))->out(false),
+            'rssenabled' => $rssenabled,
+            'rssurl' => (new moodle_url('/local/imageblog/rss.php'))->out(false),
         ];
 
         return $this->render_from_template('local_imageblog/listing', $context);

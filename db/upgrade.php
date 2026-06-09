@@ -139,5 +139,16 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026060803, 'local', 'imageblog');
     }
 
+    if ($oldversion < 2026060805) {
+        // Migrate retired 'monthly' frequency to 'weekly'.
+        $DB->set_field(
+            'local_imageblog_subs',
+            'frequency',
+            \local_imageblog\subscription::FREQ_WEEKLY,
+            ['frequency' => \local_imageblog\subscription::FREQ_MONTHLY]
+        );
+        upgrade_plugin_savepoint(true, 2026060805, 'local', 'imageblog');
+    }
+
     return true;
 }

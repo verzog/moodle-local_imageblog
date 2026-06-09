@@ -42,14 +42,7 @@ class subscription_form extends moodleform {
     public function definition(): void {
         $mform = $this->_form;
 
-        $mform->addElement(
-            'advcheckbox',
-            'subscribed',
-            get_string('subscribe_optin', 'local_imageblog')
-        );
-        $mform->addHelpButton('subscribed', 'subscribe_optin', 'local_imageblog');
-
-        $options = [];
+        $options = ['none' => get_string('frequency_none', 'local_imageblog')];
         foreach (subscription::frequencies() as $f) {
             $options[$f] = get_string('frequency_' . $f, 'local_imageblog');
         }
@@ -60,8 +53,8 @@ class subscription_form extends moodleform {
             $options
         );
         $mform->setType('frequency', PARAM_ALPHA);
-        $mform->setDefault('frequency', subscription::FREQ_WEEKLY);
-        $mform->hideIf('frequency', 'subscribed', 'notchecked');
+        $mform->setDefault('frequency', 'none');
+        $mform->addHelpButton('frequency', 'frequency', 'local_imageblog');
 
         $this->add_action_buttons(true, get_string('savechanges'));
     }

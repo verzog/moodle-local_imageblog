@@ -303,11 +303,13 @@ class post {
             $record->casedifficulty = max(1, min(5, (int)($data->casedifficulty ?? 1)));
         }
 
+        $becamepublished = false;
         if ($isnew) {
             $record->authorid    = (int)$USER->id;
             $record->timecreated = $now;
             $record->timepublished = ($record->status === self::STATUS_PUBLISHED) ? $now : null;
             $record->id = (int)$DB->insert_record('local_imageblog_posts', $record);
+            $becamepublished = ($record->status === self::STATUS_PUBLISHED);
         } else {
             $record->id = (int)$existing->id;
             if (
@@ -315,6 +317,7 @@ class post {
                 && $record->status === self::STATUS_PUBLISHED
             ) {
                 $record->timepublished = $now;
+                $becamepublished = true;
             }
             $DB->update_record('local_imageblog_posts', $record);
         }
@@ -398,6 +401,10 @@ class post {
         $levelids      = isset($data->levelids) && is_array($data->levelids) ? $data->levelids : [];
         self::set_taxonomy($record->id, $categoryid, $subcategoryid, $tagids, $levelids);
 
+        if ($becamepublished) {
+            subscription::notify_immediate_subscribers($record->id);
+        }
+
         return $record->id;
     }
 
@@ -475,13 +482,22 @@ class post {
         if ($status !== self::STATUS_SCHEDULED) {
             $update->timescheduled = null;
         }
+        $waspublished = false;
         if ($status === self::STATUS_PUBLISHED) {
-            $existing = $DB->get_record('local_imageblog_posts', ['id' => $postid], 'timepublished');
+            $existing = $DB->get_record(
+                'local_imageblog_posts',
+                ['id' => $postid],
+                'status, timepublished'
+            );
+            $waspublished = $existing && $existing->status === self::STATUS_PUBLISHED;
             if ($existing && empty($existing->timepublished)) {
                 $update->timepublished = $now;
             }
         }
         $DB->update_record('local_imageblog_posts', $update);
+        if ($status === self::STATUS_PUBLISHED && !$waspublished) {
+            subscription::notify_immediate_subscribers($postid);
+        }
     }
 
     /**

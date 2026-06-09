@@ -28,38 +28,41 @@ namespace local_imageblog;
  * Static helpers for managing per-user subscription preferences.
  */
 class subscription {
+    /** @var string Send one email per post, on publish. */
+    const FREQ_IMMEDIATE = 'immediate';
     /** @var string Daily digest. */
     const FREQ_DAILY = 'daily';
     /** @var string Weekly digest. */
     const FREQ_WEEKLY = 'weekly';
-    /** @var string Monthly digest. */
+    /** @var string Legacy monthly value kept for back-compat; migrated to weekly. */
     const FREQ_MONTHLY = 'monthly';
 
     /**
-     * Valid frequency choices.
+     * Frequency choices offered to users in the subscribe form.
      *
      * @return string[]
      */
     public static function frequencies(): array {
-        return [self::FREQ_DAILY, self::FREQ_WEEKLY, self::FREQ_MONTHLY];
+        return [self::FREQ_IMMEDIATE, self::FREQ_DAILY, self::FREQ_WEEKLY];
     }
 
     /**
-     * Number of seconds between digests at the given frequency.
+     * Configured hour of the day (0–23) when daily and weekly digests fire.
      *
-     * @param string $frequency
      * @return int
      */
-    public static function interval_seconds(string $frequency): int {
-        switch ($frequency) {
-            case self::FREQ_DAILY:
-                return DAYSECS;
-            case self::FREQ_MONTHLY:
-                return DAYSECS * 30;
-            case self::FREQ_WEEKLY:
-            default:
-                return WEEKSECS;
-        }
+    public static function digest_hour(): int {
+        return max(0, min(23, (int)get_config('local_imageblog', 'digest_hour')));
+    }
+
+    /**
+     * Configured day of the week (1=Mon … 7=Sun) the weekly digest fires.
+     *
+     * @return int
+     */
+    public static function digest_weekday(): int {
+        $day = (int)get_config('local_imageblog', 'digest_weekday');
+        return ($day >= 1 && $day <= 7) ? $day : 1;
     }
 
     /**
@@ -129,27 +132,32 @@ class subscription {
     }
 
     /**
-     * All subscribers due for a digest at the given time.
+     * Daily and weekly subscribers due for a digest at the given time.
      *
-     * "Due" means: lastsent is null (never sent) OR lastsent + interval <= $now.
+     * Immediate subscribers are handled separately by
+     * notify_immediate_subscribers() at publish time.
+     *
+     * Daily rows are due when the local hour matches digest_hour and the
+     * row has not been sent today. Weekly rows are due when the local
+     * weekday and hour both match the admin settings and the row has
+     * not been sent in the past day.
      *
      * @param int $now Current timestamp.
-     * @return \stdClass[] Rows joined with user fields (id, email, firstname, lastname, mailformat).
+     * @return \stdClass[] Rows joined with user fields.
      */
     public static function get_due_subscribers(int $now): array {
         global $DB;
 
-        $params = [
-            'fdaily'   => self::FREQ_DAILY,
-            'idaily'   => self::interval_seconds(self::FREQ_DAILY),
-            'fweekly'  => self::FREQ_WEEKLY,
-            'iweekly'  => self::interval_seconds(self::FREQ_WEEKLY),
-            'fmonthly' => self::FREQ_MONTHLY,
-            'imonthly' => self::interval_seconds(self::FREQ_MONTHLY),
-            'now1'     => $now,
-            'now2'     => $now,
-            'now3'     => $now,
-        ];
+        $hour = self::digest_hour();
+        $weekday = self::digest_weekday();
+        $nowhour = (int)date('G', $now);
+        // PHP's date('N') is 1=Mon … 7=Sun, matching our digest_weekday.
+        $nowweekday = (int)date('N', $now);
+
+        $isdailywindow = ($nowhour === $hour);
+        $isweeklywindow = ($nowweekday === $weekday && $nowhour === $hour);
+        // Reset to start-of-current-hour so a per-hour gate is exact.
+        $hourstart = strtotime(date('Y-m-d H:00:00', $now));
 
         $sql = "SELECT s.id AS subid, s.userid, s.frequency, s.lastsent,
                        u.id AS uid, u.email, u.firstname, u.lastname, u.mailformat,
@@ -158,12 +166,74 @@ class subscription {
                   JOIN {user} u ON u.id = s.userid
                  WHERE u.deleted = 0 AND u.suspended = 0 AND u.emailstop = 0
                    AND u.confirmed = 1
-                   AND (
-                        s.lastsent IS NULL
-                        OR (s.frequency = :fdaily   AND s.lastsent + :idaily   <= :now1)
-                        OR (s.frequency = :fweekly  AND s.lastsent + :iweekly  <= :now2)
-                        OR (s.frequency = :fmonthly AND s.lastsent + :imonthly <= :now3)
-                   )";
-        return array_values($DB->get_records_sql($sql, $params));
+                   AND s.frequency IN (:fdaily, :fweekly)
+                   AND (s.lastsent IS NULL OR s.lastsent < :hourstart)";
+        $rows = $DB->get_records_sql($sql, [
+            'fdaily'    => self::FREQ_DAILY,
+            'fweekly'   => self::FREQ_WEEKLY,
+            'hourstart' => $hourstart,
+        ]);
+
+        $due = [];
+        foreach ($rows as $row) {
+            if ($row->frequency === self::FREQ_DAILY && $isdailywindow) {
+                $due[] = $row;
+            } else if ($row->frequency === self::FREQ_WEEKLY && $isweeklywindow) {
+                $due[] = $row;
+            }
+        }
+        return $due;
+    }
+
+    /**
+     * Send an "as soon as published" notification to every immediate
+     * subscriber. Called from post::set_status / post::save when a post
+     * transitions to published.
+     *
+     * @param int $postid
+     * @return int Number of emails sent.
+     */
+    public static function notify_immediate_subscribers(int $postid): int {
+        global $DB, $PAGE;
+
+        if (!get_config('local_imageblog', 'subscriptions_enabled')) {
+            return 0;
+        }
+        $post = post::get($postid);
+        if (!$post || $post->status !== post::STATUS_PUBLISHED) {
+            return 0;
+        }
+
+        $sql = "SELECT s.id AS subid, s.userid,
+                       u.id AS uid, u.email, u.firstname, u.lastname, u.mailformat,
+                       u.suspended, u.deleted, u.emailstop, u.confirmed
+                  FROM {local_imageblog_subs} s
+                  JOIN {user} u ON u.id = s.userid
+                 WHERE s.frequency = :freq
+                   AND u.deleted = 0 AND u.suspended = 0
+                   AND u.emailstop = 0 AND u.confirmed = 1";
+        $rows = $DB->get_records_sql($sql, ['freq' => self::FREQ_IMMEDIATE]);
+        if (!$rows) {
+            return 0;
+        }
+
+        $renderer = $PAGE->get_renderer('local_imageblog');
+        $sender   = \core_user::get_noreply_user();
+        $sent = 0;
+        foreach ($rows as $row) {
+            $user = $DB->get_record('user', ['id' => $row->userid], '*', IGNORE_MISSING);
+            if (!$user) {
+                continue;
+            }
+            [$html, $text, $subject, $inlineimages] = $renderer->render_digest_email(
+                [$post],
+                $user,
+                self::FREQ_IMMEDIATE
+            );
+            mailer::send_html_with_inline_images($user, $sender, $subject, $text, $html, $inlineimages);
+            self::mark_sent((int)$row->subid, time());
+            $sent++;
+        }
+        return $sent;
     }
 }

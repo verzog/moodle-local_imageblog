@@ -73,43 +73,61 @@ final class subscription_test extends \advanced_testcase {
         $this->assertSame(1700000000, (int)$reloaded->lastsent);
     }
 
-    public function test_interval_seconds_matches_frequency(): void {
-        $this->assertSame(DAYSECS, subscription::interval_seconds(subscription::FREQ_DAILY));
-        $this->assertSame(WEEKSECS, subscription::interval_seconds(subscription::FREQ_WEEKLY));
-        $this->assertSame(DAYSECS * 30, subscription::interval_seconds(subscription::FREQ_MONTHLY));
-        // Unknown values fall back to weekly.
-        $this->assertSame(WEEKSECS, subscription::interval_seconds('whatever'));
+    public function test_frequencies_offered_to_users(): void {
+        $offered = subscription::frequencies();
+        $this->assertContains(subscription::FREQ_IMMEDIATE, $offered);
+        $this->assertContains(subscription::FREQ_DAILY, $offered);
+        $this->assertContains(subscription::FREQ_WEEKLY, $offered);
+        // Monthly is retired from the UI.
+        $this->assertNotContains(subscription::FREQ_MONTHLY, $offered);
     }
 
-    public function test_get_due_subscribers_includes_never_sent_and_overdue(): void {
+    public function test_get_due_subscribers_fires_only_at_configured_hour(): void {
         $this->resetAfterTest();
-        $now = 1700000000;
-        $never  = $this->getDataGenerator()->create_user();
-        $stale  = $this->getDataGenerator()->create_user();
-        $recent = $this->getDataGenerator()->create_user();
 
-        subscription::subscribe((int)$never->id, subscription::FREQ_DAILY);
+        // Pin a Monday 08:00 + matching config.
+        $now = strtotime('2024-01-08 08:00:00');
+        set_config('digest_hour', 8, 'local_imageblog');
+        set_config('digest_weekday', 1, 'local_imageblog');
 
-        subscription::subscribe((int)$stale->id, subscription::FREQ_DAILY);
-        $stalesub = subscription::get_for_user((int)$stale->id);
-        subscription::mark_sent((int)$stalesub->id, $now - (DAYSECS * 2));
+        $daily = $this->getDataGenerator()->create_user();
+        $weekly = $this->getDataGenerator()->create_user();
+        subscription::subscribe((int)$daily->id, subscription::FREQ_DAILY);
+        subscription::subscribe((int)$weekly->id, subscription::FREQ_WEEKLY);
 
-        subscription::subscribe((int)$recent->id, subscription::FREQ_DAILY);
-        $recentsub = subscription::get_for_user((int)$recent->id);
-        subscription::mark_sent((int)$recentsub->id, $now - 60);
-
-        $rows = subscription::get_due_subscribers($now);
-        $ids  = array_map(fn($r) => (int)$r->userid, $rows);
+        $ids = array_map(fn($r) => (int)$r->userid, subscription::get_due_subscribers($now));
         sort($ids);
-        $expected = [(int)$never->id, (int)$stale->id];
+        $expected = [(int)$daily->id, (int)$weekly->id];
         sort($expected);
         $this->assertSame($expected, $ids);
+
+        // Outside the hour window — no one is due.
+        $offwindow = strtotime('2024-01-08 09:00:00');
+        $this->assertSame([], subscription::get_due_subscribers($offwindow));
+    }
+
+    public function test_get_due_subscribers_skips_already_sent_this_hour(): void {
+        $this->resetAfterTest();
+        $now = strtotime('2024-01-08 08:00:00');
+        set_config('digest_hour', 8, 'local_imageblog');
+        set_config('digest_weekday', 1, 'local_imageblog');
+
+        $u = $this->getDataGenerator()->create_user();
+        subscription::subscribe((int)$u->id, subscription::FREQ_DAILY);
+        $sub = subscription::get_for_user((int)$u->id);
+        subscription::mark_sent((int)$sub->id, $now);
+
+        $this->assertSame([], subscription::get_due_subscribers($now));
     }
 
     public function test_get_due_subscribers_skips_suspended_and_deleted_users(): void {
         global $DB;
         $this->resetAfterTest();
-        $now = 1700000000;
+        // Pin the hour so the daily window matches.
+        $now = strtotime('2024-01-08 08:00:00');
+        set_config('digest_hour', 8, 'local_imageblog');
+        set_config('digest_weekday', 1, 'local_imageblog');
+
         $suspended = $this->getDataGenerator()->create_user();
         $deleted   = $this->getDataGenerator()->create_user();
         $emailstop = $this->getDataGenerator()->create_user();

@@ -88,6 +88,42 @@ if ($hassiteconfig) {
         0
     ));
 
+    $hours = [];
+    for ($h = 0; $h <= 23; $h++) {
+        $hours[$h] = sprintf('%02d:00', $h);
+    }
+    $settings->add(new admin_setting_configselect(
+        'local_imageblog/digest_hour',
+        get_string('digest_hour', 'local_imageblog'),
+        get_string('digest_hour_desc', 'local_imageblog'),
+        8,
+        $hours
+    ));
+
+    $weekdays = [
+        1 => get_string('monday', 'calendar'),
+        2 => get_string('tuesday', 'calendar'),
+        3 => get_string('wednesday', 'calendar'),
+        4 => get_string('thursday', 'calendar'),
+        5 => get_string('friday', 'calendar'),
+        6 => get_string('saturday', 'calendar'),
+        7 => get_string('sunday', 'calendar'),
+    ];
+    $settings->add(new admin_setting_configselect(
+        'local_imageblog/digest_weekday',
+        get_string('digest_weekday', 'local_imageblog'),
+        get_string('digest_weekday_desc', 'local_imageblog'),
+        1,
+        $weekdays
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'local_imageblog/rss_enabled',
+        get_string('rss_enabled', 'local_imageblog'),
+        get_string('rss_enabled_desc', 'local_imageblog'),
+        0
+    ));
+
     $settings->add(new admin_setting_heading(
         'local_imageblog/appearance_heading',
         get_string('appearance_heading', 'local_imageblog'),

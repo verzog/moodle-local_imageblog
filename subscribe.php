@@ -51,8 +51,7 @@ $form = new \local_imageblog\form\subscription_form(
     new moodle_url('/local/imageblog/subscribe.php')
 );
 $form->set_data((object)[
-    'subscribed' => $existing ? 1 : 0,
-    'frequency'  => $existing ? $existing->frequency : \local_imageblog\subscription::FREQ_WEEKLY,
+    'frequency' => $existing ? $existing->frequency : 'none',
 ]);
 
 if ($form->is_cancelled()) {
@@ -60,12 +59,13 @@ if ($form->is_cancelled()) {
 }
 
 if ($data = $form->get_data()) {
-    if (!empty($data->subscribed)) {
-        \local_imageblog\subscription::subscribe((int)$USER->id, (string)$data->frequency);
-        $msg = get_string('subscribe_saved', 'local_imageblog');
-    } else {
+    $frequency = (string)$data->frequency;
+    if ($frequency === 'none') {
         \local_imageblog\subscription::unsubscribe((int)$USER->id);
         $msg = get_string('subscribe_removed', 'local_imageblog');
+    } else {
+        \local_imageblog\subscription::subscribe((int)$USER->id, $frequency);
+        $msg = get_string('subscribe_saved', 'local_imageblog');
     }
     redirect(
         new moodle_url('/local/imageblog/subscribe.php'),
