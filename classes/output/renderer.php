@@ -67,6 +67,13 @@ class renderer extends plugin_renderer_base {
             $subcatmap[$catid][] = ['id' => (int)$sub['id'], 'name' => $sub['name']];
         }
 
+        global $USER;
+        $subsenabled = (bool)get_config('local_imageblog', 'subscriptions_enabled');
+        $issubscribed = $subsenabled
+            && isloggedin()
+            && !isguestuser()
+            && \local_imageblog\subscription::get_for_user((int)$USER->id) !== null;
+
         $context = [
             'cards'      => $cards,
             'hascards'   => !empty($cards),
@@ -76,7 +83,8 @@ class renderer extends plugin_renderer_base {
             'cancreate'  => has_capability('local/imageblog:createpost', \context_system::instance()),
             'newposturl' => (new moodle_url('/local/imageblog/edit.php'))->out(false),
             'subcatdata' => s(json_encode($subcatmap)),
-            'subsenabled' => (bool)get_config('local_imageblog', 'subscriptions_enabled'),
+            'subsenabled' => $subsenabled,
+            'issubscribed' => $issubscribed,
             'subscribeurl' => (new moodle_url('/local/imageblog/subscribe.php'))->out(false),
         ];
 

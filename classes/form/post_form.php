@@ -210,6 +210,7 @@ class post_form extends moodleform {
 
         $statusoptions = [
             post::STATUS_DRAFT     => get_string('status_draft', 'local_imageblog'),
+            post::STATUS_SCHEDULED => get_string('status_scheduled', 'local_imageblog'),
             post::STATUS_PUBLISHED => get_string('status_published', 'local_imageblog'),
             post::STATUS_ARCHIVED  => get_string('status_archived', 'local_imageblog'),
         ];
@@ -220,6 +221,15 @@ class post_form extends moodleform {
             $statusoptions
         );
         $mform->setDefault('status', post::STATUS_DRAFT);
+
+        $mform->addElement(
+            'date_time_selector',
+            'timescheduled',
+            get_string('timescheduled', 'local_imageblog'),
+            ['optional' => false]
+        );
+        $mform->addHelpButton('timescheduled', 'timescheduled', 'local_imageblog');
+        $mform->hideIf('timescheduled', 'status', 'neq', post::STATUS_SCHEDULED);
 
         $this->add_action_buttons();
 
@@ -243,6 +253,7 @@ class post_form extends moodleform {
             $defaults->caseoutcome       = $post->caseoutcome;
             $defaults->caseoutcomeformat = $post->caseoutcomeformat;
             $defaults->haspanorama       = $post->get_panorama_url() ? 1 : 0;
+            $defaults->timescheduled     = $post->timescheduled ?? 0;
         } else {
             $defaults->id         = 0;
             $defaults->body       = '';
@@ -252,6 +263,7 @@ class post_form extends moodleform {
             $defaults->caseoutcome       = '';
             $defaults->caseoutcomeformat = FORMAT_HTML;
             $defaults->haspanorama       = 0;
+            $defaults->timescheduled     = time() + DAYSECS;
         }
 
         $defaults = file_prepare_standard_editor(
@@ -315,11 +327,19 @@ class post_form extends moodleform {
 
         $validstatuses = [
             post::STATUS_DRAFT,
+            post::STATUS_SCHEDULED,
             post::STATUS_PUBLISHED,
             post::STATUS_ARCHIVED,
         ];
         if (!in_array($data['status'], $validstatuses, true)) {
             $errors['status'] = get_string('error_invalidstatus', 'local_imageblog');
+        }
+
+        if (
+            $data['status'] === post::STATUS_SCHEDULED
+            && (empty($data['timescheduled']) || (int)$data['timescheduled'] <= time())
+        ) {
+            $errors['timescheduled'] = get_string('error_schedulepast', 'local_imageblog');
         }
 
         return $errors;

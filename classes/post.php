@@ -40,8 +40,10 @@ class post {
     public string $body = '';
     /** @var int */
     public int $bodyformat = 1;
-    /** @var string draft|published|archived */
+    /** @var string draft|scheduled|published|archived */
     public string $status = self::STATUS_DRAFT;
+    /** @var int|null Future timestamp when a scheduled post should auto-publish. */
+    public ?int $timescheduled = null;
     /** @var int|null */
     public ?int $timepublished = null;
     /** @var int */
@@ -71,6 +73,8 @@ class post {
 
     /** @var string Draft post status. */
     const STATUS_DRAFT     = 'draft';
+    /** @var string Scheduled post status — auto-publishes at timescheduled. */
+    const STATUS_SCHEDULED = 'scheduled';
     /** @var string Published post status. */
     const STATUS_PUBLISHED = 'published';
     /** @var string Archived post status. */
@@ -119,6 +123,7 @@ class post {
         $statuses = array_values(array_intersect($statuses, [
             self::STATUS_PUBLISHED,
             self::STATUS_DRAFT,
+            self::STATUS_SCHEDULED,
             self::STATUS_ARCHIVED,
         ]));
         if (!$statuses) {
@@ -240,7 +245,13 @@ class post {
         $isnew = empty($data->id);
 
         $requestedstatus = $data->status ?? self::STATUS_DRAFT;
-        if (!in_array($requestedstatus, [self::STATUS_DRAFT, self::STATUS_PUBLISHED, self::STATUS_ARCHIVED], true)) {
+        $validstatuses = [
+            self::STATUS_DRAFT,
+            self::STATUS_SCHEDULED,
+            self::STATUS_PUBLISHED,
+            self::STATUS_ARCHIVED,
+        ];
+        if (!in_array($requestedstatus, $validstatuses, true)) {
             $requestedstatus = self::STATUS_DRAFT;
         }
 
@@ -248,22 +259,39 @@ class post {
             ? null
             : $DB->get_record('local_imageblog_posts', ['id' => (int)$data->id], '*', MUST_EXIST);
 
-        // Status transitions to/from published require the publish capability.
+        // Transitions that make the post live (now or in the future) require
+        // the publish capability. editanypost is the admin override.
         $canpublish = has_capability('local/imageblog:publishpost', $context)
             || has_capability('local/imageblog:editanypost', $context);
         $previousstatus = $existing->status ?? self::STATUS_DRAFT;
+        $livestatuses = [self::STATUS_PUBLISHED, self::STATUS_SCHEDULED];
         if (!$canpublish) {
-            if ($requestedstatus === self::STATUS_PUBLISHED && $previousstatus !== self::STATUS_PUBLISHED) {
+            $waslive = in_array($previousstatus, $livestatuses, true);
+            $willbelive = in_array($requestedstatus, $livestatuses, true);
+            if ($willbelive && !$waslive) {
                 $requestedstatus = self::STATUS_DRAFT;
-            } else if ($previousstatus === self::STATUS_PUBLISHED && $requestedstatus !== self::STATUS_PUBLISHED) {
-                $requestedstatus = self::STATUS_PUBLISHED;
+            } else if ($waslive && !$willbelive) {
+                $requestedstatus = $previousstatus;
             }
+        }
+
+        // Validate and normalise the schedule timestamp.
+        $timescheduled = isset($data->timescheduled) ? (int)$data->timescheduled : 0;
+        if ($requestedstatus === self::STATUS_SCHEDULED) {
+            if ($timescheduled <= $now) {
+                // A past or empty schedule time means "publish now".
+                $requestedstatus = self::STATUS_PUBLISHED;
+                $timescheduled = null;
+            }
+        } else {
+            $timescheduled = null;
         }
 
         $record = new \stdClass();
         $record->title       = $data->title;
         $record->summary     = $data->summary ?? '';
         $record->status      = $requestedstatus;
+        $record->timescheduled = $timescheduled;
         $record->lazyimages  = !empty($data->lazyimages) ? 1 : 0;
         $record->bodyformat  = FORMAT_HTML;
         $record->body        = '';
@@ -427,15 +455,33 @@ class post {
      */
     public static function set_status(int $postid, string $status): void {
         global $DB;
-        $allowed = [self::STATUS_DRAFT, self::STATUS_PUBLISHED, self::STATUS_ARCHIVED];
+        $allowed = [
+            self::STATUS_DRAFT,
+            self::STATUS_SCHEDULED,
+            self::STATUS_PUBLISHED,
+            self::STATUS_ARCHIVED,
+        ];
         if (!in_array($status, $allowed, true)) {
             throw new \moodle_exception('error_invalidstatus', 'local_imageblog');
         }
-        $DB->update_record('local_imageblog_posts', (object)[
+        $now = time();
+        $update = (object)[
             'id'           => $postid,
             'status'       => $status,
-            'timemodified' => time(),
-        ]);
+            'timemodified' => $now,
+        ];
+        // Moving off the scheduled state clears the pending timestamp; moving
+        // to published for the first time stamps timepublished.
+        if ($status !== self::STATUS_SCHEDULED) {
+            $update->timescheduled = null;
+        }
+        if ($status === self::STATUS_PUBLISHED) {
+            $existing = $DB->get_record('local_imageblog_posts', ['id' => $postid], 'timepublished');
+            if ($existing && empty($existing->timepublished)) {
+                $update->timepublished = $now;
+            }
+        }
+        $DB->update_record('local_imageblog_posts', $update);
     }
 
     /**
@@ -677,6 +723,7 @@ class post {
         $post->body          = $record->body ?? '';
         $post->bodyformat    = (int)($record->bodyformat ?? FORMAT_HTML);
         $post->status        = $record->status;
+        $post->timescheduled = isset($record->timescheduled) ? (int)$record->timescheduled : null;
         $post->timepublished = isset($record->timepublished) ? (int)$record->timepublished : null;
         $post->timecreated   = (int)$record->timecreated;
         $post->timemodified  = (int)$record->timemodified;
