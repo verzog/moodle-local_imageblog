@@ -214,6 +214,7 @@ $string['subs_heading']             = 'Subscription emails';
 $string['subs_heading_desc']        = 'Periodic digest of recently published posts. Users opt in from the blog index.';
 $string['subscribe_disabled']       = 'Email subscriptions are not enabled on this site.';
 $string['subscribe_link']           = 'Email me new posts';
+$string['subscribe_manage']         = 'Manage email subscription';
 $string['subscribe_optin']          = 'Email me when new posts are published';
 $string['subscribe_optin_help']     = 'Each digest contains the title, summary and featured image of every post published since your last email.';
 $string['subscribe_removed']        = 'You will no longer receive blog digest emails.';

@@ -13,6 +13,7 @@
     * newposturl    string
     * subcatdata    string — JSON map of categoryid -> [{id,name}] for dependent dropdown
     * subsenabled   bool
+    * issubscribed  bool — current user already has a subscription row
     * subscribeurl  string
 
     Example context (json):
@@ -35,6 +36,7 @@
         "newposturl": "https://moodle.local/local/imageblog/edit.php",
         "subcatdata": "{}",
         "subsenabled": false,
+        "issubscribed": false,
         "subscribeurl": "https://moodle.local/local/imageblog/subscribe.php"
     }
 }}
@@ -131,9 +133,16 @@
                             {{#str}}resetfilters, local_imageblog{{/str}}
                         </a>
                         {{#subsenabled}}
-                        <a href="{{subscribeurl}}" class="btn btn-sm btn-outline-primary">
-                            {{#str}}subscribe_link, local_imageblog{{/str}}
-                        </a>
+                            {{^issubscribed}}
+                            <a href="{{subscribeurl}}" class="btn btn-sm btn-outline-primary">
+                                {{#str}}subscribe_link, local_imageblog{{/str}}
+                            </a>
+                            {{/issubscribed}}
+                            {{#issubscribed}}
+                            <a href="{{subscribeurl}}" class="btn btn-sm btn-outline-secondary">
+                                {{#str}}subscribe_manage, local_imageblog{{/str}}
+                            </a>
+                            {{/issubscribed}}
                         {{/subsenabled}}
                         {{#cancreate}}
                         <a href="{{newposturl}}" class="btn btn-sm btn-success">
