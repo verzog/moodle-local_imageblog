@@ -87,6 +87,15 @@ $PAGE->set_title(get_string('blogposts', 'local_imageblog'));
 $PAGE->set_heading(get_string('blogposts', 'local_imageblog'));
 $PAGE->set_pagelayout('standard');
 
+if (get_config('local_imageblog', 'rss_enabled')) {
+    $rssurl = (new moodle_url('/local/imageblog/rss.php'))->out(false);
+    $PAGE->add_alternate_version(
+        get_string('rss_link', 'local_imageblog'),
+        $rssurl,
+        'application/rss+xml'
+    );
+}
+
 $perpage = 12;
 $result = \local_imageblog\post::get_published($filters, $perpage);
 $taxonomy = local_imageblog_get_taxonomy();

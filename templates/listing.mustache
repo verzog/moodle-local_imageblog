@@ -15,6 +15,8 @@
     * subsenabled   bool
     * issubscribed  bool — current user already has a subscription row
     * subscribeurl  string
+    * rssenabled    bool
+    * rssurl        string
 
     Example context (json):
     {
@@ -37,6 +39,8 @@
         "subcatdata": "{}",
         "subsenabled": false,
         "issubscribed": false,
+        "rssenabled": false,
+        "rssurl": "https://moodle.local/local/imageblog/rss.php",
         "subscribeurl": "https://moodle.local/local/imageblog/subscribe.php"
     }
 }}
@@ -144,6 +148,12 @@
                             </a>
                             {{/issubscribed}}
                         {{/subsenabled}}
+                        {{#rssenabled}}
+                        <a href="{{rssurl}}" class="btn btn-sm btn-outline-secondary"
+                           target="_blank" rel="noopener">
+                            {{#str}}rss_link, local_imageblog{{/str}}
+                        </a>
+                        {{/rssenabled}}
                         {{#cancreate}}
                         <a href="{{newposturl}}" class="btn btn-sm btn-success">
                             {{#str}}newpost, local_imageblog{{/str}}
