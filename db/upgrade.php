@@ -116,5 +116,28 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026060800, 'local', 'imageblog');
     }
 
+    if ($oldversion < 2026060803) {
+        // Add the scheduling timestamp column.
+        $table = new xmldb_table('local_imageblog_posts');
+        $field = new xmldb_field(
+            'timescheduled',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            null,
+            'status'
+        );
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Re-run role bootstrap so existing Blog author roles lose editanypost.
+        \local_imageblog\local\author_role::ensure();
+
+        upgrade_plugin_savepoint(true, 2026060803, 'local', 'imageblog');
+    }
+
     return true;
 }

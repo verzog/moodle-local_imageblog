@@ -35,6 +35,10 @@ class author_role {
     /**
      * Capabilities granted at system context to the blog-author role.
      *
+     * NOTE: editanypost is intentionally absent — blog authors edit and
+     * publish only their own posts. Site managers (or anyone else with
+     * editanypost via a custom role) override that scope.
+     *
      * @return string[]
      */
     public static function capabilities(): array {
@@ -42,6 +46,17 @@ class author_role {
             'local/imageblog:view',
             'local/imageblog:createpost',
             'local/imageblog:publishpost',
+        ];
+    }
+
+    /**
+     * Capabilities the role used to grant but should no longer carry. Used by
+     * the upgrade step to scrub the role on existing installs.
+     *
+     * @return string[]
+     */
+    public static function revoked_capabilities(): array {
+        return [
             'local/imageblog:editanypost',
         ];
     }
@@ -81,6 +96,9 @@ class author_role {
         $syscontext = \context_system::instance();
         foreach (self::capabilities() as $capability) {
             assign_capability($capability, CAP_ALLOW, $roleid, $syscontext->id, true);
+        }
+        foreach (self::revoked_capabilities() as $capability) {
+            unassign_capability($capability, $roleid, $syscontext->id);
         }
 
         return $roleid;

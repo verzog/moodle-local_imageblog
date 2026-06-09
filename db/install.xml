@@ -10,7 +10,8 @@
         <FIELD NAME="summary"         TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Short excerpt shown on card"/>
         <FIELD NAME="body"            TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Full post HTML from TinyMCE"/>
         <FIELD NAME="bodyformat"      TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
-        <FIELD NAME="status"          TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="draft" SEQUENCE="false" COMMENT="draft|published|archived"/>
+        <FIELD NAME="status"          TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="draft" SEQUENCE="false" COMMENT="draft|scheduled|published|archived"/>
+        <FIELD NAME="timescheduled"   TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Future timestamp when scheduled posts auto-publish"/>
         <FIELD NAME="timepublished"   TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true"  SEQUENCE="false"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true"  SEQUENCE="false"/>
