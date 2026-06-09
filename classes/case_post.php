@@ -81,7 +81,8 @@ class case_post {
      */
     public static function get_diagnoses(int $postid): array {
         global $DB;
-        $sql = "SELECT d.*, u.firstname, u.lastname
+        $namefields = implode(', u.', \core_user\fields::get_name_fields());
+        $sql = "SELECT d.*, u.{$namefields}
                   FROM {local_imageblog_case_diags} d
                   JOIN {user} u ON u.id = d.userid
                  WHERE d.postid = :postid
@@ -147,7 +148,8 @@ class case_post {
      */
     public static function get_questions(int $postid): array {
         global $DB;
-        $sql = "SELECT q.*, u.firstname, u.lastname
+        $namefields = implode(', u.', \core_user\fields::get_name_fields());
+        $sql = "SELECT q.*, u.{$namefields}
                   FROM {local_imageblog_case_qs} q
                   JOIN {user} u ON u.id = q.userid
                  WHERE q.postid = :postid
