@@ -123,7 +123,11 @@ final class subscription_test extends \advanced_testcase {
     public function test_get_due_subscribers_skips_suspended_and_deleted_users(): void {
         global $DB;
         $this->resetAfterTest();
-        $now = 1700000000;
+        // Pin the hour so the daily window matches.
+        $now = strtotime('2024-01-08 08:00:00');
+        set_config('digest_hour', 8, 'local_imageblog');
+        set_config('digest_weekday', 1, 'local_imageblog');
+
         $suspended = $this->getDataGenerator()->create_user();
         $deleted   = $this->getDataGenerator()->create_user();
         $emailstop = $this->getDataGenerator()->create_user();
