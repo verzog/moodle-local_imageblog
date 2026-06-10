@@ -33,8 +33,13 @@ $id = required_param('id', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHA);
 
 $post = \local_imageblog\post::get($id);
-if (!$post || $post->status !== \local_imageblog\post::STATUS_PUBLISHED) {
-    if (!$post || !has_capability('local/imageblog:editanypost', $context)) {
+if (!$post) {
+    throw new moodle_exception('error_notfound', 'local_imageblog');
+}
+if ($post->status !== \local_imageblog\post::STATUS_PUBLISHED) {
+    $isauthor = ((int)$post->authorid === (int)$USER->id)
+        && has_capability('local/imageblog:createpost', $context);
+    if (!$isauthor && !has_capability('local/imageblog:editanypost', $context)) {
         throw new moodle_exception('error_notfound', 'local_imageblog');
     }
 }
