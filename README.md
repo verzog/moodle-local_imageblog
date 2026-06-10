@@ -32,7 +32,34 @@ to complete the installation from the command line.
 
 ## Requirements ##
 
-* Moodle 5.0 (2025041100) or later.
+* Moodle 5.0 (2025041100) or later (tested up to Moodle 5.2).
+* PHP 8.2, 8.3 or 8.4 (per the requirements of the Moodle version in use).
+
+## Bulk import and export ##
+
+Two CLI tools share a common CSV format (columns: `title`, `summary`, `body`,
+`status`, `timepublished`, `author_email`, `category`, `subcategory`, `tags`,
+`levels`, `featured_image`, `panorama_image`), so an export from one site can
+be re-imported into another.
+
+Import legacy posts from a CSV plus an optional directory of images:
+
+    $ php local/imageblog/cli/import.php --csv=/path/posts.csv \
+          --imagedir=/path/images --fallback-author=admin [--dry-run]
+
+Export posts (and their featured/panorama images) to the same format:
+
+    $ php local/imageblog/cli/export.php --csv=/path/posts.csv \
+          --imagedir=/path/images [--status=published] [--overwrite]
+
+Run either script with `--help` for the full option list.
+
+## Uninstalling ##
+
+Uninstalling the plugin via _Site administration > Plugins > Plugins
+overview_ removes all plugin database tables, settings, capabilities,
+scheduled tasks and stored files, and also deletes the custom "Blog author"
+role the plugin creates (including any assignments of that role).
 
 ## Third-party libraries ##
 

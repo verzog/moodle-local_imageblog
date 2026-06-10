@@ -94,7 +94,9 @@ $handle = fopen($csvpath, 'r');
 if (!$handle) {
     cli_error("Failed to open CSV: $csvpath");
 }
-$header = fgetcsv($handle);
+// The escape argument is passed explicitly: relying on its default is
+// deprecated as of PHP 8.4.
+$header = fgetcsv($handle, null, ',', '"', '\\');
 if (!$header) {
     cli_error("Empty CSV.");
 }
@@ -277,7 +279,7 @@ $flush = function () use (&$batch, $dryrun, $storeimage, $continue, &$ok, &$fail
     $batch = [];
 };
 
-while (($cols = fgetcsv($handle)) !== false) {
+while (($cols = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
     $row++;
     if (count($cols) === 1 && trim((string)$cols[0]) === '') {
         continue;
