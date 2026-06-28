@@ -194,7 +194,11 @@ class case_post {
             'timemodified'        => time(),
         ];
         $DB->update_record('local_imageblog_posts', $record);
-        if ($diagnosisid) {
+        // Only touch CPD rows while awarding is enabled. With the kill-switch
+        // off, record_cpd() would compute 0 and skip the insert, so deleting
+        // the previous best row here would strip an existing award — leave the
+        // old award (and the selection pointer) in place instead.
+        if ($diagnosisid && self::cpd_enabled()) {
             $diag = $DB->get_record('local_imageblog_case_diags', ['id' => $diagnosisid], '*', MUST_EXIST);
             // Clear any previous best bonuses for this case so re-selection is correct.
             $DB->delete_records('local_imageblog_case_cpd', ['postid' => $postid, 'reason' => self::REASON_BEST]);
@@ -292,6 +296,22 @@ class case_post {
     }
 
     /**
+     * Whether clinical-case CPD awarding is enabled.
+     *
+     * Acts as a kill-switch (default on): an administrator can disable all
+     * new CPD awards from settings without a code change if the rules
+     * misfire in production. Existing awards are left untouched.
+     *
+     * @return bool
+     */
+    public static function cpd_enabled(): bool {
+        $val = get_config('local_imageblog', 'case_cpd_enabled');
+        // An unset value (fresh install) counts as enabled; only an explicit
+        // '0' disables, so the kill-switch never silently suppresses awards.
+        return $val === false || (string)$val !== '0';
+    }
+
+    /**
      * Compute hours for a (difficulty, reason) pair using admin config.
      *
      * @param int    $difficulty
@@ -299,6 +319,9 @@ class case_post {
      * @return float
      */
     public static function compute_hours(int $difficulty, string $reason): float {
+        if (!self::cpd_enabled()) {
+            return 0.0;
+        }
         $base = (float)get_config('local_imageblog', 'cpd_basehours');
         if ($base <= 0) {
             return 0.0;

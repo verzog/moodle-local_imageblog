@@ -72,6 +72,12 @@ if ($hassiteconfig) {
         '0.25',
         PARAM_FLOAT
     ));
+    $settings->add(new admin_setting_configcheckbox(
+        'local_imageblog/case_cpd_enabled',
+        get_string('case_cpd_enabled', 'local_imageblog'),
+        get_string('case_cpd_enabled_desc', 'local_imageblog'),
+        1
+    ));
 
     $settings->add(new admin_setting_heading(
         'local_imageblog/subs_heading',
