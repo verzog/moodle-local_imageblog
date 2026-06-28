@@ -1,25 +1,22 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// Copyright (c) Vernon Apain / Educheckout.
+// All rights reserved.
 //
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// This file is part of a proprietary plugin developed by Vernon Apain /
+// Educheckout for use with Moodle. It is NOT free software and is NOT
+// released under the GNU General Public License.
 //
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// Unauthorised copying, distribution, modification, or use of this file,
+// in whole or in part, via any medium, is strictly prohibited without the
+// prior written permission of Educheckout. The software is provided "as
+// is", without warranty of any kind, express or implied.
 
 /**
  * Unit tests for case_post.
  *
  * @package    local_imageblog
- * @copyright  2026 Vernon Spain
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  © Vernon Apain / Educheckout
+ * @license    Proprietary — Vernon Apain / Educheckout, all rights reserved
  */
 
 namespace local_imageblog;
@@ -58,6 +55,17 @@ final class case_post_test extends \advanced_testcase {
             'posttype'       => case_post::TYPE_CASE,
             'casedifficulty' => $difficulty,
         ], \context_system::instance());
+    }
+
+    /**
+     * Drain the adhoc task queue so the CPD award queued by reveal() runs.
+     */
+    private function run_queued_cpd_tasks(): void {
+        $now = time();
+        while ($task = \core\task\manager::get_next_adhoc_task($now)) {
+            $task->execute();
+            \core\task\manager::adhoc_task_complete($task);
+        }
     }
 
     /**
@@ -136,6 +144,9 @@ final class case_post_test extends \advanced_testcase {
         $post = $DB->get_record('local_imageblog_posts', ['id' => $postid]);
         $this->assertSame(1, (int)$post->caserevealed);
         $this->assertNotNull($post->caserevealedtime);
+
+        // Reveal queues the CPD award as an adhoc task — run it before asserting.
+        $this->run_queued_cpd_tasks();
 
         $cpd = $DB->get_record('local_imageblog_case_cpd', [
             'postid' => $postid,
@@ -252,6 +263,8 @@ final class case_post_test extends \advanced_testcase {
 
         $diagid = case_post::submit_diagnosis($postid, (int)$reader->id, 'Melanoma');
         case_post::reveal($postid);
+        // Reveal queues the participation CPD award as an adhoc task.
+        $this->run_queued_cpd_tasks();
         case_post::set_best_diagnosis($postid, $diagid);
 
         $total = case_post::get_user_total_hours($postid, (int)$reader->id);

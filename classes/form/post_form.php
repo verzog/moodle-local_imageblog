@@ -1,25 +1,22 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// Copyright (c) Vernon Apain / Educheckout.
+// All rights reserved.
 //
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// This file is part of a proprietary plugin developed by Vernon Apain /
+// Educheckout for use with Moodle. It is NOT free software and is NOT
+// released under the GNU General Public License.
 //
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// Unauthorised copying, distribution, modification, or use of this file,
+// in whole or in part, via any medium, is strictly prohibited without the
+// prior written permission of Educheckout. The software is provided "as
+// is", without warranty of any kind, express or implied.
 
 /**
  * Post create/edit form.
  *
  * @package    local_imageblog
- * @copyright  2026 Vernon Spain
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  © Vernon Apain / Educheckout
+ * @license    Proprietary — Vernon Apain / Educheckout, all rights reserved
  */
 
 namespace local_imageblog\form;
@@ -263,7 +260,18 @@ class post_form extends moodleform {
             $defaults->caseoutcome       = '';
             $defaults->caseoutcomeformat = FORMAT_HTML;
             $defaults->haspanorama       = 0;
-            $defaults->timescheduled     = time() + DAYSECS;
+            // Default the schedule picker to 09:00 tomorrow using calendar
+            // arithmetic in the user's timezone — adding DAYSECS would land an
+            // hour off across a Sydney DST changeover (CLAUDE.md §6.5).
+            $today = usergetdate(time());
+            $defaults->timescheduled = make_timestamp(
+                $today['year'],
+                $today['mon'],
+                $today['mday'] + 1,
+                9,
+                0,
+                0
+            );
         }
 
         $defaults = file_prepare_standard_editor(

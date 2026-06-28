@@ -1,25 +1,22 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// Copyright (c) Vernon Apain / Educheckout.
+// All rights reserved.
 //
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// This file is part of a proprietary plugin developed by Vernon Apain /
+// Educheckout for use with Moodle. It is NOT free software and is NOT
+// released under the GNU General Public License.
 //
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// Unauthorised copying, distribution, modification, or use of this file,
+// in whole or in part, via any medium, is strictly prohibited without the
+// prior written permission of Educheckout. The software is provided "as
+// is", without warranty of any kind, express or implied.
 
 /**
  * Clinical case operations and CPD calculation.
  *
  * @package    local_imageblog
- * @copyright  2026 Vernon Spain
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  © Vernon Apain / Educheckout
+ * @license    Proprietary — Vernon Apain / Educheckout, all rights reserved
  */
 
 namespace local_imageblog;
@@ -158,7 +155,11 @@ class case_post {
     }
 
     /**
-     * Mark the case as revealed and award CPD hours to participants.
+     * Mark the case as revealed and queue the CPD award for participants.
+     *
+     * The award iterates every participant's diagnosis, so it is enqueued as
+     * an adhoc task rather than run inline — a popular case shouldn't do a
+     * long write loop inside the reveal request (CLAUDE.md §8).
      *
      * @param int $postid
      */
@@ -172,7 +173,10 @@ class case_post {
             'timemodified'     => $now,
         ];
         $DB->update_record('local_imageblog_posts', $record);
-        self::award_cpd_for_case($postid);
+
+        $task = new \local_imageblog\task\award_case_cpd();
+        $task->set_custom_data(['postid' => $postid]);
+        \core\task\manager::queue_adhoc_task($task, true);
     }
 
     /**
