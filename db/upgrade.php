@@ -152,5 +152,12 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026060900, 'local', 'imageblog');
     }
 
+    if ($oldversion < 2026062802) {
+        // Refresh the Blog author role's name/description so the corrected
+        // "own posts only" wording reaches sites where the role already exists.
+        \local_imageblog\local\author_role::ensure();
+        upgrade_plugin_savepoint(true, 2026062802, 'local', 'imageblog');
+    }
+
     return true;
 }
