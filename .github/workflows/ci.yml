@@ -45,6 +45,22 @@ jobs:
           --health-timeout 5s
           --health-retries 5
           --health-start-period 30s
+      mariadb:
+        # MariaDB is a distinct Moodle DB driver (not just mysqli) and the
+        # most common engine in production, so it gets its own matrix leg.
+        # Mapped to host port 3307 because MySQL already holds 3306; the
+        # install step passes the matching --db-port (see below).
+        image: mariadb:10.11
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "true"
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --health-start-period 30s
 
     strategy:
       fail-fast: false
@@ -54,7 +70,7 @@ jobs:
         # $plugin->supported = [500, 502], so 'validate' would flag it as
         # untested-but-unsupported. Re-add it here once 'supported' is raised.
         moodle-branch: ['MOODLE_500_STABLE', 'MOODLE_501_STABLE', 'MOODLE_502_STABLE']
-        database: ['pgsql', 'mysqli']
+        database: ['pgsql', 'mysqli', 'mariadb']
         exclude:
           # Moodle 5.2+ requires PHP 8.3 or newer.
           - php: '8.2'
@@ -94,8 +110,16 @@ jobs:
       - name: Install moodle-plugin-ci
         id: install
         run: |
+          # Pick the port matching the service for this matrix DB. MySQL and
+          # MariaDB both speak 3306 in-container, but MariaDB is published on
+          # 3307 on the host to avoid clashing with the MySQL service.
+          case "$DB" in
+            pgsql)   DBPORT=5432 ;;
+            mariadb) DBPORT=3307 ;;
+            *)       DBPORT=3306 ;;
+          esac
           attempts=0
-          until moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1; do
+          until moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1 --db-port="$DBPORT"; do
             attempts=$((attempts + 1))
             if [ $attempts -ge 3 ]; then
               echo "moodle-plugin-ci install failed after $attempts attempts" >&2
