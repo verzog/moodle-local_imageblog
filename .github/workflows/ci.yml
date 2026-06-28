@@ -114,7 +114,11 @@ jobs:
 
       - name: Moodle Code Checker
         if: ${{ !cancelled() && steps.install.conclusion == 'success' }}
-        run: moodle-plugin-ci phpcs --max-warnings 0
+        # Pass the repo ruleset explicitly: moodle-plugin-ci defaults to
+        # --standard=moodle, which suppresses phpcs auto-discovery of the
+        # plugin's phpcs.xml, so the proprietary-header BoilerplateComment
+        # exclusion would otherwise be ignored.
+        run: moodle-plugin-ci phpcs --max-warnings 0 --standard ${{ github.workspace }}/plugin/phpcs.xml
 
       - name: Moodle PHPDoc Checker
         if: ${{ !cancelled() && steps.install.conclusion == 'success' }}
