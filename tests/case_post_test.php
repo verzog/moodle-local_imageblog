@@ -271,4 +271,37 @@ final class case_post_test extends \advanced_testcase {
         // Participation 0.75 + best 0.25 = 1.0.
         $this->assertEqualsWithDelta(1.0, $total, 0.01);
     }
+
+    public function test_compute_hours_is_zero_when_cpd_disabled(): void {
+        $this->resetAfterTest();
+        $this->set_default_cpd_config();
+
+        // Enabled by default (config unset counts as on).
+        $this->assertTrue(case_post::cpd_enabled());
+        $this->assertEqualsWithDelta(0.75, case_post::compute_hours(3, case_post::REASON_PARTICIPATION), 0.01);
+
+        // The kill-switch zeroes every reason once flipped off.
+        set_config('case_cpd_enabled', 0, 'local_imageblog');
+        $this->assertFalse(case_post::cpd_enabled());
+        $this->assertSame(0.0, case_post::compute_hours(3, case_post::REASON_PARTICIPATION));
+        $this->assertSame(0.0, case_post::compute_hours(3, case_post::REASON_VIEW));
+        $this->assertSame(0.0, case_post::compute_hours(3, case_post::REASON_BEST));
+    }
+
+    public function test_reveal_awards_no_cpd_when_kill_switch_off(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->set_default_cpd_config();
+        set_config('case_cpd_enabled', 0, 'local_imageblog');
+
+        $author = $this->getDataGenerator()->create_user();
+        $reader = $this->getDataGenerator()->create_user();
+        $postid = $this->create_case($author, 3);
+
+        case_post::submit_diagnosis($postid, (int)$reader->id, 'Melanoma');
+        case_post::reveal($postid);
+        $this->run_queued_cpd_tasks();
+
+        $this->assertSame(0, $DB->count_records('local_imageblog_case_cpd', ['postid' => $postid]));
+    }
 }
