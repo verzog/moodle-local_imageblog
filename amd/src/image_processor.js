@@ -1,16 +1,16 @@
-// Copyright (c) Vernon Apain / Educheckout.
-// All rights reserved.
+// This file is part of Moodle - http://moodle.org/
 //
-// This file is part of a proprietary plugin developed by Vernon Apain /
-// Educheckout for use with Moodle. It is NOT free software and is NOT
-// released under the GNU General Public License.
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 or later.
 //
-// Unauthorised copying, distribution, modification, or use of this file,
-// in whole or in part, via any medium, is strictly prohibited without the
-// prior written permission of Educheckout. The software is provided "as
-// is", without warranty of any kind, express or implied. The bundled
-// Pannellum library under thirdparty/ retains its own MIT licence; see
-// that directory and thirdpartylibs.xml for details.
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Client-side image processor.
@@ -19,8 +19,8 @@
  * native Canvas / createImageBitmap APIs. No external dependencies.
  *
  * @module     local_imageblog/image_processor
- * @copyright  © Vernon Apain / Educheckout
- * @license    Proprietary — Vernon Apain / Educheckout, all rights reserved
+ * @copyright  2026 Vernon Spain
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 import {get_string as getString} from 'core/str';

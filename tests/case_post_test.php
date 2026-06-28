@@ -58,6 +58,17 @@ final class case_post_test extends \advanced_testcase {
     }
 
     /**
+     * Drain the adhoc task queue so the CPD award queued by reveal() runs.
+     */
+    private function run_queued_cpd_tasks(): void {
+        $now = time();
+        while ($task = \core\task\manager::get_next_adhoc_task($now)) {
+            $task->execute();
+            \core\task\manager::adhoc_task_complete($task);
+        }
+    }
+
+    /**
      * Configure deterministic CPD rates so the maths is easy to assert.
      */
     private function set_default_cpd_config(): void {
@@ -135,11 +146,7 @@ final class case_post_test extends \advanced_testcase {
         $this->assertNotNull($post->caserevealedtime);
 
         // Reveal queues the CPD award as an adhoc task — run it before asserting.
-        $now = time();
-        while ($task = \core\task\manager::get_next_adhoc_task($now)) {
-            $task->execute();
-            \core\task\manager::adhoc_task_complete($task);
-        }
+        $this->run_queued_cpd_tasks();
 
         $cpd = $DB->get_record('local_imageblog_case_cpd', [
             'postid' => $postid,
@@ -256,6 +263,8 @@ final class case_post_test extends \advanced_testcase {
 
         $diagid = case_post::submit_diagnosis($postid, (int)$reader->id, 'Melanoma');
         case_post::reveal($postid);
+        // Reveal queues the participation CPD award as an adhoc task.
+        $this->run_queued_cpd_tasks();
         case_post::set_best_diagnosis($postid, $diagid);
 
         $total = case_post::get_user_total_hours($postid, (int)$reader->id);
