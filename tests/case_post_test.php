@@ -304,4 +304,35 @@ final class case_post_test extends \advanced_testcase {
 
         $this->assertSame(0, $DB->count_records('local_imageblog_case_cpd', ['postid' => $postid]));
     }
+
+    public function test_disabling_kill_switch_preserves_existing_best_bonus(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->set_default_cpd_config();
+        $author = $this->getDataGenerator()->create_user();
+        $alice  = $this->getDataGenerator()->create_user();
+        $bob    = $this->getDataGenerator()->create_user();
+        $postid = $this->create_case($author, 3);
+
+        $aliceid = case_post::submit_diagnosis($postid, (int)$alice->id, 'Melanoma');
+        $bobid   = case_post::submit_diagnosis($postid, (int)$bob->id, 'Nevus');
+        case_post::reveal($postid);
+        $this->run_queued_cpd_tasks();
+        case_post::set_best_diagnosis($postid, $aliceid);
+
+        $bestrow = ['postid' => $postid, 'userid' => $alice->id, 'reason' => case_post::REASON_BEST];
+        $this->assertTrue($DB->record_exists('local_imageblog_case_cpd', $bestrow));
+
+        // With the kill-switch off, re-marking best must not strip Alice's
+        // existing bonus, and must not award Bob a new one.
+        set_config('case_cpd_enabled', 0, 'local_imageblog');
+        case_post::set_best_diagnosis($postid, $bobid);
+
+        $this->assertTrue($DB->record_exists('local_imageblog_case_cpd', $bestrow));
+        $this->assertFalse($DB->record_exists('local_imageblog_case_cpd', [
+            'postid' => $postid,
+            'userid' => $bob->id,
+            'reason' => case_post::REASON_BEST,
+        ]));
+    }
 }

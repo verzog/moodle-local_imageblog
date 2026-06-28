@@ -194,7 +194,11 @@ class case_post {
             'timemodified'        => time(),
         ];
         $DB->update_record('local_imageblog_posts', $record);
-        if ($diagnosisid) {
+        // Only touch CPD rows while awarding is enabled. With the kill-switch
+        // off, record_cpd() would compute 0 and skip the insert, so deleting
+        // the previous best row here would strip an existing award — leave the
+        // old award (and the selection pointer) in place instead.
+        if ($diagnosisid && self::cpd_enabled()) {
             $diag = $DB->get_record('local_imageblog_case_diags', ['id' => $diagnosisid], '*', MUST_EXIST);
             // Clear any previous best bonuses for this case so re-selection is correct.
             $DB->delete_records('local_imageblog_case_cpd', ['postid' => $postid, 'reason' => self::REASON_BEST]);
