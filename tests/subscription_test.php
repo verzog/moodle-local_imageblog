@@ -1,25 +1,22 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// Copyright (c) Vernon Apain / Educheckout.
+// All rights reserved.
 //
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// This file is part of a proprietary plugin developed by Vernon Apain /
+// Educheckout for use with Moodle. It is NOT free software and is NOT
+// released under the GNU General Public License.
 //
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// Unauthorised copying, distribution, modification, or use of this file,
+// in whole or in part, via any medium, is strictly prohibited without the
+// prior written permission of Educheckout. The software is provided "as
+// is", without warranty of any kind, express or implied.
 
 /**
  * Unit tests for subscription.
  *
  * @package    local_imageblog
- * @copyright  2026 Vernon Spain
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  © Vernon Apain / Educheckout
+ * @license    Proprietary — Vernon Apain / Educheckout, all rights reserved
  */
 
 namespace local_imageblog;
@@ -147,5 +144,39 @@ final class subscription_test extends \advanced_testcase {
         $this->assertNotContains((int)$suspended->id, $ids);
         $this->assertNotContains((int)$deleted->id, $ids);
         $this->assertNotContains((int)$emailstop->id, $ids);
+    }
+
+    public function test_interval_seconds_window_per_frequency(): void {
+        $this->assertSame(DAYSECS, subscription::interval_seconds(subscription::FREQ_DAILY));
+        $this->assertSame(WEEKSECS, subscription::interval_seconds(subscription::FREQ_WEEKLY));
+        // Unknown / immediate falls back to a daily window rather than fataling.
+        $this->assertSame(DAYSECS, subscription::interval_seconds(subscription::FREQ_IMMEDIATE));
+    }
+
+    public function test_digest_task_processes_new_subscriber_without_error(): void {
+        $this->resetAfterTest();
+        set_config('subscriptions_enabled', 1, 'local_imageblog');
+        // Match the daily window to the current hour so the subscriber is due
+        // when the task reads the real clock inside execute().
+        set_config('digest_hour', (int)date('G'), 'local_imageblog');
+
+        $user = $this->getDataGenerator()->create_user();
+        subscription::subscribe((int)$user->id, subscription::FREQ_DAILY);
+        $sub = subscription::get_for_user((int)$user->id);
+        // A brand-new subscriber has a null lastsent. That is the branch that
+        // used to call the undefined subscription::interval_seconds() and
+        // fatal — it runs whether or not any posts are due, so no post is
+        // needed to exercise it.
+        $this->assertNull($sub->lastsent);
+
+        $task = new \local_imageblog\task\send_subscription_digest();
+        ob_start();
+        $task->execute();
+        ob_end_clean();
+
+        // Reaching the end of execute() proves interval_seconds() resolves;
+        // lastsent is now stamped for the subscriber.
+        $reloaded = subscription::get_for_user((int)$user->id);
+        $this->assertNotNull($reloaded->lastsent);
     }
 }

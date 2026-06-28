@@ -12,7 +12,7 @@
 // is", without warranty of any kind, express or implied.
 
 /**
- * Scheduled task: flip scheduled posts to published when their time arrives.
+ * Adhoc task: award CPD hours for a revealed case.
  *
  * @package    local_imageblog
  * @copyright  © Vernon Apain / Educheckout
@@ -21,42 +21,31 @@
 
 namespace local_imageblog\task;
 
-use core\task\scheduled_task;
-use local_imageblog\post;
+use core\task\adhoc_task;
+use local_imageblog\case_post;
 
 /**
- * Auto-publishes posts whose timescheduled has passed.
+ * Awards participation CPD to everyone who diagnosed a case, off the request
+ * thread so the reveal action returns promptly even for popular cases.
  */
-class publish_scheduled_posts extends scheduled_task {
+class award_case_cpd extends adhoc_task {
     /**
-     * Task name shown in admin > scheduled tasks.
+     * Task name shown in admin > tasks logs.
      *
      * @return string
      */
     public function get_name(): string {
-        return get_string('task_publish_scheduled', 'local_imageblog');
+        return get_string('task_award_cpd', 'local_imageblog');
     }
 
     /**
      * Run the task.
      */
     public function execute(): void {
-        global $DB;
-
-        $now = time();
-        $due = $DB->get_fieldset_select(
-            'local_imageblog_posts',
-            'id',
-            'status = :status AND timescheduled IS NOT NULL AND timescheduled <= :now',
-            ['status' => post::STATUS_SCHEDULED, 'now' => $now]
-        );
-        if (!$due) {
-            mtrace('local_imageblog: no scheduled posts due.');
+        $data = $this->get_custom_data();
+        if (empty($data->postid)) {
             return;
         }
-        foreach ($due as $postid) {
-            post::set_status((int)$postid, post::STATUS_PUBLISHED);
-        }
-        mtrace('local_imageblog: published ' . count($due) . ' scheduled post(s).');
+        case_post::award_cpd_for_case((int)$data->postid);
     }
 }

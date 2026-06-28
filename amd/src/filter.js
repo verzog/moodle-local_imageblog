@@ -1,17 +1,17 @@
-// This file is part of Moodle - http://moodle.org/
+// Copyright (c) Vernon Apain / Educheckout.
+// All rights reserved.
 //
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// This file is part of a proprietary plugin developed by Vernon Apain /
+// Educheckout for use with Moodle. It is NOT free software and is NOT
+// released under the GNU General Public License.
 //
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// Unauthorised copying, distribution, modification, or use of this file,
+// in whole or in part, via any medium, is strictly prohibited without the
+// prior written permission of Educheckout. The software is provided "as
+// is", without warranty of any kind, express or implied.
 //
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// The bundled Pannellum library under thirdparty/ retains its own MIT
+// licence; see that directory and thirdpartylibs.xml for details.
 
 /**
  * Listing filter behaviour: rebuilds the subcategory dropdown when the
@@ -19,8 +19,8 @@
  * region's data attribute.
  *
  * @module     local_imageblog/filter
- * @copyright  2026 Vernon Spain
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  © Vernon Apain / Educheckout
+ * @license    Proprietary — Vernon Apain / Educheckout, all rights reserved
  */
 
 import {get_string as getString} from 'core/str';

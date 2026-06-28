@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="ProjectRuleset">
+    <rule ref="moodle">
+        <!-- Proprietary, in-house plugin: not GPL, so the Moodle GPL
+             boilerplate sniff does not apply. The file headers carry a
+             proprietary "all rights reserved" notice instead. -->
+        <exclude name="moodle.Files.BoilerplateComment"/>
+    </rule>
+</ruleset>
