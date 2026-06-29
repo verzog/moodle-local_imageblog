@@ -290,4 +290,63 @@ final class post_test extends \advanced_testcase {
         post::set_taxonomy($postid, null, null, [$tag2], []);
         $this->assertSame([$tag2], $loaded->get_tag_ids());
     }
+
+    /**
+     * A user with only createpost cannot edit someone else's post by sending a
+     * tampered id to save() — ownership is enforced on the saved id.
+     */
+    public function test_save_rejects_editing_another_users_post_without_editanypost(): void {
+        $this->resetAfterTest();
+        $context = \context_system::instance();
+        $alice = $this->getDataGenerator()->create_user();
+        $bob   = $this->getDataGenerator()->create_user();
+
+        $this->setUser($alice);
+        $aliceid = post::save((object)[
+            'id'     => 0,
+            'title'  => 'Alice post',
+            'status' => post::STATUS_DRAFT,
+        ], $context);
+
+        // Bob has createpost (granted in setUp) but not editanypost; a submit
+        // carrying Alice's id must be rejected rather than overwrite her post.
+        $this->setUser($bob);
+        $this->expectException(\moodle_exception::class);
+        post::save((object)[
+            'id'     => $aliceid,
+            'title'  => 'Hijacked',
+            'status' => post::STATUS_DRAFT,
+        ], $context);
+    }
+
+    /**
+     * A manager (editanypost) may still edit any author's post.
+     */
+    public function test_save_allows_manager_to_edit_any_post(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $context = \context_system::instance();
+
+        $alice = $this->getDataGenerator()->create_user();
+        $this->setUser($alice);
+        $aliceid = post::save((object)[
+            'id'     => 0,
+            'title'  => 'Alice post',
+            'status' => post::STATUS_DRAFT,
+        ], $context);
+
+        $manager = $this->getDataGenerator()->create_user();
+        $managerrole = $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        role_assign($managerrole, $manager->id, $context->id);
+
+        $this->setUser($manager);
+        $savedid = post::save((object)[
+            'id'     => $aliceid,
+            'title'  => 'Edited by manager',
+            'status' => post::STATUS_DRAFT,
+        ], $context);
+
+        $this->assertSame($aliceid, $savedid);
+        $this->assertSame('Edited by manager', post::get($aliceid)->title);
+    }
 }

@@ -2,10 +2,11 @@
 
 A Moodle local plugin that provides a site-wide image-led blog. Posts support a
 featured image, rich body content, optional 360° equirectangular panoramas, a
-taxonomy of categories, subcategories, tags and difficulty levels, and an
-optional "clinical case" mode in which readers submit a diagnosis, ask the
-author questions, and earn CPD hours once the outcome is revealed. Readers can
-also opt in to periodic email digests of newly published posts.
+taxonomy of categories, subcategories, tags and difficulty levels, and draft or
+scheduled publishing. An optional "clinical case" mode lets readers submit a
+diagnosis, ask the author questions, and earn CPD hours once the outcome is
+revealed. Readers can also opt in to periodic email digests of newly published
+posts.
 
 ## Installing via uploaded ZIP file ##
 
@@ -34,6 +35,43 @@ to complete the installation from the command line.
 
 * Moodle 5.0 (2025041100) or later (tested up to Moodle 5.2).
 * PHP 8.2, 8.3 or 8.4 (per the requirements of the Moodle version in use).
+* PostgreSQL, MySQL or MariaDB (all three are exercised in CI).
+
+## Configuration ##
+
+All settings live under _Site administration > Plugins > Local plugins >
+Image blog > Settings_.
+
+**CPD hours for clinical cases** — how many CPD hours readers earn for taking
+part in a case:
+
+* _Base CPD hours per case_, _Difficulty multipliers_ (one per difficulty
+  level 1–5), and the per-action factors: _submitted a diagnosis_,
+  _viewed reveal_, and the _best diagnosis_ bonus.
+* _Award CPD hours for clinical cases_ is a kill-switch (on by default). When
+  turned off, no new CPD is awarded for participation, outcome views or
+  best-answer bonuses, and awards already granted are left untouched. Use it if
+  the CPD rules ever misfire in production.
+
+**Subscription emails** — let readers opt in to digests of newly published
+posts:
+
+* _Enable digest emails_ (off by default), plus the hour of day and the weekday
+  on which the daily and weekly digests are sent.
+
+**RSS feed** — _Publish an RSS feed_ exposes a public feed of recent published
+posts at `/local/imageblog/rss.php`.
+
+**Appearance** — _Custom CSS_ is injected into the blog listing and post pages
+only, so it can restyle the blog without affecting the rest of the Moodle site.
+
+## Blog authors ##
+
+The plugin defines a custom **Blog author** role that lets a user create,
+publish and edit their **own** blog posts without making them a site manager.
+(Editing _any_ author's post still requires a manager or the `editanypost`
+capability.) Assign or remove the role from _Site administration > Plugins >
+Local plugins > Image blog > Manage blog authors_.
 
 ## Bulk import and export ##
 

@@ -89,7 +89,7 @@ class author_role {
      * @return int Role id.
      */
     public static function ensure(): int {
-        global $CFG;
+        global $CFG, $DB;
         require_once($CFG->libdir . '/accesslib.php');
 
         $roleid = self::get_roleid();
@@ -101,6 +101,16 @@ class author_role {
                 ''
             );
             set_role_contextlevels($roleid, [CONTEXT_SYSTEM]);
+        } else {
+            // Keep the existing role's name and description in step with the
+            // current lang strings, so corrected copy (e.g. the scope of the
+            // role) reaches sites where the role was created by an older
+            // version. Safe to run on every upgrade.
+            $DB->update_record('role', (object)[
+                'id'          => $roleid,
+                'name'        => get_string('author_role_name', 'local_imageblog'),
+                'description' => get_string('author_role_desc', 'local_imageblog'),
+            ]);
         }
 
         $syscontext = \context_system::instance();

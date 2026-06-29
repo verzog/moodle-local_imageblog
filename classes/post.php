@@ -256,6 +256,20 @@ class post {
             ? null
             : $DB->get_record('local_imageblog_posts', ['id' => (int)$data->id], '*', MUST_EXIST);
 
+        // Re-check edit rights against the *saved* id, not just the page-load
+        // id. edit.php authorises on the query-string id, but the update path
+        // keys off the submitted hidden id, so without this a tampered POST
+        // could edit another author's post with only createpost. Authors may
+        // edit their own posts; editing anyone's needs editanypost.
+        if (!$isnew) {
+            $canedit = ((int)$existing->authorid === (int)$USER->id
+                    && has_capability('local/imageblog:createpost', $context))
+                || has_capability('local/imageblog:editanypost', $context);
+            if (!$canedit) {
+                throw new \moodle_exception('error_nopermission', 'local_imageblog');
+            }
+        }
+
         // Transitions that make the post live (now or in the future) require
         // the publish capability. editanypost is the admin override.
         $canpublish = has_capability('local/imageblog:publishpost', $context)
