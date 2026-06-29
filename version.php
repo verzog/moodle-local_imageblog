@@ -1,29 +1,32 @@
 <?php
-// Copyright (c) Vernon Apain / Educheckout.
-// All rights reserved.
+// This file is part of Moodle - http://moodle.org/
 //
-// This file is part of a proprietary plugin developed by Vernon Apain /
-// Educheckout for use with Moodle. It is NOT free software and is NOT
-// released under the GNU General Public License.
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// Unauthorised copying, distribution, modification, or use of this file,
-// in whole or in part, via any medium, is strictly prohibited without the
-// prior written permission of Educheckout. The software is provided "as
-// is", without warranty of any kind, express or implied.
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Plugin version information.
  *
  * @package   local_imageblog
- * @copyright © Vernon Apain / Educheckout
- * @license   Proprietary — Vernon Apain / Educheckout, all rights reserved
+ * @copyright 2026 Vernon Apain / Educheckout
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_imageblog';
-$plugin->version   = 2026062802;
+$plugin->version   = 2026062900;
 $plugin->requires  = 2025041100; // Moodle 5.0.
 $plugin->supported = [500, 502]; // Moodle 5.0 to 5.2 inclusive.
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.4.2';
+$plugin->release   = '0.5.0';
