@@ -117,16 +117,19 @@ changes have been made to the upstream source.
 
 ## License ##
 
-Copyright (c) Vernon Apain / Educheckout. All rights reserved.
+Copyright (c) 2026 Vernon Apain / Educheckout
 
-This is a proprietary plugin. It is **not** free software and is **not**
-released under the GNU General Public License. It is intended for in-house use
-only and is **not** for publication to the Moodle Plugins directory.
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
 
-Unauthorised copying, distribution, modification, or use of this software, in
-whole or in part, via any medium, is strictly prohibited without the prior
-written permission of Educheckout. The software is provided "as is", without
-warranty of any kind, express or implied.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-Note: the bundled Pannellum library (see _Third-party libraries_ above) remains
-under its own MIT license.
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+
+The bundled Pannellum library (see _Third-party libraries_ above) is under the
+MIT License.
