@@ -25,16 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_imageblog';
-<<<<<<< claude/privacy-audit
-$plugin->version   = 2026062902;
+$plugin->version   = 2026070100;
 $plugin->requires  = 2025041100; // Moodle 5.0.
 $plugin->supported = [500, 502]; // Moodle 5.0 to 5.2 inclusive.
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.5.2';
-=======
-$plugin->version   = 2026062901;
-$plugin->requires  = 2025041100; // Moodle 5.0.
-$plugin->supported = [500, 502]; // Moodle 5.0 to 5.2 inclusive.
-$plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.5.1';
->>>>>>> main
+$plugin->release   = '0.5.4';
