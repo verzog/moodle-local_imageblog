@@ -66,9 +66,11 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
     }
     // Case-outcome images are the answer: keep them private until the case is
     // revealed, except to the author or a manager.
-    if ($filearea === \local_imageblog\post::FILEAREA_CASEOUTCOME
-            && empty($post->caserevealed)
-            && !\local_imageblog\post::can_manage($post, $context)) {
+    if (
+        $filearea === \local_imageblog\post::FILEAREA_CASEOUTCOME
+        && empty($post->caserevealed)
+        && !\local_imageblog\post::can_manage($post, $context)
+    ) {
         return false;
     }
 
