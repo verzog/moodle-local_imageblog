@@ -70,6 +70,7 @@
     <div class="local-imageblog-post__panorama mb-3"
          data-region="local-imageblog-panorama"
          data-imgurl="{{panoramaurl}}"
+         role="img"
          aria-label="{{#str}}panorama, local_imageblog{{/str}}"></div>
     {{/haspanorama}}
 
@@ -77,7 +78,7 @@
 
     <div class="local-imageblog-post__meta text-muted small mb-3">
         <span>{{authorname}}</span>
-        <span>·</span>
+        <span aria-hidden="true">·</span>
         <span>{{datepublished}}</span>
     </div>
 
