@@ -102,6 +102,39 @@ class post {
     }
 
     /**
+     * Whether the current user may manage this post (edit, publish, act on it).
+     *
+     * The author keeps management rights on their own posts while they still
+     * hold createpost; a manager with editanypost may manage any post.
+     *
+     * @param self     $post
+     * @param \context $context System context.
+     * @return bool
+     */
+    public static function can_manage(self $post, \context $context): bool {
+        global $USER;
+        return has_capability('local/imageblog:editanypost', $context)
+            || (((int)$post->authorid === (int)$USER->id)
+                && has_capability('local/imageblog:createpost', $context));
+    }
+
+    /**
+     * Whether the current user may see this post at all.
+     *
+     * Published posts are visible to anyone with the view capability; drafts,
+     * scheduled and archived posts are visible only to the author or a manager.
+     * Callers must still enforce the view capability separately.
+     *
+     * @param self     $post
+     * @param \context $context System context.
+     * @return bool
+     */
+    public static function can_view(self $post, \context $context): bool {
+        return $post->status === self::STATUS_PUBLISHED
+            || self::can_manage($post, $context);
+    }
+
+    /**
      * Fetch posts for the listing page.
      *
      * By default returns only published posts. Pass `statuses` to widen the

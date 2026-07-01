@@ -182,6 +182,7 @@ $string['privacy:metadata:files']                = 'Featured images and body ima
 $string['privacy:metadata:posts']                = 'Information about blog posts authored by users.';
 $string['privacy:metadata:posts:authorid']       = 'The ID of the user who authored the post.';
 $string['privacy:metadata:posts:body']           = 'The full post body.';
+$string['privacy:metadata:posts:caseoutcome']    = 'The author-provided outcome/final diagnosis for a clinical case post.';
 $string['privacy:metadata:posts:status']         = 'The publication status (draft, published, archived).';
 $string['privacy:metadata:posts:summary']        = 'The short summary shown on listing cards.';
 $string['privacy:metadata:posts:timecreated']    = 'When the post was created.';
