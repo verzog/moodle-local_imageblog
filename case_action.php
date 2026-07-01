@@ -44,9 +44,14 @@ if ($post->posttype !== \local_imageblog\case_post::TYPE_CASE) {
 }
 
 // Can manage this case — author with createpost still held, or any-post editor.
-$canmanagecase = has_capability('local/imageblog:editanypost', $context)
-    || ((int)$post->authorid === (int)$USER->id
-        && has_capability('local/imageblog:createpost', $context));
+$canmanagecase = \local_imageblog\post::can_manage($post, $context);
+
+// Only allow interaction with cases the user can actually see. Without this a
+// submitdiagnosis-capable user could POST diagnoses or questions to a draft or
+// archived case by id, even though view.php would never show it to them.
+if (!\local_imageblog\post::can_view($post, $context)) {
+    throw new moodle_exception('error_notfound', 'local_imageblog');
+}
 
 $returnurl = new moodle_url('/local/imageblog/view.php', ['id' => $postid]);
 

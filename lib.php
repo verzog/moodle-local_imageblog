@@ -57,6 +57,21 @@ function local_imageblog_pluginfile($course, $cm, $context, $filearea, $args, $f
     }
     $filepath = $args ? '/' . implode('/', $args) . '/' : '/';
 
+    // The itemid is the post id. Enforce the same visibility as the post view
+    // so a view-capable user can't fetch images from a draft/archived post — or
+    // the hidden case "answer" — just by guessing the (sequential) id.
+    $post = \local_imageblog\post::get($itemid);
+    if (!$post || !\local_imageblog\post::can_view($post, $context)) {
+        return false;
+    }
+    // Case-outcome images are the answer: keep them private until the case is
+    // revealed, except to the author or a manager.
+    if ($filearea === \local_imageblog\post::FILEAREA_CASEOUTCOME
+            && empty($post->caserevealed)
+            && !\local_imageblog\post::can_manage($post, $context)) {
+        return false;
+    }
+
     $fs   = get_file_storage();
     $file = $fs->get_file($context->id, 'local_imageblog', $filearea, $itemid, $filepath, $filename);
 

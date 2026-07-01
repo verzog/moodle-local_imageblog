@@ -352,4 +352,43 @@ final class post_test extends \advanced_testcase {
         $this->assertSame($aliceid, $savedid);
         $this->assertSame('Edited by manager', post::get($aliceid)->title);
     }
+
+    /**
+     * can_view / can_manage gate access to unpublished posts. This is the logic
+     * pluginfile, view.php and case_action.php rely on to keep draft and
+     * pre-reveal content (including case-answer images) from leaking by id.
+     */
+    public function test_can_view_and_can_manage_enforce_visibility(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $context = \context_system::instance();
+        $alice = $this->getDataGenerator()->create_user();
+        $bob   = $this->getDataGenerator()->create_user();
+
+        $this->setUser($alice);
+        $draftid = post::save((object)['id' => 0, 'title' => 'D', 'status' => post::STATUS_DRAFT], $context);
+        $pubid   = post::save((object)['id' => 0, 'title' => 'P', 'status' => post::STATUS_PUBLISHED], $context);
+        $draft = post::get($draftid);
+        $pub   = post::get($pubid);
+
+        // Author sees and manages their own draft.
+        $this->assertTrue(post::can_view($draft, $context));
+        $this->assertTrue(post::can_manage($draft, $context));
+
+        // Bob has view + createpost but is not the author and lacks editanypost:
+        // he cannot see or manage Alice's draft, but can view the published post.
+        $this->setUser($bob);
+        $this->assertFalse(post::can_view($draft, $context));
+        $this->assertFalse(post::can_manage($draft, $context));
+        $this->assertTrue(post::can_view($pub, $context));
+        $this->assertFalse(post::can_manage($pub, $context));
+
+        // A manager with editanypost can see and manage any post.
+        $manager = $this->getDataGenerator()->create_user();
+        $managerrole = $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        role_assign($managerrole, $manager->id, $context->id);
+        $this->setUser($manager);
+        $this->assertTrue(post::can_view($draft, $context));
+        $this->assertTrue(post::can_manage($draft, $context));
+    }
 }
