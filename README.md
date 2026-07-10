@@ -115,6 +115,25 @@ changes have been made to the upstream source.
 > _Journal of Open Source Software_ 4, no. 40 (2019): 1628.
 > [doi:10.21105/joss.01628](https://doi.org/10.21105/joss.01628)
 
+## Commercial support ##
+
+Image blog is free, open-source software under the GNU GPL v3 (see _License_
+below) and always will be — you are free to use it, including in commercial and
+for-profit settings, redistribute it and modify it under the terms of that
+licence.
+
+If your institution would like hands-on help beyond the community, Educheckout
+offers commercial services for the plugin, including:
+
+* Installation, upgrade and hosting assistance.
+* Custom features, integrations and theming.
+* Priority bug fixes and help configuring the CPD and clinical-case rules.
+* Training for blog authors and administrators.
+
+These services are optional and separate from the plugin itself; the software
+remains GPL v3 whether or not you buy support. For a quote or to discuss your
+requirements, contact Vernon Apain at Educheckout: <verzog@gmail.com>.
+
 ## License ##
 
 Copyright (c) 2026 Vernon Apain / Educheckout
