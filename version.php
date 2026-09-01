@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_imageblog';
-$plugin->version   = 2026070101;
+$plugin->version   = 2026070102;
 $plugin->requires  = 2025041100; // Moodle 5.0.
 $plugin->supported = [500, 502]; // Moodle 5.0 to 5.2 inclusive.
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.5.4';
+$plugin->release   = '0.5.5';
