@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Image blog">
+  <!-- Three blog rows (image thumbnail + text lines) side by side, descending. -->
+  <g transform="translate(2,3)">
+    <rect x="0" y="0" width="16" height="16" rx="3" fill="#1b7f8c"/>
+    <circle cx="11.5" cy="4.5" r="2" fill="#f2a541"/>
+    <path d="M2 14l4-5 3 3 3-4 4 6z" fill="#eafaf6"/>
+    <rect x="21" y="2" width="23" height="4.5" rx="2.25" fill="#41707a"/>
+    <rect x="21" y="9.5" width="15" height="4" rx="2" fill="#a9c4c1"/>
+  </g>
+  <g transform="translate(10,23)">
+    <rect x="0" y="0" width="16" height="16" rx="3" fill="#1b7f8c"/>
+    <circle cx="11.5" cy="4.5" r="2" fill="#f2a541"/>
+    <path d="M2 14l4-5 3 3 3-4 4 6z" fill="#eafaf6"/>
+    <rect x="21" y="2" width="23" height="4.5" rx="2.25" fill="#41707a"/>
+    <rect x="21" y="9.5" width="15" height="4" rx="2" fill="#a9c4c1"/>
+  </g>
+  <g transform="translate(18,43)">
+    <rect x="0" y="0" width="16" height="16" rx="3" fill="#1b7f8c"/>
+    <circle cx="11.5" cy="4.5" r="2" fill="#f2a541"/>
+    <path d="M2 14l4-5 3 3 3-4 4 6z" fill="#eafaf6"/>
+    <rect x="21" y="2" width="23" height="4.5" rx="2.25" fill="#41707a"/>
+    <rect x="21" y="9.5" width="15" height="4" rx="2" fill="#a9c4c1"/>
+  </g>
+</svg>
