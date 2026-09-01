@@ -125,12 +125,61 @@ final class case_post_test extends \advanced_testcase {
         $postid = $this->create_case($author);
 
         $qid = case_post::ask_question($postid, (int)$reader->id, 'Edge?');
-        case_post::answer_question($qid, (int)$author->id, 'Irregular.');
+        case_post::answer_question($qid, $postid, (int)$author->id, 'Irregular.');
 
         $row = $DB->get_record('local_imageblog_case_qs', ['id' => $qid]);
         $this->assertSame('Irregular.', $row->answer);
         $this->assertSame((int)$author->id, (int)$row->answeredby);
         $this->assertNotNull($row->timeanswered);
+    }
+
+    public function test_answer_question_rejects_question_from_another_case(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $author = $this->getDataGenerator()->create_user();
+        $reader = $this->getDataGenerator()->create_user();
+        $casea  = $this->create_case($author);
+        $caseb  = $this->create_case($author);
+
+        // Question belongs to case B; answering it while claiming case A must fail.
+        $qid = case_post::ask_question($caseb, (int)$reader->id, 'Edge?');
+        try {
+            case_post::answer_question($qid, $casea, (int)$author->id, 'Irregular.');
+            $this->fail('Expected a moodle_exception for a cross-case question id.');
+        } catch (\moodle_exception $e) {
+            $this->assertStringContainsString('error_notfound', $e->errorcode);
+        }
+        $row = $DB->get_record('local_imageblog_case_qs', ['id' => $qid]);
+        $this->assertNull($row->answer);
+        $this->assertNull($row->answeredby);
+    }
+
+    public function test_set_best_diagnosis_rejects_diagnosis_from_another_case(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->set_default_cpd_config();
+        $author = $this->getDataGenerator()->create_user();
+        $reader = $this->getDataGenerator()->create_user();
+        $casea  = $this->create_case($author, 3);
+        $caseb  = $this->create_case($author, 3);
+
+        $diagb = case_post::submit_diagnosis($caseb, (int)$reader->id, 'Melanoma');
+        case_post::reveal($casea);
+        $this->run_queued_cpd_tasks();
+
+        // Diagnosis belongs to case B; pointing case A at it must fail and leave
+        // neither the pointer nor any CPD row behind.
+        try {
+            case_post::set_best_diagnosis($casea, $diagb);
+            $this->fail('Expected a moodle_exception for a cross-case diagnosis id.');
+        } catch (\moodle_exception $e) {
+            $this->assertStringContainsString('error_notfound', $e->errorcode);
+        }
+        $posta = $DB->get_record('local_imageblog_posts', ['id' => $casea]);
+        $this->assertNull($posta->casebestdiagnosisid);
+        $this->assertFalse($DB->record_exists('local_imageblog_case_cpd', [
+            'reason' => case_post::REASON_BEST,
+        ]));
     }
 
     public function test_reveal_marks_post_and_awards_participation_cpd(): void {

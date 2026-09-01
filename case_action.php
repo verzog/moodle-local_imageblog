@@ -114,7 +114,7 @@ switch ($action) {
                 \core\output\notification::NOTIFY_ERROR
             );
         }
-        \local_imageblog\case_post::answer_question($qid, (int)$USER->id, $answer);
+        \local_imageblog\case_post::answer_question($qid, $postid, (int)$USER->id, $answer);
         redirect(
             $returnurl,
             get_string('case_answer_submitted', 'local_imageblog'),
