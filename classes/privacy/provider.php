@@ -100,9 +100,11 @@ class provider implements
         $collection->add_database_table(
             'local_imageblog_subs',
             [
-                'userid'    => 'privacy:metadata:subs:userid',
-                'frequency' => 'privacy:metadata:subs:frequency',
-                'lastsent'  => 'privacy:metadata:subs:lastsent',
+                'userid'       => 'privacy:metadata:subs:userid',
+                'frequency'    => 'privacy:metadata:subs:frequency',
+                'lastsent'     => 'privacy:metadata:subs:lastsent',
+                'timecreated'  => 'privacy:metadata:subs:timecreated',
+                'timemodified' => 'privacy:metadata:subs:timemodified',
             ],
             'privacy:metadata:subs'
         );
@@ -289,14 +291,16 @@ class provider implements
             if ($context->contextlevel !== CONTEXT_SYSTEM) {
                 continue;
             }
+            // Remove this user's own case participation first, so the leftover
+            // check in delete_authored_posts() only sees other users' rows.
+            self::delete_case_data_for_users([$user->id]);
             $postids = $DB->get_fieldset_select(
                 'local_imageblog_posts',
                 'id',
                 'authorid = :userid',
                 ['userid' => $user->id]
             );
-            self::delete_posts($postids, $context);
-            self::delete_case_data_for_users([$user->id]);
+            self::delete_authored_posts($postids, $context);
         }
     }
 
@@ -315,6 +319,10 @@ class provider implements
         if (!$userids) {
             return;
         }
+        // Remove the listed users' own case participation first, so the
+        // leftover check in delete_authored_posts() only sees rows belonging
+        // to users who did not request erasure.
+        self::delete_case_data_for_users($userids);
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $postids = $DB->get_fieldset_select(
             'local_imageblog_posts',
@@ -322,8 +330,7 @@ class provider implements
             "authorid $insql",
             $inparams
         );
-        self::delete_posts($postids, $context);
-        self::delete_case_data_for_users($userids);
+        self::delete_authored_posts($postids, $context);
     }
 
     /**
@@ -350,6 +357,72 @@ class provider implements
               WHERE answeredby $insql",
             $inparams
         );
+    }
+
+    /**
+     * Erase authored posts without destroying other users' contributions.
+     *
+     * A case authored by the erased user may carry diagnoses, questions or CPD
+     * rows submitted by other people. Cascade-deleting the post would wipe
+     * those third-party records (including CPD hours with credentialing value),
+     * so a post that still has any such rows is anonymised instead of deleted:
+     * its author-written content and files are removed and its authorship is
+     * reassigned to the site guest account. Posts with no remaining
+     * participation are deleted outright.
+     *
+     * Must be called after the erased users' own case rows have been removed,
+     * so only other users' rows remain to be detected here.
+     *
+     * @param array    $postids
+     * @param \context $context
+     */
+    private static function delete_authored_posts(array $postids, \context $context): void {
+        global $DB;
+        if (!$postids) {
+            return;
+        }
+        $topurge = [];
+        foreach ($postids as $postid) {
+            $hasothers = $DB->record_exists('local_imageblog_case_diags', ['postid' => $postid])
+                || $DB->record_exists('local_imageblog_case_qs', ['postid' => $postid])
+                || $DB->record_exists('local_imageblog_case_cpd', ['postid' => $postid]);
+            if ($hasothers) {
+                self::anonymise_post((int)$postid, $context);
+            } else {
+                $topurge[] = $postid;
+            }
+        }
+        self::delete_posts($topurge, $context);
+    }
+
+    /**
+     * Strip an erased author's personal content from a post while keeping the
+     * post (and other users' participation) intact.
+     *
+     * @param int      $postid
+     * @param \context $context
+     */
+    private static function anonymise_post(int $postid, \context $context): void {
+        global $DB, $CFG;
+        $fs = get_file_storage();
+        foreach (['featured_image', 'post_images', 'panorama', 'case_outcome'] as $area) {
+            $fs->delete_area_files($context->id, 'local_imageblog', $area, $postid);
+        }
+        // Archive the scrubbed shell and clear any pending schedule. Otherwise a
+        // draft/scheduled post retained for its participants would still be
+        // published by the scheduled-posts task after erasure — notifying
+        // subscribers about a blanked placeholder the author asked to remove.
+        $DB->update_record('local_imageblog_posts', (object)[
+            'id'            => $postid,
+            'authorid'      => (int)$CFG->siteguest,
+            'title'         => get_string('privacy:deletedpost', 'local_imageblog'),
+            'summary'       => '',
+            'body'          => '',
+            'caseoutcome'   => '',
+            'status'        => \local_imageblog\post::STATUS_ARCHIVED,
+            'timescheduled' => null,
+            'timemodified'  => time(),
+        ]);
     }
 
     /**

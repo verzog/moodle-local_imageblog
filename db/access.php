@@ -38,16 +38,22 @@ $capabilities = [
         ],
     ],
 
+    // Authoring is delegated through the dedicated "Blog author" role (see
+    // classes/local/author_role.php) and to managers — not handed to every
+    // authenticated user. Granting the 'user' archetype here would let anyone
+    // logged in create posts, defeating the custom role described in the
+    // README, so only 'manager' is granted by default.
     'local/imageblog:createpost' => [
+        'riskbitmask'  => RISK_XSS | RISK_SPAM,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
-            'user'    => CAP_ALLOW,
             'manager' => CAP_ALLOW,
         ],
     ],
 
     'local/imageblog:editanypost' => [
+        'riskbitmask'  => RISK_XSS | RISK_SPAM,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
@@ -56,6 +62,7 @@ $capabilities = [
     ],
 
     'local/imageblog:deleteanypost' => [
+        'riskbitmask'  => RISK_DATALOSS,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
@@ -64,6 +71,7 @@ $capabilities = [
     ],
 
     'local/imageblog:publishpost' => [
+        'riskbitmask'  => RISK_XSS | RISK_SPAM,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
@@ -80,6 +88,7 @@ $capabilities = [
     ],
 
     'local/imageblog:submitdiagnosis' => [
+        'riskbitmask'  => RISK_SPAM,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
@@ -92,6 +101,7 @@ $capabilities = [
     ],
 
     'local/imageblog:askcasequestion' => [
+        'riskbitmask'  => RISK_SPAM,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [

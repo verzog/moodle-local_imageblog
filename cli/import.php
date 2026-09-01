@@ -214,7 +214,20 @@ $storeimage = function (string $relpath, string $filearea, int $postid) use ($im
         return false;
     }
     $abs = $imagedir . '/' . ltrim($relpath, '/');
-    if (!is_readable($abs)) {
+    // Containment check: the CSV is untrusted (it may come from another
+    // site), so a row such as featured_image=../../../config.php must not be
+    // able to pull a file from outside --imagedir into blog storage. Resolve
+    // both paths and confirm the target stays under the import directory.
+    $realbase = realpath($imagedir);
+    $realabs  = realpath($abs);
+    if (
+        $realbase !== false && $realabs !== false
+        && strncmp($realabs, $realbase . DIRECTORY_SEPARATOR, strlen($realbase) + 1) !== 0
+    ) {
+        cli_problem("  ! image path resolves outside the import directory, skipped: $relpath");
+        return false;
+    }
+    if ($realabs === false || !is_readable($realabs)) {
         cli_problem("  ! image not found: $abs");
         return false;
     }
@@ -224,8 +237,8 @@ $storeimage = function (string $relpath, string $filearea, int $postid) use ($im
         'filearea'  => $filearea,
         'itemid'    => $postid,
         'filepath'  => '/',
-        'filename'  => basename($abs),
-    ], $abs);
+        'filename'  => basename($realabs),
+    ], $realabs);
     return true;
 };
 

@@ -605,6 +605,11 @@ class post {
     ): void {
         global $DB;
 
+        // Wrap the clear-then-repopulate in a transaction so a failure part way
+        // through cannot leave the post with its taxonomy links wiped and not
+        // rebuilt.
+        $transaction = $DB->start_delegated_transaction();
+
         $DB->delete_records('local_imageblog_post_cats', ['postid' => $postid]);
         $DB->delete_records('local_imageblog_post_tags', ['postid' => $postid]);
         $DB->delete_records('local_imageblog_post_levels', ['postid' => $postid]);
@@ -630,6 +635,8 @@ class post {
                 'levelid' => $levelid,
             ]);
         }
+
+        $transaction->allow_commit();
     }
 
     /**

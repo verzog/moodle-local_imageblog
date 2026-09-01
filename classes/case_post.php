@@ -125,12 +125,21 @@ class case_post {
     /**
      * Store the author's answer to a question.
      *
+     * The question must belong to the given case: the caller is authorised to
+     * manage $postid, so answering a question on any other post by passing a
+     * foreign $questionid must be rejected.
+     *
      * @param int    $questionid
+     * @param int    $postid     The case the caller is authorised to manage.
      * @param int    $authorid
      * @param string $answer
      */
-    public static function answer_question(int $questionid, int $authorid, string $answer): void {
+    public static function answer_question(int $questionid, int $postid, int $authorid, string $answer): void {
         global $DB;
+        $question = $DB->get_record('local_imageblog_case_qs', ['id' => $questionid], 'id, postid', MUST_EXIST);
+        if ((int)$question->postid !== $postid) {
+            throw new \moodle_exception('error_notfound', 'local_imageblog');
+        }
         $record = (object)[
             'id'           => $questionid,
             'answer'       => $answer,
@@ -191,6 +200,16 @@ class case_post {
      */
     public static function set_best_diagnosis(int $postid, int $diagnosisid): void {
         global $DB;
+        // The chosen diagnosis must belong to this case, or a manager of case A
+        // could point case A at (and award the best-answer bonus on) a
+        // diagnosis submitted to case B by passing a foreign diagnosis id.
+        $diag = null;
+        if ($diagnosisid) {
+            $diag = $DB->get_record('local_imageblog_case_diags', ['id' => $diagnosisid], '*', MUST_EXIST);
+            if ((int)$diag->postid !== $postid) {
+                throw new \moodle_exception('error_notfound', 'local_imageblog');
+            }
+        }
         $record = (object)[
             'id'                  => $postid,
             'casebestdiagnosisid' => $diagnosisid ?: null,
@@ -201,8 +220,7 @@ class case_post {
         // off, record_cpd() would compute 0 and skip the insert, so deleting
         // the previous best row here would strip an existing award — leave the
         // old award (and the selection pointer) in place instead.
-        if ($diagnosisid && self::cpd_enabled()) {
-            $diag = $DB->get_record('local_imageblog_case_diags', ['id' => $diagnosisid], '*', MUST_EXIST);
+        if ($diag && self::cpd_enabled()) {
             // Clear any previous best bonuses for this case so re-selection is correct.
             $DB->delete_records('local_imageblog_case_cpd', ['postid' => $postid, 'reason' => self::REASON_BEST]);
             self::record_cpd((int)$diag->postid, (int)$diag->userid, self::REASON_BEST);

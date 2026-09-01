@@ -84,7 +84,11 @@ class renderer extends plugin_renderer_base {
             'pagination' => $this->build_pagination($total, $page, $perpage, $filters),
             'cancreate'  => has_capability('local/imageblog:createpost', \context_system::instance()),
             'newposturl' => (new moodle_url('/local/imageblog/edit.php'))->out(false),
-            'subcatdata' => s(json_encode($subcatmap)),
+            // Emitted through the double-mustache {{subcatdata}} in an HTML
+            // attribute, which HTML-escapes exactly once; the browser then
+            // decodes it back to valid JSON for filter.js. Do not pre-escape
+            // with s() here or the value is double-escaped and JSON.parse fails.
+            'subcatdata' => json_encode($subcatmap),
             'subsenabled' => $subsenabled,
             'issubscribed' => $issubscribed,
             'subscribeurl' => (new moodle_url('/local/imageblog/subscribe.php'))->out(false),

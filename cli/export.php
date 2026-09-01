@@ -66,7 +66,7 @@ if ($options['help'] || empty($options['csv'])) {
     echo "Optional:\n";
     echo "  --imagedir=PATH  Directory to copy featured/panorama images into.\n";
     echo "  --status=NAME    all|draft|scheduled|published|archived (default: all).\n";
-    echo "  --overwrite      Replace the CSV file if it already exists.\n";
+    echo "  --overwrite      Replace the CSV file (and any existing exported images) if they already exist.\n";
     exit(0);
 }
 
@@ -98,7 +98,8 @@ $fs      = get_file_storage();
 $categorynames    = $DB->get_records_menu('local_imageblog_categories', null, '', 'id, name');
 $subcategorynames = $DB->get_records_menu('local_imageblog_subcategories', null, '', 'id, name');
 
-$exportimage = function (int $postid, string $filearea, string $subdir) use ($fs, $context, $imagedir): string {
+$overwrite = !empty($options['overwrite']);
+$exportimage = function (int $postid, string $filearea, string $subdir) use ($fs, $context, $imagedir, $overwrite): string {
     if (!$imagedir) {
         return '';
     }
@@ -118,6 +119,14 @@ $exportimage = function (int $postid, string $filearea, string $subdir) use ($fs
     $abs     = $imagedir . '/' . $relpath;
     if (!check_dir_exists(dirname($abs), true, true)) {
         cli_problem("  ! cannot create directory: " . dirname($abs));
+        return '';
+    }
+    // Do not silently clobber an image already on disk unless --overwrite was
+    // given (the CSV itself is guarded the same way). Leave the CSV field
+    // empty rather than pointing it at a pre-existing file this run did not
+    // export, which could be a stale image from an earlier export.
+    if (file_exists($abs) && !$overwrite) {
+        cli_problem("  ! image already exists, left out of CSV (use --overwrite to replace): $abs");
         return '';
     }
     $file->copy_content_to($abs);
