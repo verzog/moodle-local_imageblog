@@ -220,8 +220,10 @@ $storeimage = function (string $relpath, string $filearea, int $postid) use ($im
     // both paths and confirm the target stays under the import directory.
     $realbase = realpath($imagedir);
     $realabs  = realpath($abs);
-    if ($realbase !== false && $realabs !== false
-            && strncmp($realabs, $realbase . DIRECTORY_SEPARATOR, strlen($realbase) + 1) !== 0) {
+    if (
+        $realbase !== false && $realabs !== false
+        && strncmp($realabs, $realbase . DIRECTORY_SEPARATOR, strlen($realbase) + 1) !== 0
+    ) {
         cli_problem("  ! image path resolves outside the import directory, skipped: $relpath");
         return false;
     }
