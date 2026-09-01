@@ -408,14 +408,20 @@ class provider implements
         foreach (['featured_image', 'post_images', 'panorama', 'case_outcome'] as $area) {
             $fs->delete_area_files($context->id, 'local_imageblog', $area, $postid);
         }
+        // Archive the scrubbed shell and clear any pending schedule. Otherwise a
+        // draft/scheduled post retained for its participants would still be
+        // published by the scheduled-posts task after erasure — notifying
+        // subscribers about a blanked placeholder the author asked to remove.
         $DB->update_record('local_imageblog_posts', (object)[
-            'id'           => $postid,
-            'authorid'     => (int)$CFG->siteguest,
-            'title'        => get_string('privacy:deletedpost', 'local_imageblog'),
-            'summary'      => '',
-            'body'         => '',
-            'caseoutcome'  => '',
-            'timemodified' => time(),
+            'id'            => $postid,
+            'authorid'      => (int)$CFG->siteguest,
+            'title'         => get_string('privacy:deletedpost', 'local_imageblog'),
+            'summary'       => '',
+            'body'          => '',
+            'caseoutcome'   => '',
+            'status'        => \local_imageblog\post::STATUS_ARCHIVED,
+            'timescheduled' => null,
+            'timemodified'  => time(),
         ]);
     }
 

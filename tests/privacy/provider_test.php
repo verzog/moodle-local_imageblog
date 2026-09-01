@@ -148,15 +148,18 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $alice = $this->getDataGenerator()->create_user();
         $bob   = $this->getDataGenerator()->create_user();
 
-        // Alice authors a clinical case; Bob diagnoses it and earns CPD.
+        // Alice authors a clinical case scheduled to publish in the future;
+        // Bob diagnoses it and earns CPD.
         $this->setUser($alice);
         $postid = post::save((object)[
             'title'          => 'Alice case',
             'summary'        => 'Secret summary',
-            'status'         => post::STATUS_PUBLISHED,
+            'status'         => post::STATUS_SCHEDULED,
+            'timescheduled'  => time() + DAYSECS,
             'posttype'       => \local_imageblog\case_post::TYPE_CASE,
             'casedifficulty' => 3,
         ], $syscontext);
+        $this->assertSame(post::STATUS_SCHEDULED, $DB->get_field('local_imageblog_posts', 'status', ['id' => $postid]));
         \local_imageblog\case_post::submit_diagnosis($postid, (int)$bob->id, 'Melanoma');
         \local_imageblog\case_post::reveal($postid);
         while ($task = \core\task\manager::get_next_adhoc_task(time())) {
@@ -176,6 +179,11 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->assertSame((int)$CFG->siteguest, (int)$post->authorid);
         $this->assertSame('', $post->summary);
         $this->assertSame(0, $DB->count_records('local_imageblog_posts', ['authorid' => $alice->id]));
+
+        // The retained shell is archived with no pending schedule, so the
+        // scheduled-posts task can never publish it or notify subscribers.
+        $this->assertSame(post::STATUS_ARCHIVED, $post->status);
+        $this->assertNull($post->timescheduled);
 
         // Bob's diagnosis and CPD are untouched.
         $this->assertTrue($DB->record_exists('local_imageblog_case_diags', [

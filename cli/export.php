@@ -122,10 +122,12 @@ $exportimage = function (int $postid, string $filearea, string $subdir) use ($fs
         return '';
     }
     // Do not silently clobber an image already on disk unless --overwrite was
-    // given (the CSV itself is guarded the same way).
+    // given (the CSV itself is guarded the same way). Leave the CSV field
+    // empty rather than pointing it at a pre-existing file this run did not
+    // export, which could be a stale image from an earlier export.
     if (file_exists($abs) && !$overwrite) {
-        cli_problem("  ! image already exists (use --overwrite to replace): $abs");
-        return $relpath;
+        cli_problem("  ! image already exists, left out of CSV (use --overwrite to replace): $abs");
+        return '';
     }
     $file->copy_content_to($abs);
     return $relpath;
