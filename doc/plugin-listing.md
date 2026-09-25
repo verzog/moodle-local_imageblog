@@ -8,10 +8,10 @@ Copy for submitting **Image blog** (`local_imageblog`) to the
 
 Shown in search results — keep it under ~255 characters.
 
-> A site-wide, image-led blog for Moodle. Authors publish posts with a featured
-> image, rich content and optional 360° panoramas, organised by categories, tags
-> and difficulty. An optional clinical-case mode lets readers diagnose, ask
-> questions and earn CPD, with opt-in email digests and RSS.
+> A site-wide, image-led blog for Moodle: posts with a featured image, rich
+> content and optional 360° panoramas, organised by categories, tags and
+> difficulty. An optional clinical-case mode lets readers diagnose, ask questions
+> and earn CPD.
 
 ## Description
 
@@ -32,16 +32,16 @@ Paste into the directory's Description field (Markdown is supported there).
 > - Difficulty multipliers, a best-answer bonus, and a kill-switch to disable CPD awarding without a code change.
 >
 > **Engagement**
-> - Opt-in **email digests** (immediate, daily or weekly) of newly published posts.
+> - Opt-in **email notifications** for new posts — an immediate per-post alert, or an aggregated daily or weekly digest.
 > - An optional public **RSS feed** of recent posts.
 >
 > **Administration**
-> - CLI **bulk import and export** sharing a common CSV format, so posts move between sites.
+> - CLI **bulk import and export** of posts via a shared CSV format. (The CSV carries the core post fields plus the featured and panorama images; clinical-case data and images embedded in the post body are not included.)
 > - Custom CSS scoped to the plugin's own pages.
 > - Full **Privacy API** support (export and erasure), with erasure that preserves other participants' case contributions.
 >
 > Requires Moodle 5.0+ and PHP 8.2+. Tested on PostgreSQL, MySQL and MariaDB.
-> Released under the GNU GPL v3.
+> Released under the GNU GPL v3 or later.
 
 ## Screenshots
 
