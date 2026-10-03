@@ -1,10 +1,14 @@
-# Image blog v0.5.5 — first release
+# Image blog v0.5.5
 
-A site-wide, image-led blog for Moodle. Authors publish posts with a featured
-image, rich content and optional 360° panoramas; readers can work through
-clinical cases and earn CPD.
+The current beta release of a site-wide, image-led blog for Moodle. Authors
+publish posts with a featured image, rich content and optional 360° panoramas;
+readers can work through clinical cases and earn CPD.
 
-**Requires:** Moodle 5.0+ · PHP 8.2+ · PostgreSQL / MySQL / MariaDB
+The plugin's feature set shipped in the initial public beta, v0.5.4; v0.5.5 adds
+a plugin icon and a project changelog. The highlights below summarise the plugin
+as it stands at v0.5.5.
+
+**Requires:** Moodle 5.0–5.2 · PHP 8.2+ · PostgreSQL / MySQL / MariaDB
 **Licence:** GNU GPL v3 or later
 
 ## Highlights
