@@ -11,7 +11,9 @@ the project aims to follow [Semantic Versioning](https://semver.org/).
   (Moodle 5.0–5.3 inclusive). No functional change; the codebase uses no APIs
   removed in the 5.1–5.3 cycle.
 - CI now also runs against `MOODLE_503_STABLE` (PHP 8.3 and 8.4; PHP 8.2 is
-  excluded there, as Moodle 5.3 requires PHP 8.3+).
+  excluded there, as Moodle 5.3 requires PHP 8.3+). The PostgreSQL and MariaDB
+  service containers are bumped to 17 and 11.4 respectively to meet Moodle
+  5.3's raised minimum database versions.
 
 ## [0.5.5] - 2026-09-01
 
