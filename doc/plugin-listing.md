@@ -67,7 +67,7 @@ consistency.
 | --- | --- |
 | Plugin type | Local plugin |
 | Component (frankenstyle) | `local_imageblog` |
-| Supported Moodle versions | 5.0, 5.1, 5.2 |
+| Supported Moodle versions | 5.0, 5.1, 5.2, 5.3 |
 | Source control URL | https://github.com/verzog/moodle-local_imageblog |
 | Bug tracker URL | https://github.com/verzog/moodle-local_imageblog/issues |
 | Documentation | repository README |
