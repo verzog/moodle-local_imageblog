@@ -18,7 +18,7 @@
  * Helper for sending HTML emails with inline CID images.
  *
  * @package    local_imageblog
- * @copyright  2026 Vernon Apain / Educheckout
+ * @copyright  2026 Vernon Spain
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
