@@ -4,6 +4,15 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [0.5.7] - 2026-10-04
+
+### Changed
+- Extract the clinical-case scoring maths into a context-neutral
+  `\local_imageblog\local\scoring` engine (scale parsing, difficulty multiplier
+  and the base x multiplier x factor hours formula). `case_post::compute_hours()`
+  now delegates to it. No behaviour change; this gives one shared definition the
+  companion `mod_imageblog` activity can reuse instead of duplicating.
+
 ## [0.5.6] - 2026-10-04
 
 ### Changed
@@ -58,6 +67,7 @@ Initial public beta.
   and moves the retained shell to a non-public state so it is never published
   after erasure.
 
+[0.5.7]: https://github.com/verzog/moodle-local_imageblog/releases/tag/v0.5.7
 [0.5.6]: https://github.com/verzog/moodle-local_imageblog/releases/tag/v0.5.6
 [0.5.5]: https://github.com/verzog/moodle-local_imageblog/releases/tag/v0.5.5
 [0.5.4]: https://github.com/verzog/moodle-local_imageblog/releases/tag/v0.5.4
