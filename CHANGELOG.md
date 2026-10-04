@@ -4,6 +4,17 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [0.5.6] - 2026-10-04
+
+### Changed
+- Declare support for Moodle 5.3: `$plugin->supported` now spans `[500, 503]`
+  (Moodle 5.0–5.3 inclusive). No functional change; the codebase uses no APIs
+  removed in the 5.1–5.3 cycle.
+- CI now also runs against `MOODLE_503_STABLE` (PHP 8.3 and 8.4; PHP 8.2 is
+  excluded there, as Moodle 5.3 requires PHP 8.3+). The PostgreSQL and MariaDB
+  service containers are bumped to 17 and 11.4 respectively to meet Moodle
+  5.3's raised minimum database versions.
+
 ## [0.5.5] - 2026-09-01
 
 ### Added
@@ -47,5 +58,6 @@ Initial public beta.
   and moves the retained shell to a non-public state so it is never published
   after erasure.
 
+[0.5.6]: https://github.com/verzog/moodle-local_imageblog/releases/tag/v0.5.6
 [0.5.5]: https://github.com/verzog/moodle-local_imageblog/releases/tag/v0.5.5
 [0.5.4]: https://github.com/verzog/moodle-local_imageblog/releases/tag/v0.5.4
