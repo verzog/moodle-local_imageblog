@@ -25,7 +25,6 @@ namespace local_imageblog\local;
  * @covers     \local_imageblog\local\scoring
  */
 final class scoring_test extends \basic_testcase {
-
     /**
      * Parsing a scale string yields the expected list of floats.
      */
