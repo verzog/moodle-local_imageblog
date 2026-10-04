@@ -122,7 +122,7 @@ below) and always will be — you are free to use it, including in commercial an
 for-profit settings, redistribute it and modify it under the terms of that
 licence.
 
-If your institution would like hands-on help beyond the community, Educheckout
+If your institution would like hands-on help beyond the community, EduCheckout
 offers commercial services for the plugin, including:
 
 * Installation, upgrade and hosting assistance.
@@ -132,11 +132,11 @@ offers commercial services for the plugin, including:
 
 These services are optional and separate from the plugin itself; the software
 remains GPL v3 whether or not you buy support. For a quote or to discuss your
-requirements, contact Vernon Apain at Educheckout: <verzog@gmail.com>.
+requirements, contact Vernon Spain at EduCheckout: <verzog@gmail.com>.
 
 ## License ##
 
-Copyright (c) 2026 Vernon Apain / Educheckout
+Copyright (c) 2026 Vernon Spain
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

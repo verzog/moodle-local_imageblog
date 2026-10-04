@@ -20,7 +20,7 @@ namespace local_imageblog\local;
  * Unit tests for the context-neutral scoring primitives.
  *
  * @package    local_imageblog
- * @copyright  2026 Vernon Apain / Educheckout
+ * @copyright  2026 Vernon Spain
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \local_imageblog\local\scoring
  */
