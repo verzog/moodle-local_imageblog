@@ -24,6 +24,8 @@
 
 namespace local_imageblog;
 
+use local_imageblog\local\scoring;
+
 /**
  * Static helpers for case-type posts: diagnoses, Q&A, reveal, CPD award.
  */
@@ -347,10 +349,8 @@ class case_post {
         if ($base <= 0) {
             return 0.0;
         }
-        $scaleraw = (string)get_config('local_imageblog', 'cpd_difficulty_scale');
-        $scale = array_map('floatval', array_map('trim', explode(',', $scaleraw)));
-        $idx = max(0, min(count($scale) - 1, $difficulty - 1));
-        $mult = $scale[$idx] ?? 1.0;
+        $scale = scoring::parse_scale((string)get_config('local_imageblog', 'cpd_difficulty_scale'));
+        $mult = scoring::difficulty_multiplier($scale, $difficulty);
 
         $factor = 0.0;
         switch ($reason) {
@@ -364,7 +364,7 @@ class case_post {
                 $factor = (float)get_config('local_imageblog', 'cpd_best_bonus');
                 break;
         }
-        return round($base * $mult * $factor, 2);
+        return scoring::hours($base, $mult, $factor);
     }
 
     /**
