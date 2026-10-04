@@ -33,7 +33,7 @@ to complete the installation from the command line.
 
 ## Requirements ##
 
-* Moodle 5.0 (2025041100) or later (tested up to Moodle 5.2).
+* Moodle 5.0 (2025041100) or later (tested up to Moodle 5.3).
 * PHP 8.2, 8.3 or 8.4 (per the requirements of the Moodle version in use).
 * PostgreSQL, MySQL or MariaDB (all three are exercised in CI).
 

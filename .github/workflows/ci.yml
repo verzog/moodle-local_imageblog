@@ -66,15 +66,19 @@ jobs:
       fail-fast: false
       matrix:
         php: ['8.2', '8.3', '8.4']
-        # 'main' (5.3-dev) is deliberately excluded: the plugin declares
-        # $plugin->supported = [500, 502], so 'validate' would flag it as
-        # untested-but-unsupported. Re-add it here once 'supported' is raised.
-        moodle-branch: ['MOODLE_500_STABLE', 'MOODLE_501_STABLE', 'MOODLE_502_STABLE']
+        # The plugin declares $plugin->supported = [500, 503], so the stable
+        # branches for Moodle 5.0 through 5.3 are all exercised. 'main'
+        # (5.4-dev) is deliberately excluded: 'validate' would flag it as
+        # untested-but-unsupported. Add the next MOODLE_5xx_STABLE here once
+        # 'supported' is raised to cover it.
+        moodle-branch: ['MOODLE_500_STABLE', 'MOODLE_501_STABLE', 'MOODLE_502_STABLE', 'MOODLE_503_STABLE']
         database: ['pgsql', 'mysqli', 'mariadb']
         exclude:
           # Moodle 5.2+ requires PHP 8.3 or newer.
           - php: '8.2'
             moodle-branch: 'MOODLE_502_STABLE'
+          - php: '8.2'
+            moodle-branch: 'MOODLE_503_STABLE'
 
     steps:
       - name: Check out repository code

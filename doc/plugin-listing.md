@@ -40,7 +40,7 @@ Paste into the directory's Description field (Markdown is supported there).
 > - Custom CSS scoped to the plugin's own pages.
 > - Full **Privacy API** support (export and erasure), with erasure that preserves other participants' case contributions.
 >
-> Requires Moodle 5.0+ and PHP 8.2+. Tested on PostgreSQL, MySQL and MariaDB.
+> Requires Moodle 5.0–5.3 and PHP 8.2+. Tested on PostgreSQL, MySQL and MariaDB.
 > Released under the GNU GPL v3 or later.
 
 ## Screenshots
