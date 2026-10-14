@@ -26,7 +26,7 @@ namespace local_imageblog\form;
 
 use moodleform;
 use local_imageblog\post;
-use local_imageblog\case_post;
+use local_imageblog\post_type;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -48,12 +48,26 @@ class post_form extends moodleform {
         $mform->addElement('hidden', 'id', $post?->id ?? 0);
         $mform->setType('id', PARAM_INT);
 
-        $mform->addElement('select', 'posttype', get_string('posttype', 'local_imageblog'), [
-            case_post::TYPE_BLOG => get_string('posttype_blog', 'local_imageblog'),
-            case_post::TYPE_CASE => get_string('posttype_case', 'local_imageblog'),
-        ]);
+        $mform->addElement('select', 'posttype', get_string('posttype', 'local_imageblog'), post_type::menu());
         $mform->setType('posttype', PARAM_ALPHA);
         $mform->addHelpButton('posttype', 'posttype', 'local_imageblog');
+
+        // Assessment mode applies to the interactive types only; it is hidden
+        // for read-only types (Blog Post, News, Reference Article).
+        $mform->addElement(
+            'select',
+            'assessmentmode',
+            get_string('assessmentmode', 'local_imageblog'),
+            post_type::mode_menu()
+        );
+        $mform->setType('assessmentmode', PARAM_ALPHA);
+        $mform->setDefault('assessmentmode', post_type::MODE_NONE);
+        $mform->addHelpButton('assessmentmode', 'assessmentmode', 'local_imageblog');
+        foreach (array_merge(post_type::diagnose_types(), post_type::evaluate_types()) as $itype) {
+            // The element is hidden only when the type is none of the interactive
+            // ones (the conditions are ANDed), so it shows for all of them.
+            $mform->hideIf('assessmentmode', 'posttype', 'neq', $itype);
+        }
 
         $mform->addElement('text', 'title', get_string('title', 'local_imageblog'), ['size' => 80]);
         $mform->setType('title', PARAM_TEXT);
@@ -117,39 +131,6 @@ class post_form extends moodleform {
         require_once($CFG->dirroot . '/local/imageblog/lib.php');
         $taxonomy = local_imageblog_get_taxonomy();
 
-        $catoptions = ['' => get_string('selectcategory', 'local_imageblog')];
-        foreach ($taxonomy['categories'] as $cat) {
-            $catoptions[$cat['id']] = $cat['name'];
-        }
-        $mform->addElement(
-            'select',
-            'categoryid',
-            get_string('category', 'local_imageblog'),
-            $catoptions
-        );
-        $mform->setType('categoryid', PARAM_INT);
-
-        $subcatoptions = ['' => get_string('selectsubcategory', 'local_imageblog')];
-        foreach ($taxonomy['subcategories'] as $sub) {
-            $parent = $sub['categoryid'];
-            $parentname = '';
-            foreach ($taxonomy['categories'] as $cat) {
-                if ($cat['id'] === $parent) {
-                    $parentname = $cat['name'];
-                    break;
-                }
-            }
-            $label = $parentname !== '' ? "{$parentname} / {$sub['name']}" : $sub['name'];
-            $subcatoptions[$sub['id']] = $label;
-        }
-        $mform->addElement(
-            'select',
-            'subcategoryid',
-            get_string('subcategory', 'local_imageblog'),
-            $subcatoptions
-        );
-        $mform->setType('subcategoryid', PARAM_INT);
-
         $tagoptions = [];
         foreach ($taxonomy['tags'] as $tag) {
             $tagoptions[$tag['id']] = $tag['name'];
@@ -195,7 +176,6 @@ class post_form extends moodleform {
         $mform->setType('casedifficulty', PARAM_INT);
         $mform->setDefault('casedifficulty', 3);
         $mform->addHelpButton('casedifficulty', 'casedifficulty', 'local_imageblog');
-        $mform->hideIf('casedifficulty', 'posttype', 'neq', case_post::TYPE_CASE);
 
         $mform->addElement(
             'editor',
@@ -206,7 +186,25 @@ class post_form extends moodleform {
         );
         $mform->setType('caseoutcome_editor', PARAM_RAW);
         $mform->addHelpButton('caseoutcome_editor', 'caseoutcome', 'local_imageblog');
-        $mform->hideIf('caseoutcome_editor', 'posttype', 'neq', case_post::TYPE_CASE);
+
+        // Optional author-set auto-reveal time. Left empty, the site default
+        // reveal window applies from the publish date.
+        $mform->addElement(
+            'date_time_selector',
+            'caserevealat',
+            get_string('caserevealat', 'local_imageblog'),
+            ['optional' => true]
+        );
+        $mform->addHelpButton('caserevealat', 'caserevealat', 'local_imageblog');
+
+        // The case fields (difficulty, outcome, reveal time) belong to the
+        // diagnose types only: hidden unless the type is Patient Case or Case
+        // Study (the per-type conditions are ANDed, so the field shows for both).
+        foreach (['casedifficulty', 'caseoutcome_editor', 'caserevealat'] as $casefield) {
+            foreach (post_type::diagnose_types() as $dtype) {
+                $mform->hideIf($casefield, 'posttype', 'neq', $dtype);
+            }
+        }
 
         $statusoptions = [
             post::STATUS_DRAFT     => get_string('status_draft', 'local_imageblog'),
@@ -243,25 +241,26 @@ class post_form extends moodleform {
             $defaults->status     = $post->status;
             $defaults->body       = $post->body;
             $defaults->bodyformat = $post->bodyformat;
-            [$catid, $subcatid] = $post->get_category_ids();
-            $defaults->categoryid    = $catid;
-            $defaults->subcategoryid = $subcatid;
             $defaults->tagids        = $post->get_tag_ids();
             $defaults->levelids      = $post->get_level_ids();
             $defaults->posttype          = $post->posttype;
+            $defaults->assessmentmode    = $post->assessmentmode;
             $defaults->casedifficulty    = $post->casedifficulty;
             $defaults->caseoutcome       = $post->caseoutcome;
             $defaults->caseoutcomeformat = $post->caseoutcomeformat;
+            $defaults->caserevealat      = $post->caserevealat ?? 0;
             $defaults->haspanorama       = $post->get_panorama_url() ? 1 : 0;
             $defaults->timescheduled     = $post->timescheduled ?? 0;
         } else {
             $defaults->id         = 0;
             $defaults->body       = '';
             $defaults->bodyformat = FORMAT_HTML;
-            $defaults->posttype          = case_post::TYPE_BLOG;
+            $defaults->posttype          = post_type::BLOG;
+            $defaults->assessmentmode    = post_type::MODE_NONE;
             $defaults->casedifficulty    = 3;
             $defaults->caseoutcome       = '';
             $defaults->caseoutcomeformat = FORMAT_HTML;
+            $defaults->caserevealat      = 0;
             $defaults->haspanorama       = 0;
             // Default the schedule picker to 09:00 tomorrow using calendar
             // arithmetic in the user's timezone — adding DAYSECS would land an

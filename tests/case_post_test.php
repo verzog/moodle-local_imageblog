@@ -55,7 +55,8 @@ final class case_post_test extends \advanced_testcase {
         return post::save((object)[
             'title'          => 'Pigmented lesion',
             'status'         => post::STATUS_PUBLISHED,
-            'posttype'       => case_post::TYPE_CASE,
+            'posttype'       => post_type::PATIENTCASE,
+            'assessmentmode' => post_type::MODE_ASSESSABLE,
             'casedifficulty' => $difficulty,
         ], \context_system::instance());
     }

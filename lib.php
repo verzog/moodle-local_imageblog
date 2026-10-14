@@ -108,9 +108,9 @@ function local_imageblog_get_custom_css_html(): string {
 }
 
 /**
- * Return taxonomy arrays (authors, categories, tags) for filter dropdowns.
+ * Return taxonomy arrays (authors, tags, levels) for filter dropdowns.
  *
- * @return array Keyed by 'authors', 'categories', 'subcategories', 'tags' and 'levels'.
+ * @return array Keyed by 'authors', 'tags' and 'levels'.
  */
 function local_imageblog_get_taxonomy(): array {
     global $DB;
@@ -126,20 +126,6 @@ function local_imageblog_get_taxonomy(): array {
         return ['id' => (int)$u->id, 'name' => fullname($u)];
     }, $authorrecords);
 
-    $catrecords = $DB->get_records('local_imageblog_categories', null, 'sortorder ASC');
-    $categories = array_map(function ($c) {
-        return ['id' => (int)$c->id, 'name' => $c->name];
-    }, $catrecords);
-
-    $subcatrecords = $DB->get_records('local_imageblog_subcategories', null, 'sortorder ASC');
-    $subcategories = array_map(function ($s) {
-        return [
-            'id'         => (int)$s->id,
-            'name'       => $s->name,
-            'categoryid' => (int)$s->categoryid,
-        ];
-    }, $subcatrecords);
-
     $tagrecords = $DB->get_records('local_imageblog_tags', null, 'name ASC');
     $tags = array_map(function ($t) {
         return ['id' => (int)$t->id, 'name' => $t->name];
@@ -151,11 +137,9 @@ function local_imageblog_get_taxonomy(): array {
     }, $levelrecords);
 
     return [
-        'authors'       => array_values($authors),
-        'categories'    => array_values($categories),
-        'subcategories' => array_values($subcategories),
-        'tags'          => array_values($tags),
-        'levels'        => array_values($levels),
+        'authors' => array_values($authors),
+        'tags'    => array_values($tags),
+        'levels'  => array_values($levels),
     ];
 }
 

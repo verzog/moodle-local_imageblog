@@ -74,11 +74,9 @@ final class lib_test extends \advanced_testcase {
         $this->resetAfterTest();
         $result = local_imageblog_get_taxonomy();
         $this->assertArrayHasKey('authors', $result);
-        $this->assertArrayHasKey('categories', $result);
-        $this->assertArrayHasKey('subcategories', $result);
         $this->assertArrayHasKey('tags', $result);
         $this->assertArrayHasKey('levels', $result);
-        $this->assertIsArray($result['categories']);
+        $this->assertIsArray($result['tags']);
     }
 
     public function test_get_taxonomy_authors_only_lists_published_post_owners(): void {

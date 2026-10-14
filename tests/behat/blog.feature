@@ -16,11 +16,11 @@ Feature: Image blog administration and authoring
     And I should see "Subscription emails"
     And I should see "Enable digest emails"
 
-  Scenario: Seeded categories are listed on the category management page
-    When I navigate to "Plugins > Local plugins > Image blog > Manage categories" in site administration
-    Then I should see "News"
-    And I should see "Tutorial"
-    And I should see "Case study"
+  Scenario: Seeded difficulty levels are listed on the level management page
+    When I navigate to "Plugins > Local plugins > Image blog > Manage difficulty levels" in site administration
+    Then I should see "Beginner"
+    And I should see "Intermediate"
+    And I should see "Advanced"
 
   Scenario: The blog listing shows an empty state before any posts exist
     When I navigate to "Plugins > Local plugins > Image blog > Blog posts" in site administration

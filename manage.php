@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Taxonomy management dispatcher (categories, subcategories, tags, levels).
+ * Taxonomy management dispatcher (tags, difficulty levels).
  *
  * @package    local_imageblog
  * @copyright  2026 Vernon Spain
@@ -32,14 +32,12 @@ $context = context_system::instance();
 require_capability('local/imageblog:managetaxonomy', $context);
 
 $validtypes = [
-    taxonomy::TYPE_CATEGORY,
-    taxonomy::TYPE_SUBCATEGORY,
     taxonomy::TYPE_TAG,
     taxonomy::TYPE_LEVEL,
 ];
-$type = optional_param('type', taxonomy::TYPE_CATEGORY, PARAM_ALPHA);
+$type = optional_param('type', taxonomy::TYPE_TAG, PARAM_ALPHA);
 if (!in_array($type, $validtypes, true)) {
-    $type = taxonomy::TYPE_CATEGORY;
+    $type = taxonomy::TYPE_TAG;
 }
 $action = optional_param('action', 'list', PARAM_ALPHA);
 $id = optional_param('id', 0, PARAM_INT);

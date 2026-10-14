@@ -62,7 +62,7 @@ if ($action === 'unpublish') {
 // Done here (after access checks, before render) rather than in the renderer
 // so reads stay side-effect-free.
 if (
-    $post->posttype === \local_imageblog\case_post::TYPE_CASE
+    \local_imageblog\post_type::is_diagnose($post->posttype)
     && !empty($post->caserevealed)
     && has_capability('local/imageblog:submitdiagnosis', $context)
 ) {

@@ -25,7 +25,7 @@
     * hasrows - boolean
     * addurl - URL to add a new item
     * tabs - array of {label, url, active}
-    * showslug, showcolour, showparent, showorder - column visibility flags
+    * showslug, showcolour, showorder - column visibility flags
 
     Example context (json):
     {
@@ -34,12 +34,11 @@
         "hasrows": false,
         "addurl": "https://moodle.local/local/imageblog/manage.php?type=tag&action=add",
         "tabs": [
-            {"label": "Categories", "url": "https://moodle.local/local/imageblog/manage.php?type=category", "active": false},
-            {"label": "Tags", "url": "https://moodle.local/local/imageblog/manage.php?type=tag", "active": true}
+            {"label": "Tags", "url": "https://moodle.local/local/imageblog/manage.php?type=tag", "active": true},
+            {"label": "Levels", "url": "https://moodle.local/local/imageblog/manage.php?type=level", "active": false}
         ],
         "showslug": true,
         "showcolour": false,
-        "showparent": false,
         "showorder": false
     }
 }}
@@ -61,7 +60,6 @@
             <thead>
                 <tr>
                     <th>{{#str}}name{{/str}}</th>
-                    {{#showparent}}<th>{{#str}}category, local_imageblog{{/str}}</th>{{/showparent}}
                     {{#showslug}}<th>{{#str}}slug, local_imageblog{{/str}}</th>{{/showslug}}
                     {{#showcolour}}<th>{{#str}}colour, local_imageblog{{/str}}</th>{{/showcolour}}
                     {{#showorder}}<th>{{#str}}sortorder, local_imageblog{{/str}}</th>{{/showorder}}
@@ -72,7 +70,6 @@
                 {{#rows}}
                     <tr>
                         <td>{{name}}</td>
-                        {{#showparent}}<td>{{parentname}}</td>{{/showparent}}
                         {{#showslug}}<td><code>{{slug}}</code></td>{{/showslug}}
                         {{#showcolour}}<td><span class="badge badge-{{colourkey}}">{{colourkey}}</span></td>{{/showcolour}}
                         {{#showorder}}<td>{{sortorder}}</td>{{/showorder}}

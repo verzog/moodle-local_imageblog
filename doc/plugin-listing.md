@@ -9,9 +9,9 @@ Copy for submitting **Image blog** (`local_imageblog`) to the
 Shown in search results — keep it under ~255 characters.
 
 > A site-wide, image-led blog for Moodle: posts with a featured image, rich
-> content and optional 360° panoramas, organised by categories, tags and
-> difficulty. An optional clinical-case mode lets readers diagnose, ask questions
-> and earn CPD.
+> content and optional 360° panoramas, organised by post type, tags and
+> difficulty. Patient Case and Case Study types let readers diagnose, ask
+> questions and earn CPD.
 
 ## Description
 
@@ -24,12 +24,12 @@ Paste into the directory's Description field (Markdown is supported there).
 > - Posts with a featured cover image, rich body content and an image-led card listing.
 > - Optional **360° equirectangular panoramas**, rendered with the bundled Pannellum viewer.
 > - Draft, **scheduled** and published states, with automatic publishing when a scheduled time arrives.
-> - A taxonomy of **categories, subcategories, tags and difficulty levels**, with keyword, author, category, tag and date filters on the listing.
+> - Eight **post types** (Blog Post, News, Reference Article, Patient Case, Case Study, Tutorial, Critical Review, Design Evaluation) plus **tags and difficulty levels**, with keyword, author, post-type, assessment-mode and date filters on the listing.
 > - A dedicated **"Blog author" role** so trusted users can create, publish and edit their *own* posts without being site managers.
 >
-> **Clinical-case mode**
-> - Turn any post into a **case**: readers submit a diagnosis, ask the author questions, and earn configurable **CPD hours** once the outcome is revealed.
-> - Difficulty multipliers, a best-answer bonus, and a kill-switch to disable CPD awarding without a code change.
+> **Diagnose-type posts (Patient Case, Case Study)**
+> - Readers submit a diagnosis, ask the author questions, and — in **Assessable** mode — earn configurable **CPD hours** once the outcome is revealed; **Practice** mode shows a sample score without recording CPD.
+> - Author-set or default-windowed **automatic reveal**, difficulty multipliers, a best-answer bonus, and a kill-switch to disable CPD awarding without a code change.
 >
 > **Engagement**
 > - Opt-in **email notifications** for new posts — an immediate per-post alert, or an aggregated daily or weekly digest.
@@ -50,7 +50,7 @@ few sample posts and one case so the shots look populated; light theme for
 consistency.
 
 1. **Blog listing** (`/local/imageblog/index.php`) — card grid with the filter bar.
-   _Caption: "Image-led blog listing with category, tag and difficulty filters."_
+   _Caption: "Image-led blog listing with post-type, tag and difficulty filters."_
 2. **Single post** (`view.php`) — featured image + rich body.
    _Caption: "A blog post with a featured image and rich content."_
 3. **360° panorama** — a post with a panorama loaded (drag-to-look).

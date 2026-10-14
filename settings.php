@@ -81,6 +81,13 @@ if ($hassiteconfig) {
         get_string('case_cpd_enabled_desc', 'local_imageblog'),
         1
     ));
+    $settings->add(new admin_setting_configtext(
+        'local_imageblog/default_reveal_days',
+        get_string('default_reveal_days', 'local_imageblog'),
+        get_string('default_reveal_days_desc', 'local_imageblog'),
+        '7',
+        PARAM_INT
+    ));
 
     $settings->add(new admin_setting_heading(
         'local_imageblog/subs_heading',
@@ -159,7 +166,7 @@ if ($hassiteconfig) {
         'moodle/role:assign'
     ));
 
-    foreach (['category', 'subcategory', 'tag', 'level'] as $tax) {
+    foreach (['tag', 'level'] as $tax) {
         $ADMIN->add('local_imageblog_cat', new admin_externalpage(
             'local_imageblog_manage_' . $tax,
             get_string('manage_' . $tax, 'local_imageblog'),

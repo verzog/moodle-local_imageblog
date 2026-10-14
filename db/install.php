@@ -24,37 +24,12 @@
  */
 
 /**
- * Seed default categories, subcategories, tags and difficulty levels.
+ * Seed default tags and difficulty levels.
  *
  * @return bool
  */
 function xmldb_local_imageblog_install(): bool {
     global $DB;
-
-    $now = time();
-
-    $categories = [
-        'News'       => ['Announcements', 'Events'],
-        'Tutorial'   => ['Dermoscopy', 'Histopathology', 'Procedures'],
-        'Case study' => ['Diagnostic', 'Therapeutic'],
-        'Reference'  => ['Guidelines', 'Research'],
-    ];
-    $sortorder = 0;
-    foreach ($categories as $name => $subs) {
-        $catid = $DB->insert_record('local_imageblog_categories', (object)[
-            'name'        => $name,
-            'sortorder'   => $sortorder++,
-            'timecreated' => $now,
-        ]);
-        $subsort = 0;
-        foreach ($subs as $sub) {
-            $DB->insert_record('local_imageblog_subcategories', (object)[
-                'name'       => $sub,
-                'categoryid' => $catid,
-                'sortorder'  => $subsort++,
-            ]);
-        }
-    }
 
     $tags = ['feature', 'update', 'dermoscopy', 'biopsy', 'prevention', 'screening'];
     foreach ($tags as $tag) {

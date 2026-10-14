@@ -4,6 +4,33 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-10-14
+
+### Changed
+- Restructured the post taxonomy. The free category/subcategory taxonomy is
+  removed and replaced by two fixed dimensions:
+  - **Post type** (eight types): Blog Post, News and Reference Article
+    (read-only); Patient Case and Case Study (diagnose — readers submit a
+    diagnosis and the author reveals the outcome); Tutorial, Critical Review
+    and Design Evaluation (evaluate — reader appraisal, wired in a later phase).
+  - **Assessment mode** on the interactive types: Assessable (records CPD
+    hours), Practice (sample score, no CPD) or Not assessed. CPD is now only
+    recorded for a diagnose-type post in Assessable mode.
+- The listing filter bar swaps the category/subcategory dropdowns for post-type
+  and assessment-mode filters; the CSV import/export columns `category` and
+  `subcategory` become `post_type` and `assessment_mode`.
+- Cases can auto-reveal: an author may set a reveal time per post, or the new
+  _Default reveal window (days)_ site setting reveals a case automatically a
+  fixed number of days after publication. The scheduled publishing task now
+  also performs the due reveals.
+
+### Migration
+- The upgrade drops the `local_imageblog_categories`,
+  `local_imageblog_subcategories` and `local_imageblog_post_cats` tables, and
+  adds `assessmentmode` and `caserevealat` columns to `local_imageblog_posts`.
+  Existing `case` posts become **Patient Case / Assessable**; all other posts
+  become **Blog Post / Not assessed**.
+
 ## [0.5.8] - 2026-10-04
 
 ### Fixed

@@ -39,7 +39,7 @@ $post = \local_imageblog\post::get($postid);
 if (!$post) {
     throw new moodle_exception('error_notfound', 'local_imageblog');
 }
-if ($post->posttype !== \local_imageblog\case_post::TYPE_CASE) {
+if (!\local_imageblog\post_type::is_diagnose($post->posttype)) {
     throw new moodle_exception('error_notacase', 'local_imageblog');
 }
 

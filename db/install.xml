@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/imageblog/db" VERSION="20260507" COMMENT="XMLDB file for local_imageblog">
+<XMLDB PATH="local/imageblog/db" VERSION="20261014" COMMENT="XMLDB file for local_imageblog">
   <TABLES>
 
     <TABLE NAME="local_imageblog_posts" COMMENT="Blog posts">
@@ -18,11 +18,13 @@
         <FIELD NAME="lazyimages"     TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="1=lazy load body images"/>
         <FIELD NAME="forumpostid"     TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Linked forum discussion id"/>
         <FIELD NAME="featuredimage"   TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="mdl_files id for card thumbnail"/>
-        <FIELD NAME="posttype"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="blog" SEQUENCE="false" COMMENT="blog|case"/>
+        <FIELD NAME="posttype"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="blog" SEQUENCE="false" COMMENT="blog|news|reference|patientcase|casestudy|tutorial|review|designeval"/>
+        <FIELD NAME="assessmentmode" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="none" SEQUENCE="false" COMMENT="none|practice|assessable; whether an interactive post earns CPD"/>
         <FIELD NAME="caseoutcome"     TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Author-provided outcome/diagnosis, shown after reveal"/>
         <FIELD NAME="caseoutcomeformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="caserevealed"    TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 once the author has revealed the outcome"/>
         <FIELD NAME="caserevealedtime" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="caserevealat"    TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp for scheduled auto-reveal; null = none set"/>
         <FIELD NAME="casebestdiagnosisid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Optional id of best diagnosis chosen by author"/>
         <FIELD NAME="casedifficulty"  TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Author-rated difficulty 1-5 used for CPD scaling"/>
       </FIELDS>
@@ -33,48 +35,6 @@
       <INDEXES>
         <INDEX NAME="idx_status_published" UNIQUE="false" FIELDS="status, timepublished"/>
         <INDEX NAME="idx_authorid" UNIQUE="false" FIELDS="authorid"/>
-      </INDEXES>
-    </TABLE>
-
-    <TABLE NAME="local_imageblog_categories" COMMENT="Top-level blog categories">
-      <FIELDS>
-        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name"         TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="sortorder"    TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-      </KEYS>
-    </TABLE>
-
-    <TABLE NAME="local_imageblog_subcategories" COMMENT="Subcategories belonging to a category">
-      <FIELDS>
-        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="categoryid"   TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="name"         TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="sortorder"    TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="fk_category" TYPE="foreign" FIELDS="categoryid" REFTABLE="local_imageblog_categories" REFFIELDS="id"/>
-      </KEYS>
-    </TABLE>
-
-    <TABLE NAME="local_imageblog_post_cats" COMMENT="Many-to-many: posts to categories">
-      <FIELDS>
-        <FIELD NAME="id"             TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="postid"         TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="categoryid"     TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="subcategoryid"  TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="fk_post"    TYPE="foreign" FIELDS="postid"     REFTABLE="local_imageblog_posts"         REFFIELDS="id"/>
-        <KEY NAME="fk_cat"     TYPE="foreign" FIELDS="categoryid" REFTABLE="local_imageblog_categories"    REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="idx_postid" UNIQUE="false" FIELDS="postid"/>
       </INDEXES>
     </TABLE>
 
