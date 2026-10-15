@@ -4,6 +4,14 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.1] - 2026-10-15
+
+### Added
+- Post-type labels: the listing cards and the single-post view show a badge
+  for the post type (every type except plain Blog Post, to avoid cluttering
+  ordinary posts), while the subscription digest email (HTML and plain text)
+  and the RSS feed (`<category>`) label every item regardless of type.
+
 ## [0.7.0] - 2026-10-15
 
 ### Added

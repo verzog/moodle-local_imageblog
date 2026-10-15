@@ -103,6 +103,11 @@
     background: #e9ecef;
     color: #495057;
 }
+.local-imageblog-badge--type {
+    background: #d4e4fb;
+    color: #0b3a6b;
+    font-weight: 600;
+}
 
 .local-imageblog-post {
     width: 100%;

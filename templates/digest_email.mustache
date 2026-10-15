@@ -8,7 +8,7 @@
     * sitename       string
     * recipientname  string
     * frequencylabel string
-    * items          [{title, summary, hasimage, imagecid, viewurl}]
+    * items          [{title, summary, typelabel, hasimage, imagecid, viewurl}]
     * count          int
     * listingurl     string
     * subscribeurl   string
@@ -27,6 +27,7 @@
             {
                 "title": "Dermoscopy of pigmented lesions",
                 "summary": "Visual summary of the case.",
+                "typelabel": "Patient case",
                 "hasimage": true,
                 "imagecid": "imageblog-featured-1",
                 "viewurl": "https://moodle.local/local/imageblog/view.php?id=1"
@@ -77,6 +78,11 @@
                                 {{/hasimage}}
                                 <tr>
                                     <td style="padding:16px 20px;">
+                                        <div style="margin:0 0 6px 0;">
+                                            <span style="display:inline-block;background:#d4e4fb;color:#0b3a6b;
+                                                         font-size:12px;font-weight:600;padding:2px 8px;
+                                                         border-radius:999px;">{{typelabel}}</span>
+                                        </div>
                                         <h2 style="margin:0 0 8px 0;font-size:18px;color:#0f172a;">
                                             <a href="{{viewurl}}"
                                                style="color:#0f172a;text-decoration:none;">{{title}}</a>

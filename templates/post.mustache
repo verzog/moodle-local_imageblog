@@ -19,6 +19,8 @@
     * unpublishurl  string
     * canedit       bool
     * editurl       string
+    * hastypelabel  bool
+    * typelabel     string
     * iscase        bool
     * casepanel     object — see case_panel.mustache
     * iseval        bool
@@ -28,6 +30,8 @@
     {
         "id": 1,
         "title": "Dermoscopy of pigmented lesions",
+        "hastypelabel": false,
+        "typelabel": "",
         "body": "<p>Body content goes here.</p>",
         "authorname": "Jane Doe",
         "datepublished": "1 June 2026",
@@ -77,6 +81,12 @@
          role="region"
          aria-label="{{#str}}panorama, local_imageblog{{/str}}"></div>
     {{/haspanorama}}
+
+    {{#hastypelabel}}
+    <div class="local-imageblog-post__type mb-2">
+        <span class="local-imageblog-badge local-imageblog-badge--type">{{typelabel}}</span>
+    </div>
+    {{/hastypelabel}}
 
     <h1 class="local-imageblog-post__title mb-2">{{title}}</h1>
 

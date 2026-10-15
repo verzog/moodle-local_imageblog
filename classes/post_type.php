@@ -188,6 +188,17 @@ class post_type {
     }
 
     /**
+     * Localised label for a single post type (falls back to the slug if the
+     * type is somehow unknown).
+     *
+     * @param string $type
+     * @return string
+     */
+    public static function label(string $type): string {
+        return self::is_valid($type) ? get_string('posttype_' . $type, 'local_imageblog') : $type;
+    }
+
+    /**
      * Post-type select menu: slug => localised label.
      *
      * @return array

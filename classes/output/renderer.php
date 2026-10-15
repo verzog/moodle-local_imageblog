@@ -118,6 +118,8 @@ class renderer extends plugin_renderer_base {
         $context = [
             'id'            => $post->id,
             'title'         => format_string($post->title),
+            'hastypelabel'  => $post->posttype !== post_type::BLOG,
+            'typelabel'     => post_type::label($post->posttype),
             'body'          => format_text(
                 file_rewrite_pluginfile_urls(
                     $post->body,
@@ -197,11 +199,14 @@ class renderer extends plugin_renderer_base {
             }
 
             $items[] = [
-                'title'    => format_string($p->title),
-                'summary'  => format_string($p->summary),
-                'hasimage' => $imagecid !== '',
-                'imagecid' => $imagecid,
-                'viewurl'  => (new moodle_url('/local/imageblog/view.php', ['id' => $p->id]))->out(false),
+                'title'     => format_string($p->title),
+                'summary'   => format_string($p->summary),
+                // The digest labels every item (unlike the on-site cards, which
+                // omit the default Blog Post badge to reduce clutter).
+                'typelabel' => post_type::label($p->posttype),
+                'hasimage'  => $imagecid !== '',
+                'imagecid'  => $imagecid,
+                'viewurl'   => (new moodle_url('/local/imageblog/view.php', ['id' => $p->id]))->out(false),
             ];
         }
 
@@ -223,7 +228,7 @@ class renderer extends plugin_renderer_base {
         $textlines[] = get_string('digest_intro', 'local_imageblog', $sitename);
         $textlines[] = '';
         foreach ($items as $item) {
-            $textlines[] = '* ' . $item['title'];
+            $textlines[] = '* ' . $item['title'] . ' (' . $item['typelabel'] . ')';
             if ($item['summary'] !== '') {
                 $textlines[] = '  ' . $item['summary'];
             }
@@ -556,6 +561,10 @@ class renderer extends plugin_renderer_base {
             'datepublished' => $post->timepublished
                 ? userdate($post->timepublished, get_string('strftimedate', 'langconfig'))
                 : '',
+            // Label every type except the default Blog Post, so ordinary posts
+            // aren't cluttered with a redundant badge.
+            'hastypelabel'  => $post->posttype !== post_type::BLOG,
+            'typelabel'     => post_type::label($post->posttype),
             'hasimage'      => !empty($imgurl),
             'imageurl'      => $imgurl ? $imgurl->out(false) : '',
             'tags'          => array_map(fn($name) => ['name' => format_string($name)], $tags),
