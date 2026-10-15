@@ -73,6 +73,9 @@ foreach ($posts as $post) {
     if (trim((string)$post->summary) !== '') {
         $xml->writeElement('description', format_string($post->summary));
     }
+    // Expose the post type as a feed category so readers/aggregators can tell
+    // a Patient Case or Tutorial apart from an ordinary post.
+    $xml->writeElement('category', \local_imageblog\post_type::label($post->posttype));
     $xml->endElement();
 }
 

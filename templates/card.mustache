@@ -16,6 +16,8 @@
     * levels        array  [{name, colourkey}]
     * hastags       bool
     * haslevels     bool
+    * hastypelabel  bool
+    * typelabel     string
     * isdraft       bool
     * isarchived    bool
     * statuslabel   string
@@ -36,6 +38,8 @@
         "levels": [{"name": "Beginner", "colourkey": "teal"}],
         "hastags": true,
         "haslevels": true,
+        "hastypelabel": false,
+        "typelabel": "",
         "isdraft": false,
         "isarchived": false,
         "statuslabel": "",
@@ -60,6 +64,12 @@
             <span class="local-imageblog-card__date">{{datepublished}}</span>
             <span class="local-imageblog-card__author">{{authorname}}</span>
         </div>
+
+        {{#hastypelabel}}
+        <div class="local-imageblog-card__type">
+            <span class="local-imageblog-badge local-imageblog-badge--type">{{typelabel}}</span>
+        </div>
+        {{/hastypelabel}}
 
         <h2 class="local-imageblog-card__title">
             <a href="{{viewurl}}">{{title}}</a>
