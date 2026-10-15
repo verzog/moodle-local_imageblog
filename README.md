@@ -8,9 +8,9 @@ and Case Study (readers submit a diagnosis and the author reveals the outcome);
 and Tutorial, Critical Review and Design Evaluation (readers appraise the post
 against a rubric). The interactive types run in an **assessment mode** —
 Assessable (CPD hours) or Practice (sample score). The post type is shown as a
-badge on the listing cards and the post page, in the digest email, and as an
-RSS `<category>`. Readers can also opt in to periodic email digests of newly
-published posts.
+badge on the listing cards and the post page (except for ordinary Blog Posts),
+and every item is labelled with its type in the digest email and the RSS feed.
+Readers can also opt in to periodic email digests of newly published posts.
 
 ## Installing via uploaded ZIP file ##
 

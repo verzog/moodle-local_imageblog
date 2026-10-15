@@ -199,13 +199,14 @@ class renderer extends plugin_renderer_base {
             }
 
             $items[] = [
-                'title'        => format_string($p->title),
-                'summary'      => format_string($p->summary),
-                'hastypelabel' => $p->posttype !== post_type::BLOG,
-                'typelabel'    => post_type::label($p->posttype),
-                'hasimage'     => $imagecid !== '',
-                'imagecid'     => $imagecid,
-                'viewurl'      => (new moodle_url('/local/imageblog/view.php', ['id' => $p->id]))->out(false),
+                'title'     => format_string($p->title),
+                'summary'   => format_string($p->summary),
+                // The digest labels every item (unlike the on-site cards, which
+                // omit the default Blog Post badge to reduce clutter).
+                'typelabel' => post_type::label($p->posttype),
+                'hasimage'  => $imagecid !== '',
+                'imagecid'  => $imagecid,
+                'viewurl'   => (new moodle_url('/local/imageblog/view.php', ['id' => $p->id]))->out(false),
             ];
         }
 
@@ -227,7 +228,7 @@ class renderer extends plugin_renderer_base {
         $textlines[] = get_string('digest_intro', 'local_imageblog', $sitename);
         $textlines[] = '';
         foreach ($items as $item) {
-            $textlines[] = '* ' . $item['title'];
+            $textlines[] = '* ' . $item['title'] . ' (' . $item['typelabel'] . ')';
             if ($item['summary'] !== '') {
                 $textlines[] = '  ' . $item['summary'];
             }
