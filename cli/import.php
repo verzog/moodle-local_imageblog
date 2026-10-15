@@ -276,13 +276,15 @@ while (($cols = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
     if (!\local_imageblog\post_type::is_valid($posttype)) {
         $posttype = \local_imageblog\post_type::BLOG;
     }
-    // Assessment mode only applies to interactive types; read-only types
-    // (Blog Post, News, Reference Article) are always 'none'.
+    // Assessment mode only applies to interactive types, where a post is
+    // always assessable or practice (defaulting to assessable). Read-only
+    // types (Blog Post, News, Reference Article) are always 'none'.
     $assessmentmode = strtolower(trim((string)($data['assessment_mode'] ?? '')));
-    if (
-        !\local_imageblog\post_type::is_interactive($posttype)
-        || !\local_imageblog\post_type::is_valid_mode($assessmentmode)
-    ) {
+    if (\local_imageblog\post_type::is_interactive($posttype)) {
+        if (!\local_imageblog\post_type::is_valid_interactive_mode($assessmentmode)) {
+            $assessmentmode = \local_imageblog\post_type::default_interactive_mode();
+        }
+    } else {
         $assessmentmode = \local_imageblog\post_type::MODE_NONE;
     }
 

@@ -287,6 +287,43 @@ final class post_test extends \advanced_testcase {
     }
 
     /**
+     * save() normalises the assessment mode: an interactive type with no (or an
+     * invalid) mode defaults to assessable, while a read-only type is forced to
+     * none regardless of what was submitted.
+     */
+    public function test_save_normalises_assessment_mode(): void {
+        $this->resetAfterTest();
+        $this->setUser($this->getDataGenerator()->create_user());
+        $context = \context_system::instance();
+
+        // Interactive type, no mode supplied -> defaults to assessable.
+        $caseid = post::save((object)[
+            'title'    => 'Case without a mode',
+            'status'   => post::STATUS_DRAFT,
+            'posttype' => post_type::PATIENTCASE,
+        ], $context);
+        $this->assertSame(post_type::MODE_ASSESSABLE, post::get($caseid)->assessmentmode);
+
+        // Interactive type, practice mode supplied -> kept.
+        $practiceid = post::save((object)[
+            'title'          => 'Practice case',
+            'status'         => post::STATUS_DRAFT,
+            'posttype'       => post_type::CASESTUDY,
+            'assessmentmode' => post_type::MODE_PRACTICE,
+        ], $context);
+        $this->assertSame(post_type::MODE_PRACTICE, post::get($practiceid)->assessmentmode);
+
+        // Read-only type -> forced to none even if a mode is submitted.
+        $blogid = post::save((object)[
+            'title'          => 'A blog post',
+            'status'         => post::STATUS_DRAFT,
+            'posttype'       => post_type::BLOG,
+            'assessmentmode' => post_type::MODE_ASSESSABLE,
+        ], $context);
+        $this->assertSame(post_type::MODE_NONE, post::get($blogid)->assessmentmode);
+    }
+
+    /**
      * A user with only createpost cannot edit someone else's post by sending a
      * tampered id to save() — ownership is enforced on the saved id.
      */

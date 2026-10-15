@@ -503,7 +503,7 @@ class renderer extends plugin_renderer_base {
 
         $currentmode = (string)($filters['assessmentmode'] ?? '');
         $assessmentmodes = [];
-        foreach (post_type::mode_menu() as $slug => $label) {
+        foreach (post_type::interactive_mode_menu() as $slug => $label) {
             $assessmentmodes[] = [
                 'value'    => $slug,
                 'label'    => $label,

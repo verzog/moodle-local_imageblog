@@ -14,8 +14,9 @@ the project aims to follow [Semantic Versioning](https://semver.org/).
     diagnosis and the author reveals the outcome); Tutorial, Critical Review
     and Design Evaluation (evaluate — reader appraisal, wired in a later phase).
   - **Assessment mode** on the interactive types: Assessable (records CPD
-    hours), Practice (sample score, no CPD) or Not assessed. CPD is now only
-    recorded for a diagnose-type post in Assessable mode.
+    hours) or Practice (sample score, no CPD), defaulting to Assessable. CPD is
+    now only recorded for a diagnose-type post in Assessable mode. Read-only
+    types carry no assessment.
 - The listing filter bar swaps the category/subcategory dropdowns for post-type
   and assessment-mode filters; the CSV import/export columns `category` and
   `subcategory` become `post_type` and `assessment_mode`.

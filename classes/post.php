@@ -348,12 +348,18 @@ class post {
         $record->posttype = (!empty($data->posttype) && post_type::is_valid((string)$data->posttype))
             ? (string)$data->posttype
             : post_type::BLOG;
-        // Assessment mode only applies to interactive types; read-only types
-        // (Blog Post, News, Reference Article) are always 'none'.
-        $mode = (string)($data->assessmentmode ?? post_type::MODE_NONE);
-        $record->assessmentmode = (post_type::is_interactive($record->posttype) && post_type::is_valid_mode($mode))
-            ? $mode
-            : post_type::MODE_NONE;
+        // Assessment mode only applies to interactive types, where a post is
+        // always assessable (CPD) or practice; it falls back to the default
+        // (assessable) when unset or invalid. Read-only types (Blog Post, News,
+        // Reference Article) are always 'none'.
+        if (post_type::is_interactive($record->posttype)) {
+            $mode = (string)($data->assessmentmode ?? '');
+            $record->assessmentmode = post_type::is_valid_interactive_mode($mode)
+                ? $mode
+                : post_type::default_interactive_mode();
+        } else {
+            $record->assessmentmode = post_type::MODE_NONE;
+        }
         if (post_type::is_diagnose($record->posttype)) {
             $record->casedifficulty = max(1, min(5, (int)($data->casedifficulty ?? 1)));
             // An optional author-set auto-reveal time; null means the admin
@@ -459,6 +465,20 @@ class post {
 
         if ($becamepublished) {
             subscription::notify_immediate_subscribers($record->id);
+        }
+
+        // If an already-revealed diagnose case is switched to assessable (e.g.
+        // from practice), its participants never had CPD queued at reveal time.
+        // Queue the idempotent award now so turning assessment on after the
+        // reveal backfills their hours.
+        if (
+            !$isnew
+            && post_type::is_diagnose($record->posttype)
+            && !empty($existing->caserevealed)
+            && $record->assessmentmode === post_type::MODE_ASSESSABLE
+            && ($existing->assessmentmode ?? post_type::MODE_NONE) !== post_type::MODE_ASSESSABLE
+        ) {
+            case_post::queue_cpd_award($record->id);
         }
 
         return $record->id;

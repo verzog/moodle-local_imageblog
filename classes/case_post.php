@@ -183,6 +183,18 @@ class case_post {
         ];
         $DB->update_record('local_imageblog_posts', $record);
 
+        self::queue_cpd_award($postid);
+    }
+
+    /**
+     * Queue the (idempotent) CPD award for a case's participants as an adhoc
+     * task, so a popular case does not run a long write loop inside a request.
+     * Safe to call repeatedly: award_cpd_for_case() upserts and no-ops when the
+     * post is not an assessable, revealed diagnose post.
+     *
+     * @param int $postid
+     */
+    public static function queue_cpd_award(int $postid): void {
         $task = new \local_imageblog\task\award_case_cpd();
         $task->set_custom_data(['postid' => $postid]);
         \core\task\manager::queue_adhoc_task($task, true);

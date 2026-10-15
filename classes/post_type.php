@@ -139,12 +139,32 @@ class post_type {
     }
 
     /**
-     * All assessment-mode slugs.
+     * All assessment-mode slugs (including the read-only "none").
      *
      * @return string[]
      */
     public static function modes(): array {
         return [self::MODE_NONE, self::MODE_PRACTICE, self::MODE_ASSESSABLE];
+    }
+
+    /**
+     * Assessment modes an author may choose for an interactive post. The
+     * read-only "none" is excluded: an interactive post always carries a
+     * reader assessment, so it is either assessable (CPD) or practice.
+     *
+     * @return string[]
+     */
+    public static function interactive_modes(): array {
+        return [self::MODE_ASSESSABLE, self::MODE_PRACTICE];
+    }
+
+    /**
+     * Default assessment mode for a newly interactive post.
+     *
+     * @return string
+     */
+    public static function default_interactive_mode(): string {
+        return self::MODE_ASSESSABLE;
     }
 
     /**
@@ -155,6 +175,16 @@ class post_type {
      */
     public static function is_valid_mode(string $mode): bool {
         return in_array($mode, self::modes(), true);
+    }
+
+    /**
+     * Whether a slug is a mode an interactive post may be set to.
+     *
+     * @param string $mode
+     * @return bool
+     */
+    public static function is_valid_interactive_mode(string $mode): bool {
+        return in_array($mode, self::interactive_modes(), true);
     }
 
     /**
@@ -171,13 +201,14 @@ class post_type {
     }
 
     /**
-     * Assessment-mode select menu: slug => localised label.
+     * Assessment-mode select menu for interactive posts: slug => localised
+     * label. Only the author-selectable modes (assessable, practice) appear.
      *
      * @return array
      */
-    public static function mode_menu(): array {
+    public static function interactive_mode_menu(): array {
         $out = [];
-        foreach (self::modes() as $mode) {
+        foreach (self::interactive_modes() as $mode) {
             $out[$mode] = get_string('mode_' . $mode, 'local_imageblog');
         }
         return $out;

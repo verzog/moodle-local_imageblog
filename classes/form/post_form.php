@@ -53,15 +53,17 @@ class post_form extends moodleform {
         $mform->addHelpButton('posttype', 'posttype', 'local_imageblog');
 
         // Assessment mode applies to the interactive types only; it is hidden
-        // for read-only types (Blog Post, News, Reference Article).
+        // for read-only types (Blog Post, News, Reference Article). An
+        // interactive post is always assessable (CPD) or practice — never
+        // "not assessed" — so only those options are offered here.
         $mform->addElement(
             'select',
             'assessmentmode',
             get_string('assessmentmode', 'local_imageblog'),
-            post_type::mode_menu()
+            post_type::interactive_mode_menu()
         );
         $mform->setType('assessmentmode', PARAM_ALPHA);
-        $mform->setDefault('assessmentmode', post_type::MODE_NONE);
+        $mform->setDefault('assessmentmode', post_type::default_interactive_mode());
         $mform->addHelpButton('assessmentmode', 'assessmentmode', 'local_imageblog');
         // Moodle ORs repeated hideIf() rules on one element: the element is
         // hidden when ANY rule matches. So to show the selector only for the
@@ -262,7 +264,7 @@ class post_form extends moodleform {
             $defaults->body       = '';
             $defaults->bodyformat = FORMAT_HTML;
             $defaults->posttype          = post_type::BLOG;
-            $defaults->assessmentmode    = post_type::MODE_NONE;
+            $defaults->assessmentmode    = post_type::default_interactive_mode();
             $defaults->casedifficulty    = 3;
             $defaults->caseoutcome       = '';
             $defaults->caseoutcomeformat = FORMAT_HTML;
