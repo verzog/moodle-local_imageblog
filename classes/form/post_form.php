@@ -221,10 +221,9 @@ class post_form extends moodleform {
 
         // Moodle ORs repeated hideIf() rules (an element is hidden when ANY
         // rule matches), so each field is hidden on an exact match of every
-        // type it does NOT belong to:
-        //  - difficulty + reveal time: every interactive type (diagnose + evaluate);
-        //  - the outcome editor: the diagnose types only;
-        //  - the rubric chooser: the evaluate types only.
+        // type it does NOT belong to. Difficulty and reveal time belong to
+        // every interactive type (diagnose + evaluate); the outcome editor to
+        // the diagnose types only; the rubric chooser to the evaluate types only.
         $all = post_type::all();
         $noninteractive = array_diff($all, post_type::diagnose_types(), post_type::evaluate_types());
         $nondiagnose = array_diff($all, post_type::diagnose_types());

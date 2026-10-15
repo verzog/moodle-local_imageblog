@@ -137,7 +137,7 @@ final class evaluation_test extends \advanced_testcase {
             \core\task\manager::adhoc_task_complete($task);
         }
 
-        // base 1 x difficulty-3 multiplier 1.0 x submit factor 0.75 = 0.75.
+        // Base 1 x difficulty-3 multiplier 1.0 x submit factor 0.75 = 0.75.
         $this->assertEqualsWithDelta(0.75, evaluation::get_user_total_hours($postid, (int)$reader->id), 0.001);
     }
 
