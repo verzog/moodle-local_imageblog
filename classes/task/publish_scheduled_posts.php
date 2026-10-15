@@ -98,7 +98,7 @@ class publish_scheduled_posts extends scheduled_task {
             "posttype $typesql AND status = :status AND (caserevealed = 0 OR caserevealed IS NULL)",
             $params,
             '',
-            'id, timepublished, caserevealat'
+            'id, timepublished, caserevealat, caseoutcome'
         );
         if (!$candidates) {
             mtrace('local_imageblog: no case outcomes due to reveal.');
@@ -117,6 +117,14 @@ class publish_scheduled_posts extends scheduled_task {
                 $revealat = (int)$c->timepublished + $window;
             }
             if ($revealat !== null && $revealat <= $now) {
+                // Never auto-reveal a case whose outcome has not been written:
+                // the outcome editor is optional, and revealing an empty answer
+                // would irreversibly close submissions and mislead readers. The
+                // author can reveal manually, or the sweep retries once an
+                // outcome exists.
+                if (trim((string)$c->caseoutcome) === '') {
+                    continue;
+                }
                 case_post::reveal((int)$c->id);
                 $revealed++;
             }

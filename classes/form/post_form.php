@@ -63,10 +63,14 @@ class post_form extends moodleform {
         $mform->setType('assessmentmode', PARAM_ALPHA);
         $mform->setDefault('assessmentmode', post_type::MODE_NONE);
         $mform->addHelpButton('assessmentmode', 'assessmentmode', 'local_imageblog');
-        foreach (array_merge(post_type::diagnose_types(), post_type::evaluate_types()) as $itype) {
-            // The element is hidden only when the type is none of the interactive
-            // ones (the conditions are ANDed), so it shows for all of them.
-            $mform->hideIf('assessmentmode', 'posttype', 'neq', $itype);
+        // Moodle ORs repeated hideIf() rules on one element: the element is
+        // hidden when ANY rule matches. So to show the selector only for the
+        // interactive types, hide it on an exact match of each read-only type
+        // (Blog Post, News, Reference Article).
+        $interactivetypes = array_merge(post_type::diagnose_types(), post_type::evaluate_types());
+        $readonlytypes = array_diff(post_type::all(), $interactivetypes);
+        foreach ($readonlytypes as $rtype) {
+            $mform->hideIf('assessmentmode', 'posttype', 'eq', $rtype);
         }
 
         $mform->addElement('text', 'title', get_string('title', 'local_imageblog'), ['size' => 80]);
@@ -198,11 +202,13 @@ class post_form extends moodleform {
         $mform->addHelpButton('caserevealat', 'caserevealat', 'local_imageblog');
 
         // The case fields (difficulty, outcome, reveal time) belong to the
-        // diagnose types only: hidden unless the type is Patient Case or Case
-        // Study (the per-type conditions are ANDed, so the field shows for both).
+        // diagnose types only. Because Moodle ORs repeated hideIf() rules
+        // (hidden when ANY matches), hide them on an exact match of every
+        // non-diagnose type so they show only for Patient Case and Case Study.
+        $nondiagnosetypes = array_diff(post_type::all(), post_type::diagnose_types());
         foreach (['casedifficulty', 'caseoutcome_editor', 'caserevealat'] as $casefield) {
-            foreach (post_type::diagnose_types() as $dtype) {
-                $mform->hideIf($casefield, 'posttype', 'neq', $dtype);
+            foreach ($nondiagnosetypes as $ndtype) {
+                $mform->hideIf($casefield, 'posttype', 'eq', $ndtype);
             }
         }
 
