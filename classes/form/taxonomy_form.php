@@ -54,22 +54,6 @@ class taxonomy_form extends moodleform {
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
-        if ($type === taxonomy::TYPE_SUBCATEGORY) {
-            $categories = taxonomy::all(taxonomy::TYPE_CATEGORY);
-            $options = ['' => get_string('selectcategory', 'local_imageblog')];
-            foreach ($categories as $cat) {
-                $options[$cat->id] = $cat->name;
-            }
-            $mform->addElement(
-                'select',
-                'categoryid',
-                get_string('category', 'local_imageblog'),
-                $options
-            );
-            $mform->setType('categoryid', PARAM_INT);
-            $mform->addRule('categoryid', null, 'required', null, 'client');
-        }
-
         if ($type === taxonomy::TYPE_TAG) {
             $mform->addElement('text', 'slug', get_string('slug', 'local_imageblog'), ['size' => 60]);
             $mform->setType('slug', PARAM_ALPHANUMEXT);
@@ -90,7 +74,7 @@ class taxonomy_form extends moodleform {
             $mform->setType('colourkey', PARAM_ALPHA);
         }
 
-        if (in_array($type, [taxonomy::TYPE_CATEGORY, taxonomy::TYPE_SUBCATEGORY, taxonomy::TYPE_LEVEL], true)) {
+        if ($type === taxonomy::TYPE_LEVEL) {
             $mform->addElement('text', 'sortorder', get_string('sortorder', 'local_imageblog'), ['size' => 6]);
             $mform->setType('sortorder', PARAM_INT);
             $mform->setDefault('sortorder', 0);

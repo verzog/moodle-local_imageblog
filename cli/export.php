@@ -20,7 +20,7 @@
  * Produces the same column layout that cli/import.php consumes, so an
  * export can be re-imported into another site:
  *   title, summary, body, status, timepublished, author_email,
- *   category, subcategory, tags, levels, featured_image, panorama_image
+ *   post_type, assessment_mode, tags, levels, featured_image, panorama_image
  *
  * Notes:
  * - 'scheduled' posts are exported with status 'draft' because the import
@@ -94,10 +94,6 @@ if (!in_array($statusfilter, $validstatuses, true)) {
 $context = context_system::instance();
 $fs      = get_file_storage();
 
-// Cache taxonomy names keyed by id so each post is a couple of lookups.
-$categorynames    = $DB->get_records_menu('local_imageblog_categories', null, '', 'id, name');
-$subcategorynames = $DB->get_records_menu('local_imageblog_subcategories', null, '', 'id, name');
-
 $overwrite = !empty($options['overwrite']);
 $exportimage = function (int $postid, string $filearea, string $subdir) use ($fs, $context, $imagedir, $overwrite): string {
     if (!$imagedir) {
@@ -140,7 +136,7 @@ if (!$handle) {
 
 $header = [
     'title', 'summary', 'body', 'status', 'timepublished', 'author_email',
-    'category', 'subcategory', 'tags', 'levels', 'featured_image', 'panorama_image',
+    'post_type', 'assessment_mode', 'tags', 'levels', 'featured_image', 'panorama_image',
 ];
 fputcsv($handle, $header, ',', '"', '\\');
 
@@ -164,7 +160,6 @@ foreach ($rs as $record) {
         continue;
     }
 
-    [$categoryid, $subcategoryid] = $post->get_category_ids();
     $tagnames   = array_map(fn($t) => $t->name, $post->get_tags());
     $levelnames = array_map(fn($l) => $l->name, $post->get_levels());
 
@@ -180,8 +175,8 @@ foreach ($rs as $record) {
         $status,
         $post->timepublished ?? '',
         $record->authoremail,
-        $categoryid ? ($categorynames[$categoryid] ?? '') : '',
-        $subcategoryid ? ($subcategorynames[$subcategoryid] ?? '') : '',
+        $post->posttype,
+        $post->assessmentmode,
         implode('|', $tagnames),
         implode('|', $levelnames),
         $exportimage($post->id, \local_imageblog\post::FILEAREA_FEATURED, 'featured'),

@@ -6,12 +6,11 @@
     Context variables required for this template:
     * cards         array  — see card.mustache
     * hascards      bool
-    * filterbar     object — authors, categories, subcategories, tags, levels,
+    * filterbar     object — authors, posttypes, assessmentmodes, tags, levels,
                             keyword, datefrom, dateto, formaction
     * pagination    object — show, pages, hasprev, hasnext, prevurl, nexturl
     * cancreate     bool
     * newposturl    string
-    * subcatdata    string — JSON map of categoryid -> [{id,name}] for dependent dropdown
     * subsenabled   bool
     * issubscribed  bool — current user already has a subscription row
     * subscribeurl  string
@@ -25,8 +24,8 @@
         "filterbar": {
             "formaction": "https://moodle.local/local/imageblog/index.php",
             "authors": [],
-            "categories": [],
-            "subcategories": [],
+            "posttypes": [],
+            "assessmentmodes": [],
             "tags": [],
             "levels": [],
             "keyword": "",
@@ -36,7 +35,6 @@
         "pagination": {"show": false, "pages": [], "hasprev": false, "hasnext": false, "prevurl": "", "nexturl": ""},
         "cancreate": false,
         "newposturl": "https://moodle.local/local/imageblog/edit.php",
-        "subcatdata": "{}",
         "subsenabled": false,
         "issubscribed": false,
         "rssenabled": false,
@@ -45,29 +43,28 @@
     }
 }}
 <div class="local-imageblog-listing"
-     data-region="local-imageblog-filters"
-     data-subcats="{{subcatdata}}">
+     data-region="local-imageblog-filters">
 
     <div class="local-imageblog-filters card mb-4">
         <div class="card-body">
             <form method="get" action="{{filterbar.formaction}}">
                 <div class="row g-2 mb-2">
                     <div class="col-md-3">
-                        <label class="form-label small text-muted" for="local-imageblog-filter-cat">{{#str}}category, local_imageblog{{/str}}</label>
-                        <select id="local-imageblog-filter-cat" name="categoryid" class="form-select form-select-sm" data-action="category-change">
-                            <option value="">{{#str}}selectcategory, local_imageblog{{/str}}</option>
-                            {{#filterbar.categories}}
-                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
-                            {{/filterbar.categories}}
+                        <label class="form-label small text-muted" for="local-imageblog-filter-type">{{#str}}posttype, local_imageblog{{/str}}</label>
+                        <select id="local-imageblog-filter-type" name="posttype" class="form-select form-select-sm">
+                            <option value="">{{#str}}selectposttype, local_imageblog{{/str}}</option>
+                            {{#filterbar.posttypes}}
+                            <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                            {{/filterbar.posttypes}}
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small text-muted" for="local-imageblog-filter-subcat">{{#str}}subcategory, local_imageblog{{/str}}</label>
-                        <select id="local-imageblog-filter-subcat" name="subcategoryid" class="form-select form-select-sm" data-region="subcategory">
-                            <option value="">{{#str}}selectsubcategory, local_imageblog{{/str}}</option>
-                            {{#filterbar.subcategories}}
-                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
-                            {{/filterbar.subcategories}}
+                        <label class="form-label small text-muted" for="local-imageblog-filter-mode">{{#str}}assessmentmode, local_imageblog{{/str}}</label>
+                        <select id="local-imageblog-filter-mode" name="assessmentmode" class="form-select form-select-sm">
+                            <option value="">{{#str}}selectassessmentmode, local_imageblog{{/str}}</option>
+                            {{#filterbar.assessmentmodes}}
+                            <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                            {{/filterbar.assessmentmodes}}
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -198,8 +195,3 @@
     {{/pagination.show}}
 
 </div>
-{{#js}}
-require(['local_imageblog/filter'], function(Filter) {
-    Filter.init();
-});
-{{/js}}

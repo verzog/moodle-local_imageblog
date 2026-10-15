@@ -56,8 +56,10 @@ class post {
     public ?int $forumpostid = null;
     /** @var int|null */
     public ?int $featuredimage = null;
-    /** @var string blog|case */
-    public string $posttype = 'blog';
+    /** @var string One of post_type::* (blog, news, patientcase, …). */
+    public string $posttype = post_type::BLOG;
+    /** @var string none|practice|assessable. */
+    public string $assessmentmode = post_type::MODE_NONE;
     /** @var string */
     public string $caseoutcome = '';
     /** @var int */
@@ -66,6 +68,8 @@ class post {
     public bool $caserevealed = false;
     /** @var int|null */
     public ?int $caserevealedtime = null;
+    /** @var int|null Timestamp for the scheduled auto-reveal, or null. */
+    public ?int $caserevealat = null;
     /** @var int|null */
     public ?int $casebestdiagnosisid = null;
     /** @var int */
@@ -142,7 +146,7 @@ class post {
      * the result to a single author — used so non-managers can find their
      * own drafts without seeing other authors' unpublished work.
      *
-     * @param array $filters Keys: authorid, categoryid, subcategoryid, tagid,
+     * @param array $filters Keys: authorid, posttype, assessmentmode, tagid,
      *                       levelid, keyword, datefrom, dateto, page,
      *                       statuses (string[]), mineonly (bool),
      *                       viewerid (int)
@@ -177,16 +181,14 @@ class post {
             $params['authorid'] = (int)$filters['authorid'];
         }
 
-        if (!empty($filters['categoryid']) || !empty($filters['subcategoryid'])) {
-            $joins .= ' JOIN {local_imageblog_post_cats} pc ON pc.postid = p.id ';
-            if (!empty($filters['categoryid'])) {
-                $where[]              = 'pc.categoryid = :categoryid';
-                $params['categoryid'] = (int)$filters['categoryid'];
-            }
-            if (!empty($filters['subcategoryid'])) {
-                $where[]                 = 'pc.subcategoryid = :subcategoryid';
-                $params['subcategoryid'] = (int)$filters['subcategoryid'];
-            }
+        if (!empty($filters['posttype']) && post_type::is_valid((string)$filters['posttype'])) {
+            $where[]            = 'p.posttype = :posttype';
+            $params['posttype'] = (string)$filters['posttype'];
+        }
+
+        if (!empty($filters['assessmentmode']) && post_type::is_valid_mode((string)$filters['assessmentmode'])) {
+            $where[]                  = 'p.assessmentmode = :assessmentmode';
+            $params['assessmentmode'] = (string)$filters['assessmentmode'];
         }
 
         if (!empty($filters['tagid'])) {
@@ -343,11 +345,26 @@ class post {
         $record->bodyformat  = FORMAT_HTML;
         $record->body        = '';
         $record->timemodified = $now;
-        $record->posttype    = !empty($data->posttype) && $data->posttype === case_post::TYPE_CASE
-            ? case_post::TYPE_CASE
-            : case_post::TYPE_BLOG;
-        if ($record->posttype === case_post::TYPE_CASE) {
+        $record->posttype = (!empty($data->posttype) && post_type::is_valid((string)$data->posttype))
+            ? (string)$data->posttype
+            : post_type::BLOG;
+        // Assessment mode only applies to interactive types, where a post is
+        // always assessable (CPD) or practice; it falls back to the default
+        // (assessable) when unset or invalid. Read-only types (Blog Post, News,
+        // Reference Article) are always 'none'.
+        if (post_type::is_interactive($record->posttype)) {
+            $mode = (string)($data->assessmentmode ?? '');
+            $record->assessmentmode = post_type::is_valid_interactive_mode($mode)
+                ? $mode
+                : post_type::default_interactive_mode();
+        } else {
+            $record->assessmentmode = post_type::MODE_NONE;
+        }
+        if (post_type::is_diagnose($record->posttype)) {
             $record->casedifficulty = max(1, min(5, (int)($data->casedifficulty ?? 1)));
+            // An optional author-set auto-reveal time; null means the admin
+            // default window (from publish) applies, enforced on cron.
+            $record->caserevealat = !empty($data->caserevealat) ? (int)$data->caserevealat : null;
         }
 
         $becamepublished = false;
@@ -388,8 +405,8 @@ class post {
             ]);
         }
 
-        // Process the case outcome editor when this is a case post.
-        if ($record->posttype === case_post::TYPE_CASE && !empty($data->caseoutcome_editor)) {
+        // Process the case outcome editor when this is a diagnose-type post.
+        if (post_type::is_diagnose($record->posttype) && !empty($data->caseoutcome_editor)) {
             $data->id = $record->id;
             $data = file_postupdate_standard_editor(
                 $data,
@@ -440,16 +457,28 @@ class post {
             );
         }
 
-        $categoryid    = !empty($data->categoryid) ? (int)$data->categoryid : null;
-        $subcategoryid = !empty($data->subcategoryid) ? (int)$data->subcategoryid : null;
         $tagids        = isset($data->tagids) && is_array($data->tagids)
             ? self::resolve_tagids($data->tagids)
             : [];
         $levelids      = isset($data->levelids) && is_array($data->levelids) ? $data->levelids : [];
-        self::set_taxonomy($record->id, $categoryid, $subcategoryid, $tagids, $levelids);
+        self::set_taxonomy($record->id, $tagids, $levelids);
 
         if ($becamepublished) {
             subscription::notify_immediate_subscribers($record->id);
+        }
+
+        // If an already-revealed diagnose case is switched to assessable (e.g.
+        // from practice), its participants never had CPD queued at reveal time.
+        // Queue the idempotent award now so turning assessment on after the
+        // reveal backfills their hours.
+        if (
+            !$isnew
+            && post_type::is_diagnose($record->posttype)
+            && !empty($existing->caserevealed)
+            && $record->assessmentmode === post_type::MODE_ASSESSABLE
+            && ($existing->assessmentmode ?? post_type::MODE_NONE) !== post_type::MODE_ASSESSABLE
+        ) {
+            case_post::queue_cpd_award($record->id);
         }
 
         return $record->id;
@@ -588,18 +617,14 @@ class post {
     }
 
     /**
-     * Replace the taxonomy associations for this post.
+     * Replace the tag and level associations for this post.
      *
-     * @param int      $postid
-     * @param int|null $categoryid
-     * @param int|null $subcategoryid
-     * @param int[]    $tagids
-     * @param int[]    $levelids
+     * @param int   $postid
+     * @param int[] $tagids
+     * @param int[] $levelids
      */
     public static function set_taxonomy(
         int $postid,
-        ?int $categoryid,
-        ?int $subcategoryid,
         array $tagids,
         array $levelids
     ): void {
@@ -610,17 +635,8 @@ class post {
         // rebuilt.
         $transaction = $DB->start_delegated_transaction();
 
-        $DB->delete_records('local_imageblog_post_cats', ['postid' => $postid]);
         $DB->delete_records('local_imageblog_post_tags', ['postid' => $postid]);
         $DB->delete_records('local_imageblog_post_levels', ['postid' => $postid]);
-
-        if ($categoryid) {
-            $DB->insert_record('local_imageblog_post_cats', (object)[
-                'postid'        => $postid,
-                'categoryid'    => $categoryid,
-                'subcategoryid' => $subcategoryid ?: null,
-            ]);
-        }
 
         foreach (array_unique(array_filter(array_map('intval', $tagids))) as $tagid) {
             $DB->insert_record('local_imageblog_post_tags', (object)[
@@ -637,25 +653,6 @@ class post {
         }
 
         $transaction->allow_commit();
-    }
-
-    /**
-     * Currently-associated category id (or null), and subcategory id.
-     *
-     * @return array Two elements: [0] category id or null, [1] subcategory id or null.
-     */
-    public function get_category_ids(): array {
-        global $DB;
-        $row = $DB->get_record(
-            'local_imageblog_post_cats',
-            ['postid' => $this->id],
-            'categoryid, subcategoryid',
-            IGNORE_MISSING
-        );
-        if (!$row) {
-            return [null, null];
-        }
-        return [(int)$row->categoryid, $row->subcategoryid ? (int)$row->subcategoryid : null];
     }
 
     /**
@@ -800,11 +797,13 @@ class post {
         $post->lazyimages    = !empty($record->lazyimages);
         $post->forumpostid   = isset($record->forumpostid) ? (int)$record->forumpostid : null;
         $post->featuredimage = isset($record->featuredimage) ? (int)$record->featuredimage : null;
-        $post->posttype          = $record->posttype ?? 'blog';
+        $post->posttype          = $record->posttype ?? post_type::BLOG;
+        $post->assessmentmode    = $record->assessmentmode ?? post_type::MODE_NONE;
         $post->caseoutcome       = $record->caseoutcome ?? '';
         $post->caseoutcomeformat = (int)($record->caseoutcomeformat ?? FORMAT_HTML);
         $post->caserevealed      = !empty($record->caserevealed);
         $post->caserevealedtime  = isset($record->caserevealedtime) ? (int)$record->caserevealedtime : null;
+        $post->caserevealat      = isset($record->caserevealat) ? (int)$record->caserevealat : null;
         $post->casebestdiagnosisid = isset($record->casebestdiagnosisid) ? (int)$record->casebestdiagnosisid : null;
         $post->casedifficulty    = (int)($record->casedifficulty ?? 1);
         return $post;

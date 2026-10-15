@@ -30,11 +30,6 @@ use local_imageblog\local\scoring;
  * Static helpers for case-type posts: diagnoses, Q&A, reveal, CPD award.
  */
 class case_post {
-    /** @var string Regular blog post type. */
-    const TYPE_BLOG = 'blog';
-    /** @var string Clinical case post type. */
-    const TYPE_CASE = 'case';
-
     /** @var string CPD reason: submitted a diagnosis. */
     const REASON_PARTICIPATION = 'participation';
     /** @var string CPD reason: author selected the diagnosis as best. */
@@ -188,6 +183,18 @@ class case_post {
         ];
         $DB->update_record('local_imageblog_posts', $record);
 
+        self::queue_cpd_award($postid);
+    }
+
+    /**
+     * Queue the (idempotent) CPD award for a case's participants as an adhoc
+     * task, so a popular case does not run a long write loop inside a request.
+     * Safe to call repeatedly: award_cpd_for_case() upserts and no-ops when the
+     * post is not an assessable, revealed diagnose post.
+     *
+     * @param int $postid
+     */
+    public static function queue_cpd_award(int $postid): void {
         $task = new \local_imageblog\task\award_case_cpd();
         $task->set_custom_data(['postid' => $postid]);
         \core\task\manager::queue_adhoc_task($task, true);
@@ -237,7 +244,7 @@ class case_post {
     public static function award_cpd_for_case(int $postid): void {
         global $DB;
         $post = $DB->get_record('local_imageblog_posts', ['id' => $postid], '*', MUST_EXIST);
-        if ($post->posttype !== self::TYPE_CASE || empty($post->caserevealed)) {
+        if (!self::is_cpd_post($post)) {
             return;
         }
         // Compute hours once — config and difficulty don't change inside the loop.
@@ -292,7 +299,7 @@ class case_post {
     public static function record_cpd(int $postid, int $userid, string $reason): void {
         global $DB;
         $post = $DB->get_record('local_imageblog_posts', ['id' => $postid], '*', MUST_EXIST);
-        if ($post->posttype !== self::TYPE_CASE || empty($post->caserevealed)) {
+        if (!self::is_cpd_post($post)) {
             return;
         }
         $hours = self::compute_hours((int)$post->casedifficulty, $reason);
@@ -332,6 +339,20 @@ class case_post {
         // An unset value (fresh install) counts as enabled; only an explicit
         // '0' disables, so the kill-switch never silently suppresses awards.
         return $val === false || (string)$val !== '0';
+    }
+
+    /**
+     * Whether a post record is eligible to accrue CPD: a diagnose-type post,
+     * revealed, and set to the assessable mode. Practice-mode posts show a
+     * sample score (a later phase) but never record CPD.
+     *
+     * @param \stdClass $post
+     * @return bool
+     */
+    private static function is_cpd_post(\stdClass $post): bool {
+        return post_type::is_diagnose((string)$post->posttype)
+            && !empty($post->caserevealed)
+            && ($post->assessmentmode ?? post_type::MODE_NONE) === post_type::MODE_ASSESSABLE;
     }
 
     /**

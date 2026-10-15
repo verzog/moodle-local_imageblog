@@ -452,7 +452,6 @@ class provider implements
         $DB->delete_records_select('local_imageblog_case_cpd', "postid $insql", $inparams);
 
         $DB->delete_records_select('local_imageblog_post_tags', "postid $insql", $inparams);
-        $DB->delete_records_select('local_imageblog_post_cats', "postid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_post_levels', "postid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_posts', "id $insql", $inparams);
     }

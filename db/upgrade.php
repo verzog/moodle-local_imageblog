@@ -162,5 +162,37 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026062802, 'local', 'imageblog');
     }
 
+    if ($oldversion < 2026101400) {
+        $table = new xmldb_table('local_imageblog_posts');
+
+        // Add the assessment mode (none|practice|assessable) and the optional
+        // scheduled auto-reveal timestamp.
+        $field = new xmldb_field('assessmentmode', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'none', 'posttype');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('caserevealat', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'caserevealedtime');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Map the two legacy post types onto the new set: a clinical case
+        // becomes a Patient Case graded for CPD; everything else is a Blog Post.
+        // Set the mode while the row still reads 'case', then rename the type.
+        $DB->set_field('local_imageblog_posts', 'assessmentmode', 'assessable', ['posttype' => 'case']);
+        $DB->set_field('local_imageblog_posts', 'posttype', 'patientcase', ['posttype' => 'case']);
+
+        // The free category taxonomy is replaced by post type + assessment mode;
+        // drop its tables (link table first to respect the foreign keys).
+        foreach (['local_imageblog_post_cats', 'local_imageblog_subcategories', 'local_imageblog_categories'] as $name) {
+            $drop = new xmldb_table($name);
+            if ($dbman->table_exists($drop)) {
+                $dbman->drop_table($drop);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026101400, 'local', 'imageblog');
+    }
+
     return true;
 }

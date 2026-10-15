@@ -37,25 +37,22 @@ final class taxonomy_test extends \advanced_testcase {
         parent::setUp();
         global $DB;
         $this->resetAfterTest();
-        $DB->delete_records('local_imageblog_post_cats');
         $DB->delete_records('local_imageblog_post_tags');
         $DB->delete_records('local_imageblog_post_levels');
-        $DB->delete_records('local_imageblog_subcategories');
-        $DB->delete_records('local_imageblog_categories');
         $DB->delete_records('local_imageblog_tags');
         $DB->delete_records('local_imageblog_levels');
     }
 
-    public function test_save_and_fetch_category(): void {
+    public function test_save_and_fetch_level(): void {
         $this->resetAfterTest();
-        $id = taxonomy::save(taxonomy::TYPE_CATEGORY, (object)['name' => 'News', 'sortorder' => 5]);
+        $id = taxonomy::save(taxonomy::TYPE_LEVEL, (object)['name' => 'Beginner', 'sortorder' => 5]);
         $this->assertGreaterThan(0, $id);
 
-        $row = taxonomy::get(taxonomy::TYPE_CATEGORY, $id);
-        $this->assertSame('News', $row->name);
+        $row = taxonomy::get(taxonomy::TYPE_LEVEL, $id);
+        $this->assertSame('Beginner', $row->name);
         $this->assertSame(5, (int)$row->sortorder);
 
-        $all = taxonomy::all(taxonomy::TYPE_CATEGORY);
+        $all = taxonomy::all(taxonomy::TYPE_LEVEL);
         $this->assertCount(1, $all);
     }
 
@@ -80,10 +77,10 @@ final class taxonomy_test extends \advanced_testcase {
         $this->assertSame('amber', $row->colourkey);
     }
 
-    public function test_save_subcategory_requires_parent(): void {
+    public function test_table_rejects_unknown_type(): void {
         $this->resetAfterTest();
-        $this->expectException(\moodle_exception::class);
-        taxonomy::save(taxonomy::TYPE_SUBCATEGORY, (object)['name' => 'Orphan']);
+        $this->expectException(\coding_exception::class);
+        taxonomy::table('category');
     }
 
     public function test_save_rejects_empty_name(): void {
@@ -92,40 +89,34 @@ final class taxonomy_test extends \advanced_testcase {
         taxonomy::save(taxonomy::TYPE_TAG, (object)['name' => '   ']);
     }
 
-    public function test_delete_category_cascades(): void {
+    public function test_delete_level_cascades(): void {
         global $DB;
         $this->resetAfterTest();
 
-        $catid = taxonomy::save(taxonomy::TYPE_CATEGORY, (object)['name' => 'Tutorial']);
-        $subid = taxonomy::save(taxonomy::TYPE_SUBCATEGORY, (object)[
-            'name'       => 'Dermoscopy',
-            'categoryid' => $catid,
-        ]);
+        $levelid = taxonomy::save(taxonomy::TYPE_LEVEL, (object)['name' => 'Advanced']);
 
         // Manually associate a fake post so we can verify the cascade.
-        $postid = $DB->insert_record('local_imageblog_post_cats', (object)[
-            'postid'        => 1,
-            'categoryid'    => $catid,
-            'subcategoryid' => $subid,
+        $rowid = $DB->insert_record('local_imageblog_post_levels', (object)[
+            'postid'  => 1,
+            'levelid' => $levelid,
         ]);
-        $this->assertTrue($DB->record_exists('local_imageblog_post_cats', ['id' => $postid]));
+        $this->assertTrue($DB->record_exists('local_imageblog_post_levels', ['id' => $rowid]));
 
-        taxonomy::delete(taxonomy::TYPE_CATEGORY, $catid);
+        taxonomy::delete(taxonomy::TYPE_LEVEL, $levelid);
 
-        $this->assertNull(taxonomy::get(taxonomy::TYPE_CATEGORY, $catid));
-        $this->assertNull(taxonomy::get(taxonomy::TYPE_SUBCATEGORY, $subid));
-        $this->assertFalse($DB->record_exists('local_imageblog_post_cats', ['categoryid' => $catid]));
+        $this->assertNull(taxonomy::get(taxonomy::TYPE_LEVEL, $levelid));
+        $this->assertFalse($DB->record_exists('local_imageblog_post_levels', ['levelid' => $levelid]));
     }
 
     public function test_update_existing_row(): void {
         $this->resetAfterTest();
-        $id = taxonomy::save(taxonomy::TYPE_CATEGORY, (object)['name' => 'Original']);
-        taxonomy::save(taxonomy::TYPE_CATEGORY, (object)[
+        $id = taxonomy::save(taxonomy::TYPE_LEVEL, (object)['name' => 'Original']);
+        taxonomy::save(taxonomy::TYPE_LEVEL, (object)[
             'id'        => $id,
             'name'      => 'Renamed',
             'sortorder' => 9,
         ]);
-        $row = taxonomy::get(taxonomy::TYPE_CATEGORY, $id);
+        $row = taxonomy::get(taxonomy::TYPE_LEVEL, $id);
         $this->assertSame('Renamed', $row->name);
         $this->assertSame(9, (int)$row->sortorder);
     }

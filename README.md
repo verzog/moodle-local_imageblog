@@ -1,12 +1,14 @@
 # Image blog #
 
 A Moodle local plugin that provides a site-wide image-led blog. Posts support a
-featured image, rich body content, optional 360° equirectangular panoramas, a
-taxonomy of categories, subcategories, tags and difficulty levels, and draft or
-scheduled publishing. An optional "clinical case" mode lets readers submit a
-diagnosis, ask the author questions, and earn CPD hours once the outcome is
-revealed. Readers can also opt in to periodic email digests of newly published
-posts.
+featured image, rich body content, optional 360° equirectangular panoramas,
+tags and difficulty levels, and draft or scheduled publishing. Each post has a
+**post type** — Blog Post, News and Reference Article (read-only); Patient Case
+and Case Study (readers submit a diagnosis and the author reveals the outcome);
+and Tutorial, Critical Review and Design Evaluation (reader evaluation). The
+interactive types can run in an **assessment mode** — Assessable (CPD hours) or
+Practice (sample score). Readers can also opt in to periodic email digests of
+newly published posts.
 
 ## Installing via uploaded ZIP file ##
 
@@ -43,7 +45,7 @@ All settings live under _Site administration > Plugins > Local plugins >
 Image blog > Settings_.
 
 **CPD hours for clinical cases** — how many CPD hours readers earn for taking
-part in a case:
+part in an assessable case (Patient Case or Case Study in Assessable mode):
 
 * _Base CPD hours per case_, _Difficulty multipliers_ (one per difficulty
   level 1–5), and the per-action factors: _submitted a diagnosis_,
@@ -52,6 +54,9 @@ part in a case:
   turned off, no new CPD is awarded for participation, outcome views or
   best-answer bonuses, and awards already granted are left untouched. Use it if
   the CPD rules ever misfire in production.
+* _Default reveal window (days)_ — how long after a case is published its
+  outcome is revealed automatically, unless the author sets an explicit reveal
+  time on the post.
 
 **Subscription emails** — let readers opt in to digests of newly published
 posts:
@@ -76,9 +81,9 @@ Local plugins > Image blog > Manage blog authors_.
 ## Bulk import and export ##
 
 Two CLI tools share a common CSV format (columns: `title`, `summary`, `body`,
-`status`, `timepublished`, `author_email`, `category`, `subcategory`, `tags`,
-`levels`, `featured_image`, `panorama_image`), so an export from one site can
-be re-imported into another.
+`status`, `timepublished`, `author_email`, `post_type`, `assessment_mode`,
+`tags`, `levels`, `featured_image`, `panorama_image`), so an export from one
+site can be re-imported into another.
 
 Import legacy posts from a CSV plus an optional directory of images:
 

@@ -19,11 +19,14 @@
  *
  * CSV columns (header row required):
  *   title, summary, body, status, timepublished, author_email,
- *   category, subcategory, tags, levels, featured_image, panorama_image
+ *   post_type, assessment_mode, tags, levels, featured_image, panorama_image
  *
- * - status:        draft|published|archived (default: published)
- * - timepublished: ISO-8601 or unix timestamp (optional)
- * - tags / levels: pipe-separated names (e.g. "Melanoma|Dermoscopy")
+ * - status:          draft|published|archived (default: published)
+ * - timepublished:   ISO-8601 or unix timestamp (optional)
+ * - post_type:       one of the post_type slugs (default: blog)
+ * - assessment_mode: none|practice|assessable; applies to interactive types
+ *                    only, forced to none otherwise (default: none)
+ * - tags / levels:   pipe-separated names (e.g. "Melanoma|Dermoscopy")
  * - featured_image / panorama_image: filename relative to --imagedir
  *
  * Usage:
@@ -112,8 +115,6 @@ foreach ($required as $col) {
 $usercache  = [];
 $tagcache   = [];
 $levelcache = [];
-$catcache   = [];
-$subcatcache = [];
 
 $resolveuser = function (string $email) use (&$usercache, $fallback): int {
     $email = strtolower(trim($email));
@@ -126,47 +127,6 @@ $resolveuser = function (string $email) use (&$usercache, $fallback): int {
     global $DB;
     $u = $DB->get_record('user', ['email' => $email, 'deleted' => 0], 'id');
     return $usercache[$email] = (int)($u ? $u->id : $fallback->id);
-};
-
-$resolvecategory = function (string $name) use (&$catcache): ?int {
-    $name = trim($name);
-    if ($name === '') {
-        return null;
-    }
-    if (isset($catcache[$name])) {
-        return $catcache[$name];
-    }
-    global $DB;
-    $row = $DB->get_record('local_imageblog_categories', ['name' => $name], 'id');
-    if ($row) {
-        return $catcache[$name] = (int)$row->id;
-    }
-    return $catcache[$name] = (int)$DB->insert_record('local_imageblog_categories', (object)[
-        'name'        => $name,
-        'sortorder'   => 0,
-        'timecreated' => time(),
-    ]);
-};
-
-$resolvesubcategory = function (string $name, ?int $categoryid) use (&$subcatcache): ?int {
-    $name = trim($name);
-    if ($name === '' || !$categoryid) {
-        return null;
-    }
-    $key = $categoryid . '|' . $name;
-    if (isset($subcatcache[$key])) {
-        return $subcatcache[$key];
-    }
-    global $DB;
-    $row = $DB->get_record('local_imageblog_subcategories', ['name' => $name, 'categoryid' => $categoryid], 'id');
-    if ($row) {
-        return $subcatcache[$key] = (int)$row->id;
-    }
-    return $subcatcache[$key] = (int)$DB->insert_record('local_imageblog_subcategories', (object)[
-        'name'       => $name,
-        'categoryid' => $categoryid,
-        'sortorder'  => 0,
-    ]);
 };
 
 $resolvetag = function (string $name) use (&$tagcache): int {
@@ -273,8 +233,6 @@ $flush = function () use (&$batch, $dryrun, $storeimage, $continue, &$ok, &$fail
 
             \local_imageblog\post::set_taxonomy(
                 $postid,
-                $item['categoryid'],
-                $item['subcategoryid'],
                 $item['tagids'],
                 $item['levelids']
             );
@@ -314,8 +272,21 @@ while (($cols = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
         $timepublished = $now;
     }
 
-    $categoryid    = $resolvecategory((string)($data['category'] ?? ''));
-    $subcategoryid = $resolvesubcategory((string)($data['subcategory'] ?? ''), $categoryid);
+    $posttype = strtolower(trim((string)($data['post_type'] ?? '')));
+    if (!\local_imageblog\post_type::is_valid($posttype)) {
+        $posttype = \local_imageblog\post_type::BLOG;
+    }
+    // Assessment mode only applies to interactive types, where a post is
+    // always assessable or practice (defaulting to assessable). Read-only
+    // types (Blog Post, News, Reference Article) are always 'none'.
+    $assessmentmode = strtolower(trim((string)($data['assessment_mode'] ?? '')));
+    if (\local_imageblog\post_type::is_interactive($posttype)) {
+        if (!\local_imageblog\post_type::is_valid_interactive_mode($assessmentmode)) {
+            $assessmentmode = \local_imageblog\post_type::default_interactive_mode();
+        }
+    } else {
+        $assessmentmode = \local_imageblog\post_type::MODE_NONE;
+    }
 
     $tagids = [];
     foreach (preg_split('/\|/', (string)($data['tags'] ?? '')) as $t) {
@@ -333,19 +304,19 @@ while (($cols = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
 
     $batch[] = [
         'record' => (object)[
-            'authorid'      => $resolveuser((string)($data['author_email'] ?? '')),
-            'title'         => $title,
-            'summary'       => (string)($data['summary'] ?? ''),
-            'body'          => (string)($data['body'] ?? ''),
-            'bodyformat'    => FORMAT_HTML,
-            'status'        => $status,
-            'timepublished' => $timepublished,
-            'timecreated'   => $now,
-            'timemodified'  => $now,
-            'lazyimages'    => 1,
+            'authorid'       => $resolveuser((string)($data['author_email'] ?? '')),
+            'title'          => $title,
+            'summary'        => (string)($data['summary'] ?? ''),
+            'body'           => (string)($data['body'] ?? ''),
+            'bodyformat'     => FORMAT_HTML,
+            'status'         => $status,
+            'timepublished'  => $timepublished,
+            'timecreated'    => $now,
+            'timemodified'   => $now,
+            'lazyimages'     => 1,
+            'posttype'       => $posttype,
+            'assessmentmode' => $assessmentmode,
         ],
-        'categoryid'    => $categoryid,
-        'subcategoryid' => $subcategoryid,
         'tagids'        => $tagids,
         'levelids'      => $levelids,
         'featured'      => (string)($data['featured_image'] ?? ''),

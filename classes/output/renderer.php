@@ -26,6 +26,7 @@ namespace local_imageblog\output;
 
 use local_imageblog\post;
 use local_imageblog\case_post;
+use local_imageblog\post_type;
 use moodle_url;
 use plugin_renderer_base;
 
@@ -58,15 +59,6 @@ class renderer extends plugin_renderer_base {
             $cards[] = $this->build_card_context($p, $batch);
         }
 
-        // Build a categoryid -> [{id, name}] JSON map for the dependent
-        // subcategory dropdown.
-        $subcatmap = [];
-        foreach (($taxonomy['subcategories'] ?? []) as $sub) {
-            $catid = (int)$sub['categoryid'];
-            $subcatmap[$catid] ??= [];
-            $subcatmap[$catid][] = ['id' => (int)$sub['id'], 'name' => $sub['name']];
-        }
-
         global $USER;
         $subsenabled = (bool)get_config('local_imageblog', 'subscriptions_enabled');
         $issubscribed = $subsenabled
@@ -84,11 +76,6 @@ class renderer extends plugin_renderer_base {
             'pagination' => $this->build_pagination($total, $page, $perpage, $filters),
             'cancreate'  => has_capability('local/imageblog:createpost', \context_system::instance()),
             'newposturl' => (new moodle_url('/local/imageblog/edit.php'))->out(false),
-            // Emitted through the double-mustache {{subcatdata}} in an HTML
-            // attribute, which HTML-escapes exactly once; the browser then
-            // decodes it back to valid JSON for filter.js. Do not pre-escape
-            // with s() here or the value is double-escaped and JSON.parse fails.
-            'subcatdata' => json_encode($subcatmap),
             'subsenabled' => $subsenabled,
             'issubscribed' => $issubscribed,
             'subscribeurl' => (new moodle_url('/local/imageblog/subscribe.php'))->out(false),
@@ -161,8 +148,8 @@ class renderer extends plugin_renderer_base {
                 '/local/imageblog/edit.php',
                 ['id' => $post->id]
             ))->out(false),
-            'iscase'        => $post->posttype === case_post::TYPE_CASE,
-            'casepanel'     => $post->posttype === case_post::TYPE_CASE
+            'iscase'        => post_type::is_diagnose($post->posttype),
+            'casepanel'     => post_type::is_diagnose($post->posttype)
                 ? $this->build_case_context($post, (int)$USER->id, $canmanage || ($isowner && $canauthor))
                 : null,
         ];
@@ -502,16 +489,25 @@ class renderer extends plugin_renderer_base {
             }, $items);
         };
 
-        $currentcategory = (int)($filters['categoryid'] ?? 0);
-        $subcategories = [];
-        foreach (($taxonomy['subcategories'] ?? []) as $sub) {
-            if ($currentcategory && (int)$sub['categoryid'] !== $currentcategory) {
-                continue;
-            }
-            $subcategories[] = [
-                'id'       => $sub['id'],
-                'name'     => $sub['name'],
-                'selected' => ((int)$sub['id'] === (int)($filters['subcategoryid'] ?? 0)),
+        // Post type and assessment mode replaced the old category/subcategory
+        // filters. Both are string-slug selects rather than numeric ids.
+        $currenttype = (string)($filters['posttype'] ?? '');
+        $posttypes = [];
+        foreach (post_type::menu() as $slug => $label) {
+            $posttypes[] = [
+                'value'    => $slug,
+                'label'    => $label,
+                'selected' => $slug === $currenttype,
+            ];
+        }
+
+        $currentmode = (string)($filters['assessmentmode'] ?? '');
+        $assessmentmodes = [];
+        foreach (post_type::interactive_mode_menu() as $slug => $label) {
+            $assessmentmodes[] = [
+                'value'    => $slug,
+                'label'    => $label,
+                'selected' => $slug === $currentmode,
             ];
         }
 
@@ -535,9 +531,8 @@ class renderer extends plugin_renderer_base {
 
         return [
             'authors'         => $mark($taxonomy['authors'] ?? [], (int)($filters['authorid'] ?? 0)),
-            'categories'      => $mark($taxonomy['categories'] ?? [], $currentcategory),
-            'subcategories'   => $subcategories,
-            'hassubcats'      => !empty($subcategories),
+            'posttypes'       => $posttypes,
+            'assessmentmodes' => $assessmentmodes,
             'tags'            => $mark($taxonomy['tags'] ?? [], (int)($filters['tagid'] ?? 0)),
             'levels'          => $mark($taxonomy['levels'] ?? [], (int)($filters['levelid'] ?? 0)),
             'haslevels'       => !empty($taxonomy['levels'] ?? []),
@@ -619,8 +614,6 @@ class renderer extends plugin_renderer_base {
      * @return string
      */
     public function render_taxonomy_index(string $type, array $items): string {
-        global $DB;
-
         $rows = [];
         foreach ($items as $item) {
             $row = [
@@ -635,10 +628,6 @@ class renderer extends plugin_renderer_base {
             }
             if (property_exists($item, 'colourkey')) {
                 $row['colourkey'] = $item->colourkey;
-            }
-            if (property_exists($item, 'categoryid')) {
-                $parent = $DB->get_field('local_imageblog_categories', 'name', ['id' => $item->categoryid]);
-                $row['parentname'] = $parent ? format_string($parent) : '';
             }
             $row['editurl'] = (new moodle_url(
                 '/local/imageblog/manage.php',
@@ -661,12 +650,7 @@ class renderer extends plugin_renderer_base {
             ))->out(false),
             'showslug'  => $type === \local_imageblog\taxonomy::TYPE_TAG,
             'showcolour' => $type === \local_imageblog\taxonomy::TYPE_LEVEL,
-            'showparent' => $type === \local_imageblog\taxonomy::TYPE_SUBCATEGORY,
-            'showorder'  => in_array($type, [
-                \local_imageblog\taxonomy::TYPE_CATEGORY,
-                \local_imageblog\taxonomy::TYPE_SUBCATEGORY,
-                \local_imageblog\taxonomy::TYPE_LEVEL,
-            ], true),
+            'showorder'  => $type === \local_imageblog\taxonomy::TYPE_LEVEL,
             'tabs'      => $this->build_taxonomy_tabs($type),
         ];
 
@@ -681,8 +665,6 @@ class renderer extends plugin_renderer_base {
      */
     private function build_taxonomy_tabs(string $current): array {
         $types = [
-            \local_imageblog\taxonomy::TYPE_CATEGORY,
-            \local_imageblog\taxonomy::TYPE_SUBCATEGORY,
             \local_imageblog\taxonomy::TYPE_TAG,
             \local_imageblog\taxonomy::TYPE_LEVEL,
         ];

@@ -105,7 +105,7 @@ final class post_test extends \advanced_testcase {
     }
 
     /**
-     * get_published filters by author, category and tag.
+     * get_published filters by author, post type and tag.
      */
     public function test_get_published_filters(): void {
         global $DB;
@@ -117,8 +117,9 @@ final class post_test extends \advanced_testcase {
 
         $this->setUser($alice);
         $postalice = post::save((object)[
-            'title'  => 'Alice published',
-            'status' => post::STATUS_PUBLISHED,
+            'title'    => 'Alice published',
+            'status'   => post::STATUS_PUBLISHED,
+            'posttype' => post_type::NEWS,
         ], $context);
 
         $this->setUser($bob);
@@ -131,13 +132,10 @@ final class post_test extends \advanced_testcase {
             'status' => post::STATUS_PUBLISHED,
         ], $context);
 
-        $catid = $DB->insert_record('local_imageblog_categories', (object)[
-            'name' => 'News', 'sortorder' => 0, 'timecreated' => time(),
-        ]);
         $tagid = $DB->insert_record('local_imageblog_tags', (object)[
             'name' => 'test-feature', 'slug' => 'test-feature',
         ]);
-        post::set_taxonomy($postalice, $catid, null, [$tagid], []);
+        post::set_taxonomy($postalice, [$tagid], []);
 
         $all = post::get_published();
         $this->assertSame(2, $all['total']);
@@ -146,8 +144,9 @@ final class post_test extends \advanced_testcase {
         $this->assertSame(1, $byauthor['total']);
         $this->assertSame($postalice, $byauthor['posts'][0]->id);
 
-        $bycat = post::get_published(['categoryid' => $catid]);
-        $this->assertSame(1, $bycat['total']);
+        $bytype = post::get_published(['posttype' => post_type::NEWS]);
+        $this->assertSame(1, $bytype['total']);
+        $this->assertSame($postalice, $bytype['posts'][0]->id);
 
         $bytag = post::get_published(['tagid' => $tagid]);
         $this->assertSame(1, $bytag['total']);
@@ -164,9 +163,9 @@ final class post_test extends \advanced_testcase {
     }
 
     /**
-     * Subcategory, level and date-range filters narrow results correctly.
+     * Assessment-mode, level and date-range filters narrow results correctly.
      */
-    public function test_get_published_subcategory_level_and_date_filters(): void {
+    public function test_get_published_assessmentmode_level_and_date_filters(): void {
         global $DB;
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user();
@@ -174,38 +173,31 @@ final class post_test extends \advanced_testcase {
         $context = \context_system::instance();
 
         $now = time();
-        $catid = $DB->insert_record('local_imageblog_categories', (object)[
-            'name' => 'Tutorial', 'sortorder' => 0, 'timecreated' => $now,
-        ]);
-        $sub1 = $DB->insert_record('local_imageblog_subcategories', (object)[
-            'name' => 'Dermoscopy', 'categoryid' => $catid, 'sortorder' => 0,
-        ]);
-        $sub2 = $DB->insert_record('local_imageblog_subcategories', (object)[
-            'name' => 'Procedures', 'categoryid' => $catid, 'sortorder' => 1,
-        ]);
         $level = $DB->insert_record('local_imageblog_levels', (object)[
             'name' => 'Beginner', 'colourkey' => 'teal', 'sortorder' => 0,
         ]);
 
         $postderm = post::save((object)[
-            'title'  => 'Dermoscopy basics',
-            'status' => post::STATUS_PUBLISHED,
+            'title'          => 'Dermoscopy basics',
+            'status'         => post::STATUS_PUBLISHED,
+            'posttype'       => post_type::PATIENTCASE,
+            'assessmentmode' => post_type::MODE_ASSESSABLE,
         ], $context);
-        post::set_taxonomy($postderm, $catid, $sub1, [], [$level]);
+        post::set_taxonomy($postderm, [], [$level]);
 
         $postproc = post::save((object)[
             'title'  => 'Cryotherapy procedure',
             'status' => post::STATUS_PUBLISHED,
         ], $context);
-        post::set_taxonomy($postproc, $catid, $sub2, [], []);
+        post::set_taxonomy($postproc, [], []);
 
         // Backdate the dermoscopy post to last month.
         $lastmonth = $now - (35 * DAYSECS);
         $DB->set_field('local_imageblog_posts', 'timepublished', $lastmonth, ['id' => $postderm]);
 
-        $bysubcat = post::get_published(['subcategoryid' => $sub1]);
-        $this->assertSame(1, $bysubcat['total']);
-        $this->assertSame($postderm, $bysubcat['posts'][0]->id);
+        $bymode = post::get_published(['assessmentmode' => post_type::MODE_ASSESSABLE]);
+        $this->assertSame(1, $bymode['total']);
+        $this->assertSame($postderm, $bymode['posts'][0]->id);
 
         $bylevel = post::get_published(['levelid' => $level]);
         $this->assertSame(1, $bylevel['total']);
@@ -286,12 +278,49 @@ final class post_test extends \advanced_testcase {
         $tag1 = $DB->insert_record('local_imageblog_tags', (object)['name' => 't1', 'slug' => 't1']);
         $tag2 = $DB->insert_record('local_imageblog_tags', (object)['name' => 't2', 'slug' => 't2']);
 
-        post::set_taxonomy($postid, null, null, [$tag1, $tag2], []);
+        post::set_taxonomy($postid, [$tag1, $tag2], []);
         $loaded = post::get($postid);
         $this->assertEqualsCanonicalizing([$tag1, $tag2], $loaded->get_tag_ids());
 
-        post::set_taxonomy($postid, null, null, [$tag2], []);
+        post::set_taxonomy($postid, [$tag2], []);
         $this->assertSame([$tag2], $loaded->get_tag_ids());
+    }
+
+    /**
+     * save() normalises the assessment mode: an interactive type with no (or an
+     * invalid) mode defaults to assessable, while a read-only type is forced to
+     * none regardless of what was submitted.
+     */
+    public function test_save_normalises_assessment_mode(): void {
+        $this->resetAfterTest();
+        $this->setUser($this->getDataGenerator()->create_user());
+        $context = \context_system::instance();
+
+        // Interactive type, no mode supplied -> defaults to assessable.
+        $caseid = post::save((object)[
+            'title'    => 'Case without a mode',
+            'status'   => post::STATUS_DRAFT,
+            'posttype' => post_type::PATIENTCASE,
+        ], $context);
+        $this->assertSame(post_type::MODE_ASSESSABLE, post::get($caseid)->assessmentmode);
+
+        // Interactive type, practice mode supplied -> kept.
+        $practiceid = post::save((object)[
+            'title'          => 'Practice case',
+            'status'         => post::STATUS_DRAFT,
+            'posttype'       => post_type::CASESTUDY,
+            'assessmentmode' => post_type::MODE_PRACTICE,
+        ], $context);
+        $this->assertSame(post_type::MODE_PRACTICE, post::get($practiceid)->assessmentmode);
+
+        // Read-only type -> forced to none even if a mode is submitted.
+        $blogid = post::save((object)[
+            'title'          => 'A blog post',
+            'status'         => post::STATUS_DRAFT,
+            'posttype'       => post_type::BLOG,
+            'assessmentmode' => post_type::MODE_ASSESSABLE,
+        ], $context);
+        $this->assertSame(post_type::MODE_NONE, post::get($blogid)->assessmentmode);
     }
 
     /**

@@ -156,7 +156,8 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
             'summary'        => 'Secret summary',
             'status'         => post::STATUS_SCHEDULED,
             'timescheduled'  => time() + DAYSECS,
-            'posttype'       => \local_imageblog\case_post::TYPE_CASE,
+            'posttype'       => \local_imageblog\post_type::PATIENTCASE,
+            'assessmentmode' => \local_imageblog\post_type::MODE_ASSESSABLE,
             'casedifficulty' => 3,
         ], $syscontext);
         $this->assertSame(post::STATUS_SCHEDULED, $DB->get_field('local_imageblog_posts', 'status', ['id' => $postid]));

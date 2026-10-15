@@ -25,14 +25,11 @@
 namespace local_imageblog;
 
 /**
- * Static CRUD operations for the four taxonomy tables used by the blog:
- * categories, subcategories, tags and difficulty levels.
+ * Static CRUD operations for the taxonomy tables used by the blog: tags and
+ * difficulty levels. (Post type and assessment mode replaced the former
+ * category/subcategory taxonomy.)
  */
 class taxonomy {
-    /** @var string Categories taxonomy. */
-    const TYPE_CATEGORY = 'category';
-    /** @var string Subcategories taxonomy. */
-    const TYPE_SUBCATEGORY = 'subcategory';
     /** @var string Tags taxonomy. */
     const TYPE_TAG = 'tag';
     /** @var string Difficulty levels taxonomy. */
@@ -49,8 +46,6 @@ class taxonomy {
      */
     public static function table(string $type): string {
         return match ($type) {
-            self::TYPE_CATEGORY    => 'local_imageblog_categories',
-            self::TYPE_SUBCATEGORY => 'local_imageblog_subcategories',
             self::TYPE_TAG         => 'local_imageblog_tags',
             self::TYPE_LEVEL       => 'local_imageblog_levels',
             default                => throw new \coding_exception("Unknown taxonomy type: {$type}"),
@@ -106,19 +101,6 @@ class taxonomy {
         }
 
         switch ($type) {
-            case self::TYPE_CATEGORY:
-                $record->sortorder = (int)($data->sortorder ?? 0);
-                if (empty($data->id)) {
-                    $record->timecreated = time();
-                }
-                break;
-            case self::TYPE_SUBCATEGORY:
-                $record->categoryid = (int)($data->categoryid ?? 0);
-                if (!$record->categoryid) {
-                    throw new \moodle_exception('error_subcategoryparent', 'local_imageblog');
-                }
-                $record->sortorder = (int)($data->sortorder ?? 0);
-                break;
             case self::TYPE_TAG:
                 $record->slug = self::slugify($data->slug ?? $record->name);
                 return self::save_tag_with_unique_slug($record, (int)($data->id ?? 0));
@@ -150,21 +132,6 @@ class taxonomy {
     public static function delete(string $type, int $id): void {
         global $DB;
         switch ($type) {
-            case self::TYPE_CATEGORY:
-                $subs = $DB->get_fieldset_select(
-                    'local_imageblog_subcategories',
-                    'id',
-                    'categoryid = :cid',
-                    ['cid' => $id]
-                );
-                foreach ($subs as $subid) {
-                    self::delete(self::TYPE_SUBCATEGORY, (int)$subid);
-                }
-                $DB->delete_records('local_imageblog_post_cats', ['categoryid' => $id]);
-                break;
-            case self::TYPE_SUBCATEGORY:
-                $DB->set_field('local_imageblog_post_cats', 'subcategoryid', null, ['subcategoryid' => $id]);
-                break;
             case self::TYPE_TAG:
                 $DB->delete_records('local_imageblog_post_tags', ['tagid' => $id]);
                 break;

@@ -18,7 +18,8 @@ Feature: Clinical case diagnosis, reveal and CPD
     # The author (admin) creates a published clinical case.
     Given I log in as "admin"
     And I visit "/local/imageblog/edit.php"
-    And I set the field "Post type" to "Clinical case"
+    And I set the field "Post type" to "Patient case"
+    And I set the field "Assessment mode" to "Assessable (CPD)"
     And I set the field "Title" to "Pigmented lesion case"
     And I set the field "Post content" to "Asymmetric pigmented lesion on the back."
     And I set the field "Outcome / final diagnosis" to "Melanoma, confirmed on histopathology."
@@ -55,7 +56,8 @@ Feature: Clinical case diagnosis, reveal and CPD
       | case_cpd_enabled | 0 | local_imageblog |
     And I log in as "admin"
     And I visit "/local/imageblog/edit.php"
-    And I set the field "Post type" to "Clinical case"
+    And I set the field "Post type" to "Patient case"
+    And I set the field "Assessment mode" to "Assessable (CPD)"
     And I set the field "Title" to "Switched-off case"
     And I set the field "Post content" to "A lesion to assess."
     And I set the field "Outcome / final diagnosis" to "Benign naevus."
