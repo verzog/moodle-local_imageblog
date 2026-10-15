@@ -5,10 +5,10 @@ featured image, rich body content, optional 360° equirectangular panoramas,
 tags and difficulty levels, and draft or scheduled publishing. Each post has a
 **post type** — Blog Post, News and Reference Article (read-only); Patient Case
 and Case Study (readers submit a diagnosis and the author reveals the outcome);
-and Tutorial, Critical Review and Design Evaluation (reader evaluation). The
-interactive types can run in an **assessment mode** — Assessable (CPD hours) or
-Practice (sample score). Readers can also opt in to periodic email digests of
-newly published posts.
+and Tutorial, Critical Review and Design Evaluation (readers appraise the post
+against a rubric). The interactive types run in an **assessment mode** —
+Assessable (CPD hours) or Practice (sample score). Readers can also opt in to
+periodic email digests of newly published posts.
 
 ## Installing via uploaded ZIP file ##
 
@@ -69,6 +69,26 @@ posts at `/local/imageblog/rss.php`.
 
 **Appearance** — _Custom CSS_ is injected into the blog listing and post pages
 only, so it can restyle the blog without affecting the rest of the Moodle site.
+
+**Evaluate posts** — _Show other readers' evaluations_ controls whether, after
+the result is revealed, each reader can see other readers' ratings and comments.
+
+## Evaluate posts and rubrics ##
+
+The evaluate post types — Tutorial, Critical Review and Design Evaluation — let
+readers appraise the post against a rubric and leave a comment. Define rubric
+templates under _Site administration > Plugins > Local plugins > Image blog >
+Manage evaluation rubrics_: each template has a rating scale (1 up to a chosen
+maximum) and a list of criteria.
+
+When authoring an evaluate post the author picks a rubric, then sets a
+reference ("model") rating for each criterion on the post page. Readers rate
+each criterion and comment; once the author reveals the result (or the reveal
+window elapses, as for cases) each reader sees a score that is **completeness ×
+agreement** — how much of the rubric they completed, multiplied by how closely
+their ratings matched the reference. Assessable posts record CPD hours for
+participation (using the same rates as cases); Practice posts show the score
+without recording CPD.
 
 ## Blog authors ##
 

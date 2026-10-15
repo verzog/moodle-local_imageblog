@@ -90,6 +90,19 @@ if ($hassiteconfig) {
     ));
 
     $settings->add(new admin_setting_heading(
+        'local_imageblog/evaluate_heading',
+        get_string('evaluate_heading', 'local_imageblog'),
+        get_string('evaluate_heading_desc', 'local_imageblog')
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'local_imageblog/evaluate_show_others',
+        get_string('evaluate_show_others', 'local_imageblog'),
+        get_string('evaluate_show_others_desc', 'local_imageblog'),
+        0
+    ));
+
+    $settings->add(new admin_setting_heading(
         'local_imageblog/subs_heading',
         get_string('subs_heading', 'local_imageblog'),
         get_string('subs_heading_desc', 'local_imageblog')
@@ -174,4 +187,11 @@ if ($hassiteconfig) {
             'local/imageblog:managetaxonomy'
         ));
     }
+
+    $ADMIN->add('local_imageblog_cat', new admin_externalpage(
+        'local_imageblog_manage_rubrics',
+        get_string('manage_rubrics', 'local_imageblog'),
+        new moodle_url('/local/imageblog/rubrics.php'),
+        'local/imageblog:managetaxonomy'
+    ));
 }

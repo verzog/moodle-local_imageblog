@@ -74,6 +74,8 @@ class post {
     public ?int $casebestdiagnosisid = null;
     /** @var int */
     public int $casedifficulty = 1;
+    /** @var int|null Chosen rubric template id for evaluate posts, or null. */
+    public ?int $rubricid = null;
 
     /** @var string Draft post status. */
     const STATUS_DRAFT     = 'draft';
@@ -360,11 +362,20 @@ class post {
         } else {
             $record->assessmentmode = post_type::MODE_NONE;
         }
-        if (post_type::is_diagnose($record->posttype)) {
+        // Difficulty (CPD scaling) and the optional author-set auto-reveal time
+        // apply to every interactive type — diagnose and evaluate alike. A null
+        // caserevealat means the admin default window (from publish) applies,
+        // enforced on cron.
+        if (post_type::is_interactive($record->posttype)) {
             $record->casedifficulty = max(1, min(5, (int)($data->casedifficulty ?? 1)));
-            // An optional author-set auto-reveal time; null means the admin
-            // default window (from publish) applies, enforced on cron.
             $record->caserevealat = !empty($data->caserevealat) ? (int)$data->caserevealat : null;
+        }
+        // The chosen rubric template belongs to evaluate posts only; cleared
+        // for any other type.
+        $record->rubricid = null;
+        if (post_type::is_evaluate($record->posttype)) {
+            $rid = (int)($data->rubricid ?? 0);
+            $record->rubricid = ($rid > 0 && rubric::template_exists($rid)) ? $rid : null;
         }
 
         $becamepublished = false;
@@ -806,6 +817,7 @@ class post {
         $post->caserevealat      = isset($record->caserevealat) ? (int)$record->caserevealat : null;
         $post->casebestdiagnosisid = isset($record->casebestdiagnosisid) ? (int)$record->casebestdiagnosisid : null;
         $post->casedifficulty    = (int)($record->casedifficulty ?? 1);
+        $post->rubricid          = isset($record->rubricid) ? (int)$record->rubricid : null;
         return $post;
     }
 }

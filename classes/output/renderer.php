@@ -26,7 +26,9 @@ namespace local_imageblog\output;
 
 use local_imageblog\post;
 use local_imageblog\case_post;
+use local_imageblog\evaluation;
 use local_imageblog\post_type;
+use local_imageblog\rubric;
 use moodle_url;
 use plugin_renderer_base;
 
@@ -151,6 +153,10 @@ class renderer extends plugin_renderer_base {
             'iscase'        => post_type::is_diagnose($post->posttype),
             'casepanel'     => post_type::is_diagnose($post->posttype)
                 ? $this->build_case_context($post, (int)$USER->id, $canmanage || ($isowner && $canauthor))
+                : null,
+            'iseval'        => post_type::is_evaluate($post->posttype),
+            'evalpanel'     => post_type::is_evaluate($post->posttype)
+                ? $this->build_eval_context($post, (int)$USER->id, $canmanage || ($isowner && $canauthor))
                 : null,
         ];
 
@@ -332,6 +338,107 @@ class renderer extends plugin_renderer_base {
             ]))->out(false),
             'cpdtotal'         => $totalhours > 0 ? number_format($totalhours, 2) : '',
             'hascpd'           => $totalhours > 0,
+        ];
+    }
+
+    /**
+     * Build the Mustache context for the evaluate panel rendered under a post.
+     *
+     * @param post $post
+     * @param int  $userid   Viewer id
+     * @param bool $isauthor True when the viewer can manage the post
+     * @return array
+     */
+    private function build_eval_context(post $post, int $userid, bool $isauthor): array {
+        $syscontext = \context_system::instance();
+        $revealed = !empty($post->caserevealed);
+        $criteria = evaluation::get_criteria($post);
+        $max = evaluation::maxscore($post);
+        $refs = evaluation::get_reference($post->id);
+        $usereval = evaluation::get_user_evaluation($post->id, $userid);
+        $userscores = $usereval->scores ?? [];
+        $agg = $revealed ? evaluation::aggregate($post->id) : ['count' => 0, 'means' => []];
+        $scalelist = range(1, $max);
+
+        $rows = [];
+        foreach ($criteria as $c) {
+            $cid = (int)$c->id;
+            $refsel = $refs[$cid] ?? 0;
+            $usersel = $userscores[$cid] ?? 0;
+            $rows[] = [
+                'id'            => $cid,
+                'name'          => format_string($c->name),
+                'description'   => $c->description
+                    ? format_text($c->description, FORMAT_PLAIN, ['context' => $syscontext])
+                    : '',
+                'hasdescription' => !empty($c->description),
+                'refoptions'    => array_map(fn($v) => ['value' => $v, 'selected' => $v === $refsel], $scalelist),
+                'useroptions'   => array_map(fn($v) => ['value' => $v, 'selected' => $v === $usersel], $scalelist),
+                'refscore'      => $refsel ?: '-',
+                'userscore'     => $usersel ?: '-',
+                'meanscore'     => array_key_exists($cid, $agg['means']) ? $agg['means'][$cid] : '-',
+            ];
+        }
+
+        $score = $revealed ? evaluation::score_for($post, $userid) : null;
+        $ispractice = $post->assessmentmode === post_type::MODE_PRACTICE;
+        $totalhours = evaluation::get_user_total_hours($post->id, $userid);
+
+        $showothers = $revealed && (bool)get_config('local_imageblog', 'evaluate_show_others');
+        $others = [];
+        if ($showothers) {
+            foreach (evaluation::get_evaluations($post->id) as $e) {
+                $escores = [];
+                foreach ($criteria as $c) {
+                    $cid = (int)$c->id;
+                    $escores[] = [
+                        'name'  => format_string($c->name),
+                        'score' => array_key_exists($cid, $e->scores) ? $e->scores[$cid] : '-',
+                    ];
+                }
+                $others[] = [
+                    'username'   => fullname($e),
+                    'hascomment' => trim((string)$e->commenttext) !== '',
+                    'comment'    => format_text((string)$e->commenttext, FORMAT_PLAIN, ['context' => $syscontext]),
+                    'scores'     => $escores,
+                    'time'       => userdate((int)$e->timecreated, get_string('strftimedatetimeshort', 'langconfig')),
+                ];
+            }
+        }
+
+        return [
+            'postid'            => $post->id,
+            'revealed'          => $revealed,
+            'isauthor'          => $isauthor,
+            'maxscore'          => $max,
+            'criteria'          => $rows,
+            'hasrubric'         => !empty($rows),
+            'norubric'          => empty($rows),
+            'cansetreference'   => $isauthor && !$revealed && !empty($rows),
+            'referencecomplete' => evaluation::has_full_reference($post),
+            'cansubmit'         => !$revealed && !$isauthor && !empty($rows)
+                && has_capability('local/imageblog:submitevaluation', $syscontext),
+            'hasusereval'       => !empty($usereval),
+            'usercomment'       => $usereval ? $usereval->commenttext : '',
+            'showresults'       => $revealed,
+            'hasuserscore'      => $score !== null,
+            'scorepercent'      => $score !== null ? $score['percent'] : 0,
+            'completenesspct'   => $score !== null ? (int)round($score['completeness'] * 100) : 0,
+            'agreementpct'      => $score !== null ? (int)round($score['agreement'] * 100) : 0,
+            'ispractice'        => $ispractice,
+            'cpdtotal'          => $totalhours > 0 ? number_format($totalhours, 2) : '',
+            'hascpd'            => $totalhours > 0,
+            'aggregatecount'    => (int)$agg['count'],
+            'showothers'        => $showothers,
+            'others'            => $others,
+            'hasothers'         => !empty($others),
+            'sesskey'           => sesskey(),
+            'actionurl'         => (new moodle_url('/local/imageblog/eval_action.php'))->out(false),
+            'revealurl'         => (new moodle_url('/local/imageblog/eval_action.php', [
+                'postid'  => $post->id,
+                'action'  => 'reveal',
+                'sesskey' => sesskey(),
+            ]))->out(false),
         ];
     }
 
@@ -677,5 +784,77 @@ class renderer extends plugin_renderer_base {
             ];
         }
         return $tabs;
+    }
+
+    /**
+     * Render the rubric-template admin index.
+     *
+     * @param \stdClass[] $templates
+     * @return string
+     */
+    public function render_rubric_index(array $templates): string {
+        global $DB;
+        $rows = [];
+        foreach ($templates as $t) {
+            $rows[] = [
+                'name'        => format_string($t->name),
+                'maxscore'    => (int)$t->maxscore,
+                'critcount'   => (int)$DB->count_records('local_imageblog_rubric_crit', ['rubricid' => $t->id]),
+                'criteriaurl' => (new moodle_url(
+                    '/local/imageblog/rubrics.php',
+                    ['action' => 'criteria', 'rubricid' => (int)$t->id]
+                ))->out(false),
+                'editurl'     => (new moodle_url(
+                    '/local/imageblog/rubrics.php',
+                    ['action' => 'edit', 'id' => (int)$t->id]
+                ))->out(false),
+                'deleteurl'   => (new moodle_url(
+                    '/local/imageblog/rubrics.php',
+                    ['action' => 'delete', 'id' => (int)$t->id, 'sesskey' => sesskey()]
+                ))->out(false),
+            ];
+        }
+        return $this->render_from_template('local_imageblog/rubric_index', [
+            'rows'    => $rows,
+            'hasrows' => !empty($rows),
+            'addurl'  => (new moodle_url('/local/imageblog/rubrics.php', ['action' => 'add']))->out(false),
+        ]);
+    }
+
+    /**
+     * Render the criteria list for one rubric template.
+     *
+     * @param \stdClass   $template
+     * @param \stdClass[] $criteria
+     * @return string
+     */
+    public function render_rubric_criteria(\stdClass $template, array $criteria): string {
+        $syscontext = \context_system::instance();
+        $rows = [];
+        foreach ($criteria as $c) {
+            $rows[] = [
+                'name'        => format_string($c->name),
+                'description' => $c->description
+                    ? format_text($c->description, FORMAT_PLAIN, ['context' => $syscontext])
+                    : '',
+                'sortorder'   => (int)$c->sortorder,
+                'editurl'     => (new moodle_url('/local/imageblog/rubrics.php', [
+                    'action' => 'editcrit', 'id' => (int)$c->id, 'rubricid' => (int)$template->id,
+                ]))->out(false),
+                'deleteurl'   => (new moodle_url('/local/imageblog/rubrics.php', [
+                    'action' => 'deletecrit', 'id' => (int)$c->id,
+                    'rubricid' => (int)$template->id, 'sesskey' => sesskey(),
+                ]))->out(false),
+            ];
+        }
+        return $this->render_from_template('local_imageblog/rubric_criteria', [
+            'name'    => format_string($template->name),
+            'rows'    => $rows,
+            'hasrows' => !empty($rows),
+            'addurl'  => (new moodle_url('/local/imageblog/rubrics.php', [
+                'action' => 'addcrit', 'rubricid' => (int)$template->id,
+            ]))->out(false),
+            'backurl' => (new moodle_url('/local/imageblog/rubrics.php'))->out(false),
+        ]);
     }
 }

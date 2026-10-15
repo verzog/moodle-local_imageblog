@@ -87,6 +87,19 @@ $capabilities = [
         ],
     ],
 
+    'local/imageblog:submitevaluation' => [
+        'riskbitmask'  => RISK_SPAM,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'user'           => CAP_ALLOW,
+            'student'        => CAP_ALLOW,
+            'teacher'        => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager'        => CAP_ALLOW,
+        ],
+    ],
+
     'local/imageblog:submitdiagnosis' => [
         'riskbitmask'  => RISK_SPAM,
         'captype'      => 'write',

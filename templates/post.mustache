@@ -21,6 +21,8 @@
     * editurl       string
     * iscase        bool
     * casepanel     object — see case_panel.mustache
+    * iseval        bool
+    * evalpanel     object — see eval_panel.mustache
 
     Example context (json):
     {
@@ -40,7 +42,9 @@
         "canedit": false,
         "editurl": "",
         "iscase": false,
-        "casepanel": null
+        "casepanel": null,
+        "iseval": false,
+        "evalpanel": null
     }
 }}
 <div class="local-imageblog-post">
@@ -91,4 +95,10 @@
             {{> local_imageblog/case_panel }}
         {{/casepanel}}
     {{/iscase}}
+
+    {{#iseval}}
+        {{#evalpanel}}
+            {{> local_imageblog/eval_panel }}
+        {{/evalpanel}}
+    {{/iseval}}
 </div>
