@@ -4,6 +4,32 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-10-15
+
+### Added
+- The **evaluate** interaction for the Tutorial, Critical Review and Design
+  Evaluation post types. Readers rate the post against an admin-defined rubric
+  and leave a comment; the author sets a reference ("model") rating per
+  criterion. On reveal each reader is scored **completeness × agreement** — the
+  share of the rubric they completed times how closely their ratings matched
+  the reference.
+- Admin-managed **rubric templates** (_Manage evaluation rubrics_): each has a
+  1..N rating scale and a list of criteria. Authors pick a template per post.
+- Assessable evaluate posts record participation CPD (same rates as cases);
+  Practice posts show the score without recording CPD. Evaluate posts reuse the
+  author-set / default reveal window, and the scheduled task now auto-reveals
+  them once the author's reference ratings exist.
+- A _Show other readers' evaluations_ setting controls post-reveal visibility of
+  other readers' ratings and comments.
+- New capability `local/imageblog:submitevaluation`; Privacy API coverage for
+  reader evaluations and their per-criterion scores.
+
+### Database
+- Adds `local_imageblog_rubrics`, `local_imageblog_rubric_crit`,
+  `local_imageblog_eval_refs`, `local_imageblog_evals` and
+  `local_imageblog_eval_scores`, and a `rubricid` column on
+  `local_imageblog_posts` (v2026101500).
+
 ## [0.6.0] - 2026-10-14
 
 ### Changed

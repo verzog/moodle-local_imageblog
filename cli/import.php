@@ -19,13 +19,15 @@
  *
  * CSV columns (header row required):
  *   title, summary, body, status, timepublished, author_email,
- *   post_type, assessment_mode, tags, levels, featured_image, panorama_image
+ *   post_type, assessment_mode, rubric, tags, levels, featured_image, panorama_image
  *
  * - status:          draft|published|archived (default: published)
  * - timepublished:   ISO-8601 or unix timestamp (optional)
  * - post_type:       one of the post_type slugs (default: blog)
  * - assessment_mode: none|practice|assessable; applies to interactive types
  *                    only, forced to none otherwise (default: none)
+ * - rubric:          evaluate posts only — the name of an existing rubric
+ *                    template; unmatched names import the post without a rubric
  * - tags / levels:   pipe-separated names (e.g. "Melanoma|Dermoscopy")
  * - featured_image / panorama_image: filename relative to --imagedir
  *
@@ -155,6 +157,22 @@ $resolvelevel = function (string $name) use (&$levelcache): ?int {
         : $DB->insert_record('local_imageblog_levels', (object)[
             'name' => $name, 'colourkey' => 'amber', 'sortorder' => 0,
         ]));
+};
+
+$rubriccache = [];
+$resolverubric = function (string $name) use (&$rubriccache): ?int {
+    $name = trim($name);
+    if ($name === '') {
+        return null;
+    }
+    if (array_key_exists($name, $rubriccache)) {
+        return $rubriccache[$name];
+    }
+    global $DB;
+    // Resolve to an existing rubric template only. A rubric needs admin-defined
+    // criteria to be usable, so importing must not fabricate an empty one.
+    $row = $DB->get_record('local_imageblog_rubrics', ['name' => $name], 'id', IGNORE_MULTIPLE);
+    return $rubriccache[$name] = $row ? (int)$row->id : null;
 };
 
 $parsetime = function (string $value): ?int {
@@ -287,6 +305,13 @@ while (($cols = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
     } else {
         $assessmentmode = \local_imageblog\post_type::MODE_NONE;
     }
+    // Evaluate posts carry a rubric, referenced by template name in the CSV.
+    $rubricid = \local_imageblog\post_type::is_evaluate($posttype)
+        ? $resolverubric((string)($data['rubric'] ?? ''))
+        : null;
+    if (\local_imageblog\post_type::is_evaluate($posttype) && !$rubricid) {
+        cli_problem("row $row: evaluate post '$title' has no matching rubric; imported without one.");
+    }
 
     $tagids = [];
     foreach (preg_split('/\|/', (string)($data['tags'] ?? '')) as $t) {
@@ -316,6 +341,7 @@ while (($cols = fgetcsv($handle, null, ',', '"', '\\')) !== false) {
             'lazyimages'     => 1,
             'posttype'       => $posttype,
             'assessmentmode' => $assessmentmode,
+            'rubricid'       => $rubricid,
         ],
         'tagids'        => $tagids,
         'levelids'      => $levelids,

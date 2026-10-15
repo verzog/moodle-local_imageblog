@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/imageblog/db" VERSION="20261014" COMMENT="XMLDB file for local_imageblog">
+<XMLDB PATH="local/imageblog/db" VERSION="20261015" COMMENT="XMLDB file for local_imageblog">
   <TABLES>
 
     <TABLE NAME="local_imageblog_posts" COMMENT="Blog posts">
@@ -27,6 +27,7 @@
         <FIELD NAME="caserevealat"    TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp for scheduled auto-reveal; null = none set"/>
         <FIELD NAME="casebestdiagnosisid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Optional id of best diagnosis chosen by author"/>
         <FIELD NAME="casedifficulty"  TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Author-rated difficulty 1-5 used for CPD scaling"/>
+        <FIELD NAME="rubricid"        TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Chosen rubric template for evaluate posts; null otherwise"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -168,6 +169,87 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="idx_userid" UNIQUE="true" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_imageblog_rubrics" COMMENT="Admin-defined evaluation rubric templates">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="description"  TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="maxscore"     TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="5" SEQUENCE="false" COMMENT="Top of the 1..maxscore rating scale"/>
+        <FIELD NAME="sortorder"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_imageblog_rubric_crit" COMMENT="Criteria belonging to a rubric template">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="rubricid"    TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="name"        TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="sortorder"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_rubric" TYPE="foreign" FIELDS="rubricid" REFTABLE="local_imageblog_rubrics" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_rubricid" UNIQUE="false" FIELDS="rubricid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_imageblog_eval_refs" COMMENT="Author reference (model) score per criterion for an evaluate post">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="postid"      TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="criterionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="refscore"    TYPE="int" LENGTH="4"  NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_post" TYPE="foreign" FIELDS="postid" REFTABLE="local_imageblog_posts" REFFIELDS="id"/>
+        <KEY NAME="fk_crit" TYPE="foreign" FIELDS="criterionid" REFTABLE="local_imageblog_rubric_crit" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_post_crit" UNIQUE="true" FIELDS="postid, criterionid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_imageblog_evals" COMMENT="Reader evaluation submission on an evaluate post">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="postid"       TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="commenttext"  TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_post" TYPE="foreign" FIELDS="postid" REFTABLE="local_imageblog_posts" REFFIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_post_user" UNIQUE="true" FIELDS="postid, userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_imageblog_eval_scores" COMMENT="Reader score per criterion within an evaluation">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="evalid"      TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="criterionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="score"       TYPE="int" LENGTH="4"  NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_eval" TYPE="foreign" FIELDS="evalid" REFTABLE="local_imageblog_evals" REFFIELDS="id"/>
+        <KEY NAME="fk_crit" TYPE="foreign" FIELDS="criterionid" REFTABLE="local_imageblog_rubric_crit" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_eval_crit" UNIQUE="true" FIELDS="evalid, criterionid"/>
       </INDEXES>
     </TABLE>
 

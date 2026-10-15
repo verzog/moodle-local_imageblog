@@ -98,6 +98,33 @@ class provider implements
         );
 
         $collection->add_database_table(
+            'local_imageblog_evals',
+            [
+                'userid'       => 'privacy:metadata:evals:userid',
+                'commenttext'  => 'privacy:metadata:evals:comment',
+                'timecreated'  => 'privacy:metadata:evals:timecreated',
+                'timemodified' => 'privacy:metadata:evals:timemodified',
+            ],
+            'privacy:metadata:evals'
+        );
+
+        $collection->add_database_table(
+            'local_imageblog_eval_scores',
+            [
+                'score' => 'privacy:metadata:evalscores:score',
+            ],
+            'privacy:metadata:evalscores'
+        );
+
+        $collection->add_database_table(
+            'local_imageblog_eval_refs',
+            [
+                'refscore' => 'privacy:metadata:evalrefs:refscore',
+            ],
+            'privacy:metadata:evalrefs'
+        );
+
+        $collection->add_database_table(
             'local_imageblog_subs',
             [
                 'userid'       => 'privacy:metadata:subs:userid',
@@ -133,11 +160,12 @@ class provider implements
                         OR EXISTS (SELECT 1 FROM {local_imageblog_case_qs}
                                     WHERE userid = :u3 OR answeredby = :u4)
                         OR EXISTS (SELECT 1 FROM {local_imageblog_case_cpd} WHERE userid = :u5)
+                        OR EXISTS (SELECT 1 FROM {local_imageblog_evals} WHERE userid = :u7)
                         OR EXISTS (SELECT 1 FROM {local_imageblog_subs} WHERE userid = :u6))";
         $contextlist->add_from_sql($sql, [
             'contextlevel' => CONTEXT_SYSTEM,
             'u1' => $userid, 'u2' => $userid, 'u3' => $userid,
-            'u4' => $userid, 'u5' => $userid, 'u6' => $userid,
+            'u4' => $userid, 'u5' => $userid, 'u6' => $userid, 'u7' => $userid,
         ]);
 
         return $contextlist;
@@ -159,6 +187,7 @@ class provider implements
         $sql = "SELECT answeredby FROM {local_imageblog_case_qs} WHERE answeredby IS NOT NULL";
         $userlist->add_from_sql('answeredby', $sql, []);
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_imageblog_case_cpd}", []);
+        $userlist->add_from_sql('userid', "SELECT userid FROM {local_imageblog_evals}", []);
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_imageblog_subs}", []);
     }
 
@@ -190,6 +219,11 @@ class provider implements
                         ? \core_privacy\local\request\transform::datetime($record->timepublished)
                         : null,
                 ];
+                // The author's rubric reference ratings for an evaluate post.
+                $refs = $DB->get_records('local_imageblog_eval_refs', ['postid' => $record->id], '', 'criterionid, refscore');
+                if ($refs) {
+                    $data->rubricreferences = array_map(fn($r) => (int)$r->refscore, array_values($refs));
+                }
                 $path = [$pluginname, 'post-' . $record->id];
                 $w = writer::with_context($context);
                 $w->export_data($path, $data);
@@ -244,6 +278,20 @@ class provider implements
                     ->export_data([$pluginname, 'case-cpd-' . $row->id], $data);
             }
 
+            // Evaluations submitted by the user (with per-criterion scores).
+            $evals = $DB->get_records('local_imageblog_evals', ['userid' => $user->id]);
+            foreach ($evals as $e) {
+                $scores = $DB->get_records('local_imageblog_eval_scores', ['evalid' => $e->id], '', 'criterionid, score');
+                $data = (object)[
+                    'comment'      => $e->commenttext,
+                    'scores'       => array_map(fn($s) => (int)$s->score, array_values($scores)),
+                    'timecreated'  => \core_privacy\local\request\transform::datetime($e->timecreated),
+                    'timemodified' => \core_privacy\local\request\transform::datetime($e->timemodified),
+                ];
+                writer::with_context($context)
+                    ->export_data([$pluginname, 'evaluation-' . $e->id], $data);
+            }
+
             // Subscription preferences.
             $sub = $DB->get_record('local_imageblog_subs', ['userid' => $user->id]);
             if ($sub) {
@@ -272,10 +320,14 @@ class provider implements
         $postids = $DB->get_fieldset_select('local_imageblog_posts', 'id', '');
         self::delete_posts($postids, $context);
 
-        // The case + subscription tables only contain user data — wipe them entirely.
+        // The case + evaluation + subscription tables only contain user data —
+        // wipe them entirely. (Author reference ratings are cleared with the
+        // posts by delete_posts() above.)
         $DB->delete_records('local_imageblog_case_diags', null);
         $DB->delete_records('local_imageblog_case_qs', null);
         $DB->delete_records('local_imageblog_case_cpd', null);
+        $DB->delete_records('local_imageblog_eval_scores', null);
+        $DB->delete_records('local_imageblog_evals', null);
         $DB->delete_records('local_imageblog_subs', null);
     }
 
@@ -348,6 +400,14 @@ class provider implements
         $DB->delete_records_select('local_imageblog_case_diags', "userid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_case_cpd', "userid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_subs', "userid $insql", $inparams);
+        // Reader evaluations: drop their per-criterion scores first, then the
+        // evaluation headers belonging to the listed users.
+        $evalids = $DB->get_fieldset_select('local_imageblog_evals', 'id', "userid $insql", $inparams);
+        if ($evalids) {
+            [$esql, $eparams] = $DB->get_in_or_equal($evalids, SQL_PARAMS_NAMED, 'e');
+            $DB->delete_records_select('local_imageblog_eval_scores', "evalid $esql", $eparams);
+        }
+        $DB->delete_records_select('local_imageblog_evals', "userid $insql", $inparams);
         // Drop rows where the user asked the question; for rows they only
         // answered, keep the question intact and null out the answer fields.
         $DB->delete_records_select('local_imageblog_case_qs', "userid $insql", $inparams);
@@ -385,7 +445,8 @@ class provider implements
         foreach ($postids as $postid) {
             $hasothers = $DB->record_exists('local_imageblog_case_diags', ['postid' => $postid])
                 || $DB->record_exists('local_imageblog_case_qs', ['postid' => $postid])
-                || $DB->record_exists('local_imageblog_case_cpd', ['postid' => $postid]);
+                || $DB->record_exists('local_imageblog_case_cpd', ['postid' => $postid])
+                || $DB->record_exists('local_imageblog_evals', ['postid' => $postid]);
             if ($hasothers) {
                 self::anonymise_post((int)$postid, $context);
             } else {
@@ -408,6 +469,9 @@ class provider implements
         foreach (['featured_image', 'post_images', 'panorama', 'case_outcome'] as $area) {
             $fs->delete_area_files($context->id, 'local_imageblog', $area, $postid);
         }
+        // The author's rubric reference ratings are their content too — drop
+        // them when scrubbing the post.
+        $DB->delete_records('local_imageblog_eval_refs', ['postid' => $postid]);
         // Archive the scrubbed shell and clear any pending schedule. Otherwise a
         // draft/scheduled post retained for its participants would still be
         // published by the scheduled-posts task after erasure — notifying
@@ -450,6 +514,16 @@ class provider implements
         $DB->delete_records_select('local_imageblog_case_diags', "postid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_case_qs', "postid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_case_cpd', "postid $insql", $inparams);
+
+        // Cascade-delete evaluation rows: per-criterion scores (via the eval
+        // headers), the headers, then the author reference ratings.
+        $evalids = $DB->get_fieldset_select('local_imageblog_evals', 'id', "postid $insql", $inparams);
+        if ($evalids) {
+            [$esql, $eparams] = $DB->get_in_or_equal($evalids, SQL_PARAMS_NAMED, 'e');
+            $DB->delete_records_select('local_imageblog_eval_scores', "evalid $esql", $eparams);
+        }
+        $DB->delete_records_select('local_imageblog_evals', "postid $insql", $inparams);
+        $DB->delete_records_select('local_imageblog_eval_refs', "postid $insql", $inparams);
 
         $DB->delete_records_select('local_imageblog_post_tags', "postid $insql", $inparams);
         $DB->delete_records_select('local_imageblog_post_levels', "postid $insql", $inparams);

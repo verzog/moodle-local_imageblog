@@ -259,14 +259,15 @@ class case_post {
     }
 
     /**
-     * Insert or refresh a CPD row with a pre-computed hours value.
+     * Insert or refresh a CPD row with a pre-computed hours value. Public so the
+     * evaluate interaction can write participation hours through the same path.
      *
      * @param int    $postid
      * @param int    $userid
      * @param string $reason
      * @param float  $hours
      */
-    private static function upsert_cpd_row(int $postid, int $userid, string $reason, float $hours): void {
+    public static function upsert_cpd_row(int $postid, int $userid, string $reason, float $hours): void {
         global $DB;
         $existing = $DB->get_record(
             'local_imageblog_case_cpd',

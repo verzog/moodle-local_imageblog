@@ -26,10 +26,14 @@ namespace local_imageblog\task;
 
 use core\task\adhoc_task;
 use local_imageblog\case_post;
+use local_imageblog\evaluation;
+use local_imageblog\post;
+use local_imageblog\post_type;
 
 /**
- * Awards participation CPD to everyone who diagnosed a case, off the request
- * thread so the reveal action returns promptly even for popular cases.
+ * Awards participation CPD to everyone who took part in a revealed interactive
+ * post — diagnosing a case or evaluating a post — off the request thread so the
+ * reveal action returns promptly even for popular posts.
  */
 class award_case_cpd extends adhoc_task {
     /**
@@ -49,6 +53,15 @@ class award_case_cpd extends adhoc_task {
         if (empty($data->postid)) {
             return;
         }
-        case_post::award_cpd_for_case((int)$data->postid);
+        $postid = (int)$data->postid;
+        $p = post::get($postid);
+        if (!$p) {
+            return;
+        }
+        if (post_type::is_evaluate($p->posttype)) {
+            evaluation::award_cpd_for_eval($postid);
+        } else {
+            case_post::award_cpd_for_case($postid);
+        }
     }
 }

@@ -27,6 +27,7 @@ namespace local_imageblog\form;
 use moodleform;
 use local_imageblog\post;
 use local_imageblog\post_type;
+use local_imageblog\rubric;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -203,16 +204,39 @@ class post_form extends moodleform {
         );
         $mform->addHelpButton('caserevealat', 'caserevealat', 'local_imageblog');
 
-        // The case fields (difficulty, outcome, reveal time) belong to the
-        // diagnose types only. Because Moodle ORs repeated hideIf() rules
-        // (hidden when ANY matches), hide them on an exact match of every
-        // non-diagnose type so they show only for Patient Case and Case Study.
-        $nondiagnosetypes = array_diff(post_type::all(), post_type::diagnose_types());
-        foreach (['casedifficulty', 'caseoutcome_editor', 'caserevealat'] as $casefield) {
-            foreach ($nondiagnosetypes as $ndtype) {
-                $mform->hideIf($casefield, 'posttype', 'eq', $ndtype);
+        // Rubric template chooser for the evaluate types. The author sets the
+        // reference ("model") ratings for its criteria on the post page after
+        // saving. Hidden when no templates exist (the element is still added so
+        // hideIf has a target, but with only the placeholder option).
+        $rubricoptions = [0 => get_string('rubric_choose', 'local_imageblog')] + rubric::template_menu();
+        $mform->addElement(
+            'select',
+            'rubricid',
+            get_string('rubric', 'local_imageblog'),
+            $rubricoptions
+        );
+        $mform->setType('rubricid', PARAM_INT);
+        $mform->setDefault('rubricid', 0);
+        $mform->addHelpButton('rubricid', 'rubric', 'local_imageblog');
+
+        // Moodle ORs repeated hideIf() rules (an element is hidden when ANY
+        // rule matches), so each field is hidden on an exact match of every
+        // type it does NOT belong to. Difficulty and reveal time belong to
+        // every interactive type (diagnose + evaluate); the outcome editor to
+        // the diagnose types only; the rubric chooser to the evaluate types only.
+        $all = post_type::all();
+        $noninteractive = array_diff($all, post_type::diagnose_types(), post_type::evaluate_types());
+        $nondiagnose = array_diff($all, post_type::diagnose_types());
+        $nonevaluate = array_diff($all, post_type::evaluate_types());
+        $hide = function (string $element, array $types) use ($mform) {
+            foreach ($types as $type) {
+                $mform->hideIf($element, 'posttype', 'eq', $type);
             }
-        }
+        };
+        $hide('casedifficulty', $noninteractive);
+        $hide('caserevealat', $noninteractive);
+        $hide('caseoutcome_editor', $nondiagnose);
+        $hide('rubricid', $nonevaluate);
 
         $statusoptions = [
             post::STATUS_DRAFT     => get_string('status_draft', 'local_imageblog'),
@@ -257,6 +281,7 @@ class post_form extends moodleform {
             $defaults->caseoutcome       = $post->caseoutcome;
             $defaults->caseoutcomeformat = $post->caseoutcomeformat;
             $defaults->caserevealat      = $post->caserevealat ?? 0;
+            $defaults->rubricid          = $post->rubricid ?? 0;
             $defaults->haspanorama       = $post->get_panorama_url() ? 1 : 0;
             $defaults->timescheduled     = $post->timescheduled ?? 0;
         } else {
@@ -269,6 +294,7 @@ class post_form extends moodleform {
             $defaults->caseoutcome       = '';
             $defaults->caseoutcomeformat = FORMAT_HTML;
             $defaults->caserevealat      = 0;
+            $defaults->rubricid          = 0;
             $defaults->haspanorama       = 0;
             // Default the schedule picker to 09:00 tomorrow using calendar
             // arithmetic in the user's timezone — adding DAYSECS would land an
@@ -358,6 +384,18 @@ class post_form extends moodleform {
             && (empty($data['timescheduled']) || (int)$data['timescheduled'] <= time())
         ) {
             $errors['timescheduled'] = get_string('error_schedulepast', 'local_imageblog');
+        }
+
+        // An evaluate post needs a rubric — and that rubric must have at least
+        // one criterion, or its panel would have nothing to rate and automatic
+        // reveal could never find a complete reference.
+        if (!empty($data['posttype']) && post_type::is_evaluate((string)$data['posttype'])) {
+            $rubricid = (int)($data['rubricid'] ?? 0);
+            if (!$rubricid || !rubric::template_exists($rubricid)) {
+                $errors['rubricid'] = get_string('error_rubricrequired', 'local_imageblog');
+            } else if (!rubric::get_criteria($rubricid)) {
+                $errors['rubricid'] = get_string('error_rubricnocriteria', 'local_imageblog');
+            }
         }
 
         return $errors;

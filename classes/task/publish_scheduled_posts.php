@@ -27,6 +27,7 @@ namespace local_imageblog\task;
 
 use core\task\scheduled_task;
 use local_imageblog\case_post;
+use local_imageblog\evaluation;
 use local_imageblog\post;
 use local_imageblog\post_type;
 
@@ -77,31 +78,32 @@ class publish_scheduled_posts extends scheduled_task {
     }
 
     /**
-     * Reveal any published, not-yet-revealed diagnose-type case whose reveal
-     * time has passed. The reveal time is the author-set caserevealat when
-     * present, otherwise the publish date plus the site default reveal window
+     * Reveal any published, not-yet-revealed interactive post whose reveal time
+     * has passed. The reveal time is the author-set caserevealat when present,
+     * otherwise the publish date plus the site default reveal window
      * (default_reveal_days); a window of zero disables the automatic default.
+     *
+     * A post is only revealed once it is ready: a diagnose case needs its
+     * outcome written, and an evaluate post needs the author's reference
+     * ratings set. Otherwise the sweep leaves it and retries next run.
      *
      * @param int $now
      */
     private function reveal_due_cases(int $now): void {
         global $DB;
 
-        [$typesql, $typeparams] = $DB->get_in_or_equal(
-            post_type::diagnose_types(),
-            SQL_PARAMS_NAMED,
-            'pt'
-        );
+        $types = array_merge(post_type::diagnose_types(), post_type::evaluate_types());
+        [$typesql, $typeparams] = $DB->get_in_or_equal($types, SQL_PARAMS_NAMED, 'pt');
         $params = $typeparams + ['status' => post::STATUS_PUBLISHED];
         $candidates = $DB->get_records_select(
             'local_imageblog_posts',
             "posttype $typesql AND status = :status AND (caserevealed = 0 OR caserevealed IS NULL)",
             $params,
             '',
-            'id, timepublished, caserevealat, caseoutcome'
+            'id, posttype, timepublished, caserevealat, caseoutcome'
         );
         if (!$candidates) {
-            mtrace('local_imageblog: no case outcomes due to reveal.');
+            mtrace('local_imageblog: no interactive posts due to reveal.');
             return;
         }
 
@@ -116,12 +118,22 @@ class publish_scheduled_posts extends scheduled_task {
             } else if ($window > 0 && !empty($c->timepublished)) {
                 $revealat = (int)$c->timepublished + $window;
             }
-            if ($revealat !== null && $revealat <= $now) {
+            if ($revealat === null || $revealat > $now) {
+                continue;
+            }
+            if (post_type::is_evaluate($c->posttype)) {
+                // An evaluate post needs the author's reference ratings before
+                // a reveal can be scored; skip (and retry) until they exist.
+                $post = post::get((int)$c->id);
+                if (!$post || !evaluation::has_full_reference($post)) {
+                    continue;
+                }
+                evaluation::reveal((int)$c->id);
+                $revealed++;
+            } else {
                 // Never auto-reveal a case whose outcome has not been written:
                 // the outcome editor is optional, and revealing an empty answer
-                // would irreversibly close submissions and mislead readers. The
-                // author can reveal manually, or the sweep retries once an
-                // outcome exists.
+                // would irreversibly close submissions and mislead readers.
                 if (trim((string)$c->caseoutcome) === '') {
                     continue;
                 }
@@ -129,6 +141,6 @@ class publish_scheduled_posts extends scheduled_task {
                 $revealed++;
             }
         }
-        mtrace('local_imageblog: auto-revealed ' . $revealed . ' case outcome(s).');
+        mtrace('local_imageblog: auto-revealed ' . $revealed . ' interactive post(s).');
     }
 }

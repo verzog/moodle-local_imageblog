@@ -1,0 +1,215 @@
+{{!
+    @template local_imageblog/eval_panel
+
+    Interactive panel rendered under an evaluate-type post (Tutorial, Critical
+    Review, Design Evaluation). The reader rates the post against the author's
+    chosen rubric and leaves a comment; the author sets reference ratings and
+    reveals the result.
+
+    Context variables required for this template:
+    * See renderer::build_eval_context() for the full shape.
+
+    Example context (json):
+    {
+        "postid": 1,
+        "revealed": false,
+        "isauthor": false,
+        "maxscore": 5,
+        "criteria": [],
+        "hasrubric": true,
+        "norubric": false,
+        "cansetreference": false,
+        "referencecomplete": false,
+        "cansubmit": false,
+        "hasusereval": false,
+        "usercomment": "",
+        "showresults": false,
+        "hasuserscore": false,
+        "scorepercent": 0,
+        "completenesspct": 0,
+        "agreementpct": 0,
+        "ispractice": false,
+        "cpdtotal": "",
+        "hascpd": false,
+        "aggregatecount": 0,
+        "showothers": false,
+        "others": [],
+        "hasothers": false,
+        "sesskey": "sesskey",
+        "actionurl": "https://moodle.local/local/imageblog/eval_action.php",
+        "revealurl": "https://moodle.local/local/imageblog/eval_action.php?postid=1&action=reveal&sesskey=sesskey"
+    }
+}}
+<div class="local-imageblog-eval mt-4 p-3 border rounded">
+    <h3 class="h5">{{#str}}eval_heading, local_imageblog{{/str}}</h3>
+
+    {{#norubric}}
+        <div class="alert alert-warning py-2">{{#str}}eval_norubric, local_imageblog{{/str}}</div>
+    {{/norubric}}
+
+    {{#hascpd}}
+        <div class="alert alert-success py-2">
+            {{#str}}case_cpd_awarded, local_imageblog, {{cpdtotal}}{{/str}}
+        </div>
+    {{/hascpd}}
+
+    {{^revealed}}
+        {{#hasrubric}}
+        <div class="alert alert-info py-2">{{#str}}eval_not_revealed, local_imageblog{{/str}}</div>
+        {{/hasrubric}}
+    {{/revealed}}
+
+    {{! Author: set reference ratings + reveal. }}
+    {{#cansetreference}}
+        <form method="post" action="{{actionurl}}" class="mb-3">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <input type="hidden" name="postid" value="{{postid}}">
+            <input type="hidden" name="action" value="setreference">
+            <p class="text-muted small">{{#str}}eval_reference_intro, local_imageblog{{/str}}</p>
+            <table class="generaltable">
+                <thead>
+                    <tr>
+                        <th>{{#str}}eval_criterion, local_imageblog{{/str}}</th>
+                        <th>{{#str}}eval_reference_score, local_imageblog{{/str}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#criteria}}
+                    <tr>
+                        <td>
+                            <strong>{{{name}}}</strong>
+                            {{#hasdescription}}<div class="text-muted small">{{{description}}}</div>{{/hasdescription}}
+                        </td>
+                        <td>
+                            <select name="ref[{{id}}]" class="form-select form-select-sm">
+                                {{#refoptions}}
+                                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{value}}</option>
+                                {{/refoptions}}
+                            </select>
+                        </td>
+                    </tr>
+                    {{/criteria}}
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-secondary">{{#str}}eval_reference_save, local_imageblog{{/str}}</button>
+        </form>
+
+        <form method="post" action="{{revealurl}}"
+              onsubmit="return confirm('{{#str}}case_reveal_confirm, local_imageblog{{/str}}');">
+            <button type="submit" class="btn btn-primary mb-3" {{^referencecomplete}}disabled{{/referencecomplete}}>
+                {{#str}}eval_reveal, local_imageblog{{/str}}
+            </button>
+            {{^referencecomplete}}
+            <span class="text-muted small">{{#str}}eval_reference_incomplete, local_imageblog{{/str}}</span>
+            {{/referencecomplete}}
+        </form>
+    {{/cansetreference}}
+
+    {{! Reader: submit / update an evaluation. }}
+    {{#cansubmit}}
+        <form method="post" action="{{actionurl}}" class="mb-3">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <input type="hidden" name="postid" value="{{postid}}">
+            <input type="hidden" name="action" value="evaluate">
+            <table class="generaltable">
+                <thead>
+                    <tr>
+                        <th>{{#str}}eval_criterion, local_imageblog{{/str}}</th>
+                        <th>{{#str}}eval_your_score, local_imageblog{{/str}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#criteria}}
+                    <tr>
+                        <td>
+                            <strong>{{{name}}}</strong>
+                            {{#hasdescription}}<div class="text-muted small">{{{description}}}</div>{{/hasdescription}}
+                        </td>
+                        <td>
+                            <select name="score[{{id}}]" class="form-select form-select-sm">
+                                <option value="">-</option>
+                                {{#useroptions}}
+                                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{value}}</option>
+                                {{/useroptions}}
+                            </select>
+                        </td>
+                    </tr>
+                    {{/criteria}}
+                </tbody>
+            </table>
+            <div class="mb-2">
+                <label for="local-imageblog-eval-comment" class="form-label">
+                    {{#str}}eval_comment, local_imageblog{{/str}}
+                </label>
+                <textarea id="local-imageblog-eval-comment" name="comment" rows="3"
+                          class="form-control">{{usercomment}}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                {{#hasusereval}}{{#str}}eval_update, local_imageblog{{/str}}{{/hasusereval}}
+                {{^hasusereval}}{{#str}}eval_submit, local_imageblog{{/str}}{{/hasusereval}}
+            </button>
+        </form>
+    {{/cansubmit}}
+
+    {{! Post-reveal results. }}
+    {{#showresults}}
+        {{#hasuserscore}}
+        <div class="local-imageblog-eval-score mb-3">
+            <p class="h4 mb-1">{{#str}}eval_your_result, local_imageblog, {{scorepercent}}{{/str}}</p>
+            <p class="text-muted small mb-0">
+                {{#str}}eval_score_breakdown, local_imageblog, {"completeness": {{completenesspct}}, "agreement": {{agreementpct}}}{{/str}}
+            </p>
+            {{#ispractice}}
+            <p class="text-muted small mb-0"><em>{{#str}}eval_practice_note, local_imageblog{{/str}}</em></p>
+            {{/ispractice}}
+        </div>
+        {{/hasuserscore}}
+
+        {{#hasrubric}}
+        <table class="generaltable">
+            <thead>
+                <tr>
+                    <th>{{#str}}eval_criterion, local_imageblog{{/str}}</th>
+                    <th>{{#str}}eval_your_score, local_imageblog{{/str}}</th>
+                    <th>{{#str}}eval_reference_score, local_imageblog{{/str}}</th>
+                    {{#showothers}}<th>{{#str}}eval_mean_score, local_imageblog{{/str}}</th>{{/showothers}}
+                </tr>
+            </thead>
+            <tbody>
+                {{#criteria}}
+                <tr>
+                    <td>
+                        <strong>{{{name}}}</strong>
+                        {{#hasdescription}}<div class="text-muted small">{{{description}}}</div>{{/hasdescription}}
+                    </td>
+                    <td>{{userscore}}</td>
+                    <td>{{refscore}}</td>
+                    {{#showothers}}<td>{{meanscore}}</td>{{/showothers}}
+                </tr>
+                {{/criteria}}
+            </tbody>
+        </table>
+        {{#showothers}}
+        <p class="text-muted small">{{#str}}eval_aggregate_count, local_imageblog, {{aggregatecount}}{{/str}}</p>
+        {{/showothers}}
+        {{/hasrubric}}
+
+        {{#showothers}}
+            {{#hasothers}}
+            <h4 class="h6 mt-3">{{#str}}eval_others_heading, local_imageblog{{/str}}</h4>
+            {{#others}}
+            <div class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between">
+                    <strong>{{username}}</strong>
+                    <span class="text-muted small">{{time}}</span>
+                </div>
+                <div class="small">
+                    {{#scores}}<span class="badge bg-light text-dark me-1">{{{name}}}: {{score}}</span>{{/scores}}
+                </div>
+                {{#hascomment}}<div class="mt-1">{{{comment}}}</div>{{/hascomment}}
+            </div>
+            {{/others}}
+            {{/hasothers}}
+        {{/showothers}}
+    {{/showresults}}
+</div>
