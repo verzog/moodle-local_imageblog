@@ -378,6 +378,16 @@ class post {
             $record->rubricid = ($rid > 0 && rubric::template_exists($rid)) ? $rid : null;
         }
 
+        // Changing a post's type changes (or removes) its interaction, so the
+        // reveal state carried from the old interaction no longer applies —
+        // reset it. Otherwise an already-revealed case converted to an evaluate
+        // post (or the reverse) would appear revealed with the wrong data.
+        if (!$isnew && $existing->posttype !== $record->posttype) {
+            $record->caserevealed = 0;
+            $record->caserevealedtime = null;
+            $record->casebestdiagnosisid = null;
+        }
+
         $becamepublished = false;
         if ($isnew) {
             $record->authorid    = (int)$USER->id;

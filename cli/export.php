@@ -20,7 +20,7 @@
  * Produces the same column layout that cli/import.php consumes, so an
  * export can be re-imported into another site:
  *   title, summary, body, status, timepublished, author_email,
- *   post_type, assessment_mode, tags, levels, featured_image, panorama_image
+ *   post_type, assessment_mode, rubric, tags, levels, featured_image, panorama_image
  *
  * Notes:
  * - 'scheduled' posts are exported with status 'draft' because the import
@@ -94,6 +94,10 @@ if (!in_array($statusfilter, $validstatuses, true)) {
 $context = context_system::instance();
 $fs      = get_file_storage();
 
+// Rubric template names keyed by id, so each evaluate post can export the
+// name of its rubric for a portable round trip.
+$rubricnames = $DB->get_records_menu('local_imageblog_rubrics', null, '', 'id, name');
+
 $overwrite = !empty($options['overwrite']);
 $exportimage = function (int $postid, string $filearea, string $subdir) use ($fs, $context, $imagedir, $overwrite): string {
     if (!$imagedir) {
@@ -136,7 +140,7 @@ if (!$handle) {
 
 $header = [
     'title', 'summary', 'body', 'status', 'timepublished', 'author_email',
-    'post_type', 'assessment_mode', 'tags', 'levels', 'featured_image', 'panorama_image',
+    'post_type', 'assessment_mode', 'rubric', 'tags', 'levels', 'featured_image', 'panorama_image',
 ];
 fputcsv($handle, $header, ',', '"', '\\');
 
@@ -177,6 +181,7 @@ foreach ($rs as $record) {
         $record->authoremail,
         $post->posttype,
         $post->assessmentmode,
+        $post->rubricid ? ($rubricnames[$post->rubricid] ?? '') : '',
         implode('|', $tagnames),
         implode('|', $levelnames),
         $exportimage($post->id, \local_imageblog\post::FILEAREA_FEATURED, 'featured'),

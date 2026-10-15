@@ -127,11 +127,37 @@ class rubric {
 
         if (!empty($data->id)) {
             $record->id = (int)$data->id;
+            // The rating scale is baked into every stored reference and reader
+            // score, so once the rubric has been used it cannot be changed
+            // (narrowing it would invalidate existing scores).
+            if (self::is_in_use($record->id)) {
+                $current = $DB->get_record('local_imageblog_rubrics', ['id' => $record->id], 'maxscore', MUST_EXIST);
+                $record->maxscore = (int)$current->maxscore;
+            }
             $DB->update_record('local_imageblog_rubrics', $record);
             return $record->id;
         }
         $record->timecreated = $now;
         return (int)$DB->insert_record('local_imageblog_rubrics', $record);
+    }
+
+    /**
+     * Whether any author reference or reader score has been recorded against a
+     * criterion of this rubric — i.e. the rubric is in use and its scale is
+     * locked.
+     *
+     * @param int $rubricid
+     * @return bool
+     */
+    public static function is_in_use(int $rubricid): bool {
+        global $DB;
+        $critids = $DB->get_fieldset_select('local_imageblog_rubric_crit', 'id', 'rubricid = :r', ['r' => $rubricid]);
+        if (!$critids) {
+            return false;
+        }
+        [$insql, $params] = $DB->get_in_or_equal($critids, SQL_PARAMS_NAMED);
+        return $DB->record_exists_select('local_imageblog_eval_refs', "criterionid $insql", $params)
+            || $DB->record_exists_select('local_imageblog_eval_scores', "criterionid $insql", $params);
     }
 
     /**

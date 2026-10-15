@@ -159,6 +159,19 @@ final class evaluation_test extends \advanced_testcase {
         $this->assertEqualsWithDelta(0.0, evaluation::get_user_total_hours($postid, (int)$reader->id), 0.001);
     }
 
+    public function test_empty_evaluation_is_not_recorded(): void {
+        global $DB;
+        $author = $this->getDataGenerator()->create_user();
+        $reader = $this->getDataGenerator()->create_user();
+        $postid = $this->create_eval_post($author);
+        $post = post::get($postid);
+
+        // No valid score and no comment -> nothing stored, returns 0.
+        $this->assertSame(0, evaluation::submit_evaluation($post, (int)$reader->id, [], ''));
+        $this->assertSame(0, $DB->count_records('local_imageblog_evals', ['postid' => $postid]));
+        $this->assertNull(evaluation::get_user_evaluation($postid, (int)$reader->id));
+    }
+
     public function test_aggregate_counts_and_means(): void {
         $author = $this->getDataGenerator()->create_user();
         $r1 = $this->getDataGenerator()->create_user();

@@ -77,8 +77,8 @@
                     {{#criteria}}
                     <tr>
                         <td>
-                            <strong>{{name}}</strong>
-                            {{#hasdescription}}<div class="text-muted small">{{description}}</div>{{/hasdescription}}
+                            <strong>{{{name}}}</strong>
+                            {{#hasdescription}}<div class="text-muted small">{{{description}}}</div>{{/hasdescription}}
                         </td>
                         <td>
                             <select name="ref[{{id}}]" class="form-select form-select-sm">
@@ -122,8 +122,8 @@
                     {{#criteria}}
                     <tr>
                         <td>
-                            <strong>{{name}}</strong>
-                            {{#hasdescription}}<div class="text-muted small">{{description}}</div>{{/hasdescription}}
+                            <strong>{{{name}}}</strong>
+                            {{#hasdescription}}<div class="text-muted small">{{{description}}}</div>{{/hasdescription}}
                         </td>
                         <td>
                             <select name="score[{{id}}]" class="form-select form-select-sm">
@@ -172,24 +172,26 @@
                     <th>{{#str}}eval_criterion, local_imageblog{{/str}}</th>
                     <th>{{#str}}eval_your_score, local_imageblog{{/str}}</th>
                     <th>{{#str}}eval_reference_score, local_imageblog{{/str}}</th>
-                    <th>{{#str}}eval_mean_score, local_imageblog{{/str}}</th>
+                    {{#showothers}}<th>{{#str}}eval_mean_score, local_imageblog{{/str}}</th>{{/showothers}}
                 </tr>
             </thead>
             <tbody>
                 {{#criteria}}
                 <tr>
                     <td>
-                        <strong>{{name}}</strong>
-                        {{#hasdescription}}<div class="text-muted small">{{description}}</div>{{/hasdescription}}
+                        <strong>{{{name}}}</strong>
+                        {{#hasdescription}}<div class="text-muted small">{{{description}}}</div>{{/hasdescription}}
                     </td>
                     <td>{{userscore}}</td>
                     <td>{{refscore}}</td>
-                    <td>{{meanscore}}</td>
+                    {{#showothers}}<td>{{meanscore}}</td>{{/showothers}}
                 </tr>
                 {{/criteria}}
             </tbody>
         </table>
+        {{#showothers}}
         <p class="text-muted small">{{#str}}eval_aggregate_count, local_imageblog, {{aggregatecount}}{{/str}}</p>
+        {{/showothers}}
         {{/hasrubric}}
 
         {{#showothers}}
@@ -202,9 +204,9 @@
                     <span class="text-muted small">{{time}}</span>
                 </div>
                 <div class="small">
-                    {{#scores}}<span class="badge bg-light text-dark me-1">{{name}}: {{score}}</span>{{/scores}}
+                    {{#scores}}<span class="badge bg-light text-dark me-1">{{{name}}}: {{score}}</span>{{/scores}}
                 </div>
-                {{#hascomment}}<div class="mt-1">{{comment}}</div>{{/hascomment}}
+                {{#hascomment}}<div class="mt-1">{{{comment}}}</div>{{/hascomment}}
             </div>
             {{/others}}
             {{/hasothers}}

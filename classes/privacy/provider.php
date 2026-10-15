@@ -117,6 +117,14 @@ class provider implements
         );
 
         $collection->add_database_table(
+            'local_imageblog_eval_refs',
+            [
+                'refscore' => 'privacy:metadata:evalrefs:refscore',
+            ],
+            'privacy:metadata:evalrefs'
+        );
+
+        $collection->add_database_table(
             'local_imageblog_subs',
             [
                 'userid'       => 'privacy:metadata:subs:userid',
@@ -211,6 +219,11 @@ class provider implements
                         ? \core_privacy\local\request\transform::datetime($record->timepublished)
                         : null,
                 ];
+                // The author's rubric reference ratings for an evaluate post.
+                $refs = $DB->get_records('local_imageblog_eval_refs', ['postid' => $record->id], '', 'criterionid, refscore');
+                if ($refs) {
+                    $data->rubricreferences = array_map(fn($r) => (int)$r->refscore, array_values($refs));
+                }
                 $path = [$pluginname, 'post-' . $record->id];
                 $w = writer::with_context($context);
                 $w->export_data($path, $data);
@@ -456,6 +469,9 @@ class provider implements
         foreach (['featured_image', 'post_images', 'panorama', 'case_outcome'] as $area) {
             $fs->delete_area_files($context->id, 'local_imageblog', $area, $postid);
         }
+        // The author's rubric reference ratings are their content too — drop
+        // them when scrubbing the post.
+        $DB->delete_records('local_imageblog_eval_refs', ['postid' => $postid]);
         // Archive the scrubbed shell and clear any pending schedule. Otherwise a
         // draft/scheduled post retained for its participants would still be
         // published by the scheduled-posts task after erasure — notifying

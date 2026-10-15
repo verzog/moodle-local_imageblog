@@ -63,7 +63,15 @@ switch ($action) {
         }
         $scores  = optional_param_array('score', [], PARAM_INT);
         $comment = trim(optional_param('comment', '', PARAM_TEXT));
-        \local_imageblog\evaluation::submit_evaluation($post, (int)$USER->id, $scores, $comment);
+        $evalid = \local_imageblog\evaluation::submit_evaluation($post, (int)$USER->id, $scores, $comment);
+        if (!$evalid) {
+            redirect(
+                $returnurl,
+                get_string('error_emptyfield', 'local_imageblog'),
+                null,
+                \core\output\notification::NOTIFY_ERROR
+            );
+        }
         redirect(
             $returnurl,
             get_string('eval_saved', 'local_imageblog'),

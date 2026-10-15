@@ -39,7 +39,7 @@
     <p>
         <a href="{{backurl}}">&laquo; {{#str}}rubric_back, local_imageblog{{/str}}</a>
     </p>
-    <h3 class="h4">{{name}}</h3>
+    <h3 class="h4">{{{name}}}</h3>
     <p><a class="btn btn-primary" href="{{addurl}}">{{#str}}rubric_addcriterion, local_imageblog{{/str}}</a></p>
 
     {{#hasrows}}
@@ -55,8 +55,8 @@
             <tbody>
                 {{#rows}}
                     <tr>
-                        <td>{{name}}</td>
-                        <td>{{description}}</td>
+                        <td>{{{name}}}</td>
+                        <td>{{{description}}}</td>
                         <td>{{sortorder}}</td>
                         <td>
                             <a href="{{editurl}}">{{#str}}edit{{/str}}</a>

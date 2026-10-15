@@ -135,7 +135,8 @@ class evaluation {
      * @param int    $userid
      * @param array  $scores criterionid => score
      * @param string $comment
-     * @return int Evaluation row id.
+     * @return int Evaluation row id, or 0 when the submission was empty (no
+     *   valid score and no comment) and therefore not recorded.
      */
     public static function submit_evaluation(post $post, int $userid, array $scores, string $comment = ''): int {
         global $DB;
@@ -143,6 +144,23 @@ class evaluation {
         $criteria = self::get_criteria($post);
         $validids = array_map(fn($c) => (int)$c->id, $criteria);
         $max = self::maxscore($post);
+        $comment = trim($comment);
+
+        // Keep only in-range scores for valid criteria.
+        $clean = [];
+        foreach ($scores as $critid => $score) {
+            $critid = (int)$critid;
+            $score  = (int)$score;
+            if (in_array($critid, $validids, true) && $score >= 1 && $score <= $max) {
+                $clean[$critid] = $score;
+            }
+        }
+
+        // An evaluation with no valid score and no comment carries no content —
+        // never record it (and so never let it earn participation CPD).
+        if (!$clean && $comment === '') {
+            return 0;
+        }
 
         $transaction = $DB->start_delegated_transaction();
 
@@ -163,12 +181,7 @@ class evaluation {
         }
 
         $DB->delete_records('local_imageblog_eval_scores', ['evalid' => $evalid]);
-        foreach ($scores as $critid => $score) {
-            $critid = (int)$critid;
-            $score  = (int)$score;
-            if (!in_array($critid, $validids, true) || $score < 1 || $score > $max) {
-                continue;
-            }
+        foreach ($clean as $critid => $score) {
             $DB->insert_record('local_imageblog_eval_scores', (object)[
                 'evalid'      => $evalid,
                 'criterionid' => $critid,
@@ -280,7 +293,10 @@ class evaluation {
             $cid = (int)$c->id;
             if (array_key_exists($cid, $eval->scores) && array_key_exists($cid, $refs)) {
                 $distance = abs($eval->scores[$cid] - $refs[$cid]);
-                $agreements[] = 1 - ($distance / $range);
+                // Clamp to [0,1]: a stored score outside the rubric's current
+                // scale (e.g. after the scale was narrowed) can't drive this
+                // negative.
+                $agreements[] = max(0.0, 1 - ($distance / $range));
             }
         }
         $agreement = $agreements ? array_sum($agreements) / count($agreements) : 0.0;
@@ -364,6 +380,11 @@ class evaluation {
         }
         $evals = $DB->get_records('local_imageblog_evals', ['postid' => $postid], '', 'id, userid');
         foreach ($evals as $e) {
+            // Only reward an evaluation that actually scored at least one
+            // criterion — a comment-only row earns no participation CPD.
+            if (!$DB->record_exists('local_imageblog_eval_scores', ['evalid' => (int)$e->id])) {
+                continue;
+            }
             case_post::upsert_cpd_row($postid, (int)$e->userid, case_post::REASON_PARTICIPATION, $hours);
         }
     }

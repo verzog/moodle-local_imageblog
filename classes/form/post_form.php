@@ -386,13 +386,16 @@ class post_form extends moodleform {
             $errors['timescheduled'] = get_string('error_schedulepast', 'local_imageblog');
         }
 
-        // An evaluate post needs a rubric to be evaluated against.
-        if (
-            !empty($data['posttype'])
-            && post_type::is_evaluate((string)$data['posttype'])
-            && empty($data['rubricid'])
-        ) {
-            $errors['rubricid'] = get_string('error_rubricrequired', 'local_imageblog');
+        // An evaluate post needs a rubric — and that rubric must have at least
+        // one criterion, or its panel would have nothing to rate and automatic
+        // reveal could never find a complete reference.
+        if (!empty($data['posttype']) && post_type::is_evaluate((string)$data['posttype'])) {
+            $rubricid = (int)($data['rubricid'] ?? 0);
+            if (!$rubricid || !rubric::template_exists($rubricid)) {
+                $errors['rubricid'] = get_string('error_rubricrequired', 'local_imageblog');
+            } else if (!rubric::get_criteria($rubricid)) {
+                $errors['rubricid'] = get_string('error_rubricnocriteria', 'local_imageblog');
+            }
         }
 
         return $errors;
