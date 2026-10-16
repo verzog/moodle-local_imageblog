@@ -223,8 +223,9 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         $table->add_field('description', XMLDB_TYPE_TEXT, null, null, null, null, null);
         $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        // The foreign key on rubricid already provides an index on that column,
+        // so no separate idx_rubricid index is declared (it would collide).
         $table->add_key('fk_rubric', XMLDB_KEY_FOREIGN, ['rubricid'], 'local_imageblog_rubrics', ['id']);
-        $table->add_index('idx_rubricid', XMLDB_INDEX_NOTUNIQUE, ['rubricid']);
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
