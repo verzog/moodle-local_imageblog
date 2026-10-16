@@ -223,8 +223,9 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         $table->add_field('description', XMLDB_TYPE_TEXT, null, null, null, null, null);
         $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        // The foreign key on rubricid already provides an index on that column,
+        // so no separate idx_rubricid index is declared (it would collide).
         $table->add_key('fk_rubric', XMLDB_KEY_FOREIGN, ['rubricid'], 'local_imageblog_rubrics', ['id']);
-        $table->add_index('idx_rubricid', XMLDB_INDEX_NOTUNIQUE, ['rubricid']);
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }
@@ -271,6 +272,20 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         }
 
         upgrade_plugin_savepoint(true, 2026101500, 'local', 'imageblog');
+    }
+
+    if ($oldversion < 2026101502) {
+        // Drop the redundant idx_rubricid index on local_imageblog_rubric_crit for
+        // sites that installed it before it was removed. The fk_rubric foreign key
+        // already indexes rubricid, so the separate index both duplicated it and
+        // collided with the key when the table was built programmatically.
+        $table = new xmldb_table('local_imageblog_rubric_crit');
+        $index = new xmldb_index('idx_rubricid', XMLDB_INDEX_NOTUNIQUE, ['rubricid']);
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026101502, 'local', 'imageblog');
     }
 
     return true;

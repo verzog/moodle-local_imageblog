@@ -4,6 +4,17 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.2] - 2026-10-16
+
+### Fixed
+- Upgrade crash (`Key fk_rubric collides with index idx_rubricid`) when
+  installing the 0.7.0 evaluate tables on an existing site. The
+  `local_imageblog_rubric_crit` table declared a separate `idx_rubricid` index
+  on the same column already indexed by the `fk_rubric` foreign key, which the
+  XMLDB builder rejects. The redundant index is removed from the schema, and
+  the upgrade now drops it from sites that installed it before the fix
+  (v2026101502).
+
 ## [0.7.1] - 2026-10-15
 
 ### Added
