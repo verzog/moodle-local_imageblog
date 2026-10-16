@@ -10,10 +10,12 @@ the project aims to follow [Semantic Versioning](https://semver.org/).
 - Upgrade crash (`Key fk_rubric collides with index idx_rubricid`) when
   installing the 0.7.0 evaluate tables on an existing site. The
   `local_imageblog_rubric_crit` table declared a separate `idx_rubricid` index
-  on the same column already indexed by the `fk_rubric` foreign key, which the
-  XMLDB builder rejects. The redundant index is removed from the schema, and
-  the upgrade now drops it from sites that installed it before the fix
-  (v2026101502).
+  on `rubricid`, the same column already indexed by the `fk_rubric` foreign
+  key, which the XMLDB table builder rejects. The redundant index is removed
+  from the schema (both `install.xml` and the upgrade step). No data migration
+  is needed: the collision was purely in the schema definition and was caught
+  while building the table object, so the database never physically held two
+  indexes on the column — the foreign key continues to index it.
 
 ## [0.7.1] - 2026-10-15
 
