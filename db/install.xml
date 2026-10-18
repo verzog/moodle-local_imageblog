@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/imageblog/db" VERSION="20261016" COMMENT="XMLDB file for local_imageblog">
+<XMLDB PATH="local/imageblog/db" VERSION="20261018" COMMENT="XMLDB file for local_imageblog">
   <TABLES>
 
     <TABLE NAME="local_imageblog_posts" COMMENT="Blog posts">
@@ -35,7 +35,6 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="idx_status_published" UNIQUE="false" FIELDS="status, timepublished"/>
-        <INDEX NAME="idx_authorid" UNIQUE="false" FIELDS="authorid"/>
       </INDEXES>
     </TABLE>
 
@@ -64,9 +63,6 @@
         <KEY NAME="fk_post" TYPE="foreign" FIELDS="postid" REFTABLE="local_imageblog_posts" REFFIELDS="id"/>
         <KEY NAME="fk_tag"  TYPE="foreign" FIELDS="tagid"  REFTABLE="local_imageblog_tags"  REFFIELDS="id"/>
       </KEYS>
-      <INDEXES>
-        <INDEX NAME="idx_postid" UNIQUE="false" FIELDS="postid"/>
-      </INDEXES>
     </TABLE>
 
     <TABLE NAME="local_imageblog_levels" COMMENT="Difficulty level tags (All Levels, Advanced, Fellowship etc.)">
@@ -130,9 +126,6 @@
         <KEY NAME="fk_post" TYPE="foreign" FIELDS="postid" REFTABLE="local_imageblog_posts" REFFIELDS="id"/>
         <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
-      <INDEXES>
-        <INDEX NAME="idx_postid" UNIQUE="false" FIELDS="postid"/>
-      </INDEXES>
     </TABLE>
 
     <TABLE NAME="local_imageblog_case_cpd" COMMENT="CPD hours awarded for case participation">
