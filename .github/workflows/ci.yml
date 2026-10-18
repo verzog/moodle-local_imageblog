@@ -313,8 +313,7 @@ jobs:
             --adminpass='Ci!Passw0rd' \
             --adminemail='admin@example.com' \
             --fullname='CI Upgrade Test' \
-            --shortname='ci' \
-            --non-interactive
+            --shortname='ci'
 
       - name: Swap in the current plugin code
         if: ${{ steps.install.conclusion == 'success' }}
