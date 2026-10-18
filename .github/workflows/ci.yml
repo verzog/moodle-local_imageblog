@@ -301,6 +301,21 @@ jobs:
             sleep $((attempts * 10))
           done
 
+      - name: Install the baseline site database
+        if: ${{ steps.install.conclusion == 'success' }}
+        run: |
+          # moodle-plugin-ci only initialises the PHPUnit/Behat test databases,
+          # not a real site install, so admin/cli/upgrade.php has no recorded
+          # version to upgrade from. Install the main site at the baseline
+          # version here; the swap + upgrade below then exercise db/upgrade.php.
+          php "$MOODLE_DIR/admin/cli/install_database.php" \
+            --agree-license \
+            --adminpass='Ci!Passw0rd' \
+            --adminemail='admin@example.com' \
+            --fullname='CI Upgrade Test' \
+            --shortname='ci' \
+            --non-interactive
+
       - name: Swap in the current plugin code
         if: ${{ steps.install.conclusion == 'success' }}
         run: |
