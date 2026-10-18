@@ -4,6 +4,30 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.0] - 2026-10-18
+
+First stable release.
+
+### Changed
+- Maturity promoted from beta to **stable** (`MATURITY_STABLE`).
+
+### Removed
+- Three redundant single-column indexes whose foreign key already provides the
+  index: `idx_authorid` on `local_imageblog_posts`, and `idx_postid` on
+  `local_imageblog_post_tags` and `local_imageblog_case_qs`. The foreign keys
+  (`fk_author`, `fk_post`) continue to index those columns, so lookup
+  performance is unchanged, and no data migration is needed (the surviving
+  index is equivalent by column set). The unique `idx_userid` on
+  `local_imageblog_subs` is kept — it enforces one subscription per user, which
+  a foreign-key index would not.
+
+### Testing
+- CI now also runs the Moodle **PHP Mess Detector** (`phpmd`) check, matching
+  the moodle.org plugin prechecker, and a **cross-version upgrade** job that
+  installs the earliest released version and upgrades it to this revision
+  against PostgreSQL, MySQL and MariaDB, so the upgrade path (not just fresh
+  installs) is exercised on every change.
+
 ## [0.7.2] - 2026-10-16
 
 ### Fixed
