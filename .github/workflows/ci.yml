@@ -238,6 +238,10 @@ jobs:
       BASELINE_TAG: v0.5.5
       MOODLE_BRANCH: MOODLE_500_STABLE
       DB: ${{ matrix.database }}
+      # moodle-plugin-ci installs Moodle into ./moodle relative to the job's
+      # working directory (the workspace) and does not export its path, so set
+      # it explicitly for the swap/upgrade steps below.
+      MOODLE_DIR: ${{ github.workspace }}/moodle
 
     steps:
       - name: Check out repository code
