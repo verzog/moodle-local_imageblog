@@ -124,6 +124,20 @@ class author_role {
             unassign_capability($capability, $roleid, $syscontext->id);
         }
 
+        // Let the site's manager-archetype roles assign this role through the
+        // standard allow-assign boundary, so the authors admin page can enforce
+        // get_assignable_roles() instead of bypassing it with a bare
+        // role_assign(). Idempotent: only added where not already present.
+        foreach ($DB->get_records('role', ['archetype' => 'manager'], '', 'id') as $manager) {
+            $allowed = $DB->record_exists('role_allow_assign', [
+                'roleid'      => $manager->id,
+                'allowassign' => $roleid,
+            ]);
+            if (!$allowed) {
+                core_role_set_assign_allowed((int)$manager->id, $roleid);
+            }
+        }
+
         return $roleid;
     }
 }

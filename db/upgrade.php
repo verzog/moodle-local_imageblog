@@ -274,5 +274,14 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026101500, 'local', 'imageblog');
     }
 
+    if ($oldversion < 2026102000) {
+        // Register the allow-assign relationship for the blog-author role so
+        // the authors admin page enforces the standard assignable-roles
+        // boundary instead of bypassing it. ensure() is idempotent.
+        \local_imageblog\local\author_role::ensure();
+
+        upgrade_plugin_savepoint(true, 2026102000, 'local', 'imageblog');
+    }
+
     return true;
 }
