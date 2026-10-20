@@ -104,6 +104,13 @@ class author_role {
                 ''
             );
             set_role_contextlevels($roleid, [CONTEXT_SYSTEM]);
+            // Seed the default allow-assign policy once, at creation only. It
+            // must NOT be re-seeded on later ensure() calls (this method runs
+            // on every authors.php load), or an admin who revokes the
+            // relationship via the role-assignment matrix would have it
+            // silently restored. Existing installs are seeded once by the
+            // v2026102000 upgrade step.
+            self::seed_manager_assignment($roleid);
         } else {
             // Keep the existing role's name and description in step with the
             // current lang strings, so corrected copy (e.g. the scope of the
@@ -124,10 +131,26 @@ class author_role {
             unassign_capability($capability, $roleid, $syscontext->id);
         }
 
-        // Let the site's manager-archetype roles assign this role through the
-        // standard allow-assign boundary, so the authors admin page can enforce
-        // get_assignable_roles() instead of bypassing it with a bare
-        // role_assign(). Idempotent: only added where not already present.
+        return $roleid;
+    }
+
+    /**
+     * Seed the default "manager roles may assign the blog-author role"
+     * allow-assign policy, so the authors admin page can enforce the standard
+     * get_assignable_roles() boundary instead of bypassing it.
+     *
+     * This is a ONE-TIME seed of the default, called only at role creation and
+     * once from the v2026102000 upgrade step — never on every ensure() call.
+     * Re-seeding on every page load would override a deliberate admin
+     * revocation of the relationship via the role-assignment matrix.
+     *
+     * @param int $roleid The blog-author role id.
+     * @return void
+     */
+    public static function seed_manager_assignment(int $roleid): void {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/accesslib.php');
+
         foreach ($DB->get_records('role', ['archetype' => 'manager'], '', 'id') as $manager) {
             $allowed = $DB->record_exists('role_allow_assign', [
                 'roleid'      => $manager->id,
@@ -137,7 +160,5 @@ class author_role {
                 core_role_set_assign_allowed((int)$manager->id, $roleid);
             }
         }
-
-        return $roleid;
     }
 }
