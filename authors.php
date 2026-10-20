@@ -36,9 +36,18 @@ require_capability('moodle/role:assign', $context);
 $roleid = \local_imageblog\local\author_role::ensure();
 $action = optional_param('action', '', PARAM_ALPHA);
 
+// Respect the standard assignable-roles boundary rather than bypassing it with
+// a bare role_assign(). ensure() above registers the allow-assign relationship
+// for manager roles, so this holds for the intended admins; a role:assign
+// holder not permitted to assign this role is correctly blocked.
+$canassignrole = is_siteadmin() || array_key_exists($roleid, get_assignable_roles($context));
+
 if ($action === 'add') {
     require_sesskey();
     $userid = required_param('userid', PARAM_INT);
+    if (!$canassignrole) {
+        throw new \moodle_exception('nopermissions', 'error', '', get_string('assign'));
+    }
     role_assign($roleid, $userid, $context->id, 'local_imageblog', 0, 0);
     redirect(
         new moodle_url('/local/imageblog/authors.php'),
@@ -73,6 +82,9 @@ if ($data = $form->get_data()) {
     require_sesskey();
     $userid = (int)$data->userid;
     if ($userid) {
+        if (!$canassignrole) {
+            throw new \moodle_exception('nopermissions', 'error', '', get_string('assign'));
+        }
         role_assign($roleid, $userid, $context->id, 'local_imageblog', 0, 0);
         redirect(
             new moodle_url('/local/imageblog/authors.php'),
@@ -120,7 +132,7 @@ if ($current) {
             ['class' => 'btn btn-sm btn-outline-danger']
         );
         $table->data[] = [
-            fullname($u),
+            s(fullname($u)),
             s($u->email),
             $removebtn,
         ];

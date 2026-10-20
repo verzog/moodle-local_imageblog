@@ -4,6 +4,22 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-10-20
+
+### Security
+- Escape the author's display name when rendering the _Manage blog authors_
+  table (`authors.php`). The name was emitted unescaped into an
+  `html_writer::table` cell (the adjacent email was already escaped), a
+  conditional stored-XSS sink for display names carrying markup from an
+  external auth/sync source. Now wrapped in `s()`, matching Moodle's
+  escape-on-output standard.
+- Enforce the standard assignable-roles boundary when granting the Blog author
+  role. The authors page previously called `role_assign()` directly, letting
+  any holder of `moodle/role:assign` grant the role regardless of whether site
+  policy permits them to assign it. The role is now registered as allow-assign
+  for manager-archetype roles (via `author_role::ensure()`), and both assign
+  paths check `get_assignable_roles()` first (v2026102000).
+
 ## [1.0.0] - 2026-10-18
 
 First stable release.

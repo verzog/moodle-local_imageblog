@@ -274,5 +274,18 @@ function xmldb_local_imageblog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026101500, 'local', 'imageblog');
     }
 
+    if ($oldversion < 2026102000) {
+        // One-time seed of the allow-assign relationship for the blog-author
+        // role on existing installs, so the authors admin page enforces the
+        // standard assignable-roles boundary. Seeded once here (not on every
+        // ensure()), so a later admin revocation via the role matrix sticks.
+        $roleid = \local_imageblog\local\author_role::get_roleid();
+        if ($roleid) {
+            \local_imageblog\local\author_role::seed_manager_assignment($roleid);
+        }
+
+        upgrade_plugin_savepoint(true, 2026102000, 'local', 'imageblog');
+    }
+
     return true;
 }
