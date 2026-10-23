@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: verzog/moodle-ci-workflows/.github/workflows/moodle-plugin-ci.yml@vdiddy/more-inputs
+    uses: verzog/moodle-ci-workflows/.github/workflows/moodle-plugin-ci.yml@v1
     with:
       # The plugin declares $plugin->supported = [500, 503], so the stable branches for Moodle 5.0 through 5.3 are
       # all exercised on every PHP and database. 'main' (5.4-dev) is deliberately excluded: 'validate' would flag
