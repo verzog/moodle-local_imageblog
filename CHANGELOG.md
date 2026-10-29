@@ -4,6 +4,13 @@ All notable changes to the Image blog plugin (`local_imageblog`) are documented
 here. The format is based on [Keep a Changelog](https://keepachangelog.com/), and
 the project aims to follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- Moodle 5.1 is now the minimum: the plugin supports Moodle 5.1 to 5.3 LTS, and
+  Moodle 5.0 is no longer supported or tested. CI also reports on Moodle `main`
+  (allowed to fail), and the upgrade-path job now runs on Moodle 5.1.
+
 ## [1.0.1] - 2026-10-20
 
 ### Security
