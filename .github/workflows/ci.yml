@@ -23,21 +23,12 @@ jobs:
   ci:
     uses: verzog/moodle-ci-workflows/.github/workflows/moodle-plugin-ci.yml@v1
     with:
-      # The plugin declares $plugin->supported = [500, 503], so the stable branches for Moodle 5.0 through 5.3 are
-      # all exercised on every PHP and database. 'main' (5.4-dev) is deliberately excluded: 'validate' would flag
-      # it as untested-but-unsupported. Add the next MOODLE_5xx_STABLE here once 'supported' is raised to cover it.
+      # The plugin declares $plugin->supported = [501, 503], so the stable branches for Moodle 5.1 through 5.3 are
+      # all exercised on every PHP and database. MOODLE_500_STABLE is deliberately excluded: it is below the 5.1
+      # baseline in version.php. Moodle main is the next version: the shared workflow reports it but lets it fail.
       # Moodle 5.2+ requires PHP 8.3 or newer.
       matrix: >-
         [
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.2", "database": "pgsql"},
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.2", "database": "mysqli"},
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.2", "database": "mariadb"},
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.3", "database": "pgsql"},
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.3", "database": "mysqli"},
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.3", "database": "mariadb"},
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.4", "database": "pgsql"},
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.4", "database": "mysqli"},
-          {"moodle-branch": "MOODLE_500_STABLE", "php": "8.4", "database": "mariadb"},
           {"moodle-branch": "MOODLE_501_STABLE", "php": "8.2", "database": "pgsql"},
           {"moodle-branch": "MOODLE_501_STABLE", "php": "8.2", "database": "mysqli"},
           {"moodle-branch": "MOODLE_501_STABLE", "php": "8.2", "database": "mariadb"},
@@ -58,9 +49,10 @@ jobs:
           {"moodle-branch": "MOODLE_503_STABLE", "php": "8.3", "database": "mariadb"},
           {"moodle-branch": "MOODLE_503_STABLE", "php": "8.4", "database": "pgsql"},
           {"moodle-branch": "MOODLE_503_STABLE", "php": "8.4", "database": "mysqli"},
-          {"moodle-branch": "MOODLE_503_STABLE", "php": "8.4", "database": "mariadb"}
+          {"moodle-branch": "MOODLE_503_STABLE", "php": "8.4", "database": "mariadb"},
+          {"moodle-branch": "main", "php": "8.4", "database": "pgsql"}
         ]
-      grunt-branch: MOODLE_500_STABLE
+      grunt-branch: MOODLE_501_STABLE
       # Mess Detector findings fail the build in this plugin.
       phpmd-blocking: true
 
@@ -118,16 +110,17 @@ jobs:
     env:
       # Baseline is the earliest published tag; upgrading it to HEAD exercises
       # the whole db/upgrade.php chain (taxonomy restructure + evaluate tables).
-      # Pinned to Moodle 5.0 — the branch the baseline plugin was written for —
-      # so the baseline install is maximally compatible; the upgrade SQL itself
+      # Pinned to Moodle 5.1, the lowest supported branch; the upgrade SQL itself
       # is Moodle-version independent, and the three DB engines are what matter.
       BASELINE_TAG: v0.5.5
-      MOODLE_BRANCH: MOODLE_500_STABLE
+      MOODLE_BRANCH: MOODLE_501_STABLE
       DB: ${{ matrix.database }}
       # moodle-plugin-ci installs Moodle into ./moodle relative to the job's
       # working directory (the workspace) and does not export its path, so set
       # it explicitly for the swap/upgrade steps below.
       MOODLE_DIR: ${{ github.workspace }}/moodle
+      # From Moodle 5.1 plugins live under the public/ docroot; the CLI scripts stay in admin/cli at the root.
+      PLUGIN_DIR: ${{ github.workspace }}/moodle/public/local/imageblog
 
     steps:
       - name: Check out repository code
@@ -205,12 +198,12 @@ jobs:
       - name: Swap in the current plugin code
         if: ${{ steps.install.conclusion == 'success' }}
         run: |
-          if [ -z "$MOODLE_DIR" ] || [ ! -d "$MOODLE_DIR/local/imageblog" ]; then
-            echo "MOODLE_DIR not set or plugin not installed at \$MOODLE_DIR/local/imageblog (MOODLE_DIR='$MOODLE_DIR')" >&2
+          if [ -z "$PLUGIN_DIR" ] || [ ! -d "$PLUGIN_DIR" ]; then
+            echo "Plugin not installed at PLUGIN_DIR='$PLUGIN_DIR'" >&2
             exit 1
           fi
           git -C plugin checkout --detach "$HEAD_SHA"
-          rsync -a --delete --exclude='.git' ./plugin/ "$MOODLE_DIR/local/imageblog/"
+          rsync -a --delete --exclude='.git' ./plugin/ "$PLUGIN_DIR/"
 
       - name: Run the upgrade
         if: ${{ steps.install.conclusion == 'success' }}
